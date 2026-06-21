@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00A7E1"/>
+      <stop offset="100%" style="stop-color:#36C0EF"/>
+    </linearGradient>
+  </defs>
+  <!-- Main sail shape - left curved blade -->
+  <path d="M280 50 C280 50 80 200 100 400 L280 380 Z" fill="url(#g1)"/>
+  <!-- Right blade / A leg -->
+  <path d="M280 50 C280 50 420 300 380 420 L280 380 Z" fill="url(#g1)" opacity="0.85"/>
+  <!-- Inner highlight/cut -->
+  <path d="M180 350 C200 280 260 220 280 180 C280 180 310 260 340 360 L280 380 Z" fill="white" opacity="0.15"/>
+  <!-- Bottom left foot -->
+  <path d="M100 400 C100 400 70 440 50 460 L180 440 Z" fill="url(#g1)" opacity="0.9"/>
+  <!-- Bottom right foot -->
+  <path d="M380 420 C380 420 440 450 460 470 L300 450 Z" fill="url(#g1)" opacity="0.9"/>
+</svg>
