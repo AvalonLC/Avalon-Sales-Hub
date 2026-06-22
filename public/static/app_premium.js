@@ -1946,4 +1946,33 @@ window.pnlImportCsv = function(fileId) {
 
 window.revenueAdmin = revenueAdmin;
 
+// ── Seed baseline actuals from data.js on first load ──────────────────────────
+// Runs once: if localStorage keys are empty, pre-populates from AVALON_DATA's
+// divisionMonthlyActuals + monthlyBudget so dashboards show real numbers immediately.
+// User edits always take priority — this never overwrites existing data.
+(function seedBaselineActuals() {
+  const raw = window.AVALON_DATA && window.AVALON_DATA.fy2026;
+  if (!raw) return;
+
+  // ── Seed avalonDivisionActuals ──
+  const existingDiv = loadDivisionActuals();
+  const hasAnyDiv = Object.keys(existingDiv).some(k => Object.keys(existingDiv[k] || {}).length > 0);
+  if (!hasAnyDiv && raw.divisionMonthlyActuals) {
+    saveDivisionActuals(raw.divisionMonthlyActuals);
+  }
+
+  // ── Seed avalonRevenueActuals ──
+  // Only seed the months that have hardcoded actuals in data.js and haven't been
+  // overridden yet. This ensures the monthly editor reflects Jan–May right away.
+  const existingRev = loadRevenueActuals();
+  const hasSavedMonths = Object.keys(existingRev).filter(k => !k.startsWith('note_')).length > 0;
+  if (!hasSavedMonths && raw.monthlyBudget) {
+    const seeded = {};
+    raw.monthlyBudget.forEach(m => {
+      if (m.actual != null) seeded[m.month] = m.actual;
+    });
+    if (Object.keys(seeded).length > 0) saveRevenueActuals(seeded);
+  }
+})();
+
 show('today');

@@ -31,21 +31,44 @@ window.AVALON_DATA = {
       { "month": "Mar", "budgeted": 109000, "actual": 104275.22, "variance": -4724.78  },
       { "month": "Apr", "budgeted": 103000, "actual": 113504.53, "variance": 10504.53  },
       { "month": "May", "budgeted": 113000, "actual": 106436.01, "variance": -6563.99  },
-      { "month": "Jun", "budgeted": 108000, "actual": null, "variance": null },
-      { "month": "Jul", "budgeted": 123000, "actual": null, "variance": null },
-      { "month": "Aug", "budgeted": 103000, "actual": null, "variance": null },
-      { "month": "Sep", "budgeted": 103000, "actual": null, "variance": null },
-      { "month": "Oct", "budgeted": 93000,  "actual": null, "variance": null },
-      { "month": "Nov", "budgeted": 88000,  "actual": null, "variance": null },
-      { "month": "Dec", "budgeted": 78000,  "actual": null, "variance": null }
+      { "month": "Jun", "budgeted": 108000, "actual": null,      "variance": null },
+      { "month": "Jul", "budgeted": 123000, "actual": null,      "variance": null },
+      { "month": "Aug", "budgeted": 103000, "actual": null,      "variance": null },
+      { "month": "Sep", "budgeted": 103000, "actual": null,      "variance": null },
+      { "month": "Oct", "budgeted": 93000,  "actual": null,      "variance": null },
+      { "month": "Nov", "budgeted": 88000,  "actual": null,      "variance": null },
+      { "month": "Dec", "budgeted": 78000,  "actual": null,      "variance": null }
     ],
+    "divisionMonthlyActuals": {
+      "landscape": {
+        "Jan": { "revenue": 0       },
+        "Feb": { "revenue": 13833   },
+        "Mar": { "revenue": 25275   },
+        "Apr": { "revenue": 55505   },
+        "May": { "revenue": 58436   }
+      },
+      "maintenance": {
+        "Jan": { "revenue": 0       },
+        "Feb": { "revenue": 48000   },
+        "Mar": { "revenue": 48000   },
+        "Apr": { "revenue": 58000   },
+        "May": { "revenue": 48000   }
+      },
+      "snow": {
+        "Jan": { "revenue": 21100.64 },
+        "Feb": { "revenue": 126000   },
+        "Mar": { "revenue": 31000    },
+        "Apr": { "revenue": 0        },
+        "May": { "revenue": 0        }
+      }
+    },
     "divisions": {
       "landscape": {
         "name": "Landscape",
         "icon": "🌿",
         "target": 525000,
-        "actual": 153048,
-        "remaining": 371952,
+        "actual": 153049,
+        "remaining": 371951,
         "pctOfCompany": 0.422,
         "operatingIncome": 220609.22,
         "cogs": 178237,
@@ -84,6 +107,7 @@ window.AVALON_DATA = {
         "target": 543000,
         "actual": 202000,
         "remaining": 341000,
+        "ytdActual": 202000,
         "pctOfCompany": 0.436,
         "contractedBase": 378614,
         "contractedCommercial": 314737,
@@ -122,8 +146,8 @@ window.AVALON_DATA = {
         "name": "Snow & Ice",
         "icon": "❄️",
         "target": 177000,
-        "actual": 178101,
-        "remaining": -1101,
+        "actual": 178100.64,
+        "remaining": -1100.64,
         "status": "ABOVE PLAN",
         "pctOfCompany": 0.142,
         "operatingIncome": 127314.70,
