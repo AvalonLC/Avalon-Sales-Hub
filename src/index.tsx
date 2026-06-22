@@ -114,7 +114,7 @@ function getHtml(): string {
         <summary class="nav-summary">⚙️ Admin</summary>
         <div class="nav-items">
           <button class="nav-item" data-view="manager" onclick="show('manager')">Manager Tools</button>
-          <button class="nav-item" data-view="revenueAdmin" onclick="show('revenueAdmin')">Revenue Editor</button>
+          <button class="nav-item" data-view="revenueAdmin" onclick="show('revenueAdmin')">Financial Data Hub</button>
           <button class="nav-item" data-view="integrations" onclick="show('integrations')">Integrations</button>
           <button class="nav-item" data-view="settings" onclick="show('settings')">Settings</button>
         </div>

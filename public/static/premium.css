@@ -94,3 +94,20 @@ code{background:#1e293b;color:#e2e8f0;padding:2px 6px;border-radius:4px;font-siz
 .rev-variance-none { color:#334155; }
 .rev-month-tag { font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#94a3b8; margin-right:6px; }
 .rev-locked-badge { font-size:9px; background:#1e293b; color:#475569; border-radius:4px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
+
+/* ── Financial Hub tab nav / division entry ───────────────────────────────── */
+.fin-tab-btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all .12s; }
+.fin-tab-btn.active { background:#0e3044; border:1px solid #22d3ee; color:#22d3ee; }
+.fin-tab-btn:not(.active) { background:#0f172a; border:1px solid #1e293b; color:#94a3b8; }
+.fin-tab-btn:hover:not(.active) { border-color:#334155; color:#cbd5e1; }
+.div-entry-table { width:100%; border-collapse:collapse; font-size:13px; }
+.div-entry-table th { padding:9px 10px; text-align:left; color:#64748b; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; border-bottom:1px solid #1e293b; }
+.div-entry-table th.right { text-align:right; }
+.div-entry-table td { padding:6px 10px; color:#e2e8f0; border-bottom:1px solid #0a0f1a; }
+.div-entry-table td.right { text-align:right; }
+.div-entry-table tbody tr:hover { background:#0f172a; }
+/* P&L upload drop zone */
+.pnl-drop-zone { border:2px dashed #1e4d6b; border-radius:14px; padding:24px; text-align:center; background:#0a0f1a; transition:border-color .12s; }
+.pnl-drop-zone:hover { border-color:#22d3ee; }
+/* Dynamic tag */
+.dynamic-tag { font-size:9px; font-weight:700; background:#0e3044; color:#22d3ee; border-radius:4px; padding:1px 5px; margin-left:4px; vertical-align:middle; letter-spacing:.04em; text-transform:uppercase; }

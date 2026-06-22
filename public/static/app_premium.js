@@ -756,7 +756,7 @@ function manager(){
       <div style="text-align:center">
         <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Needed / Month</div>
         <div style="font-size:1.9rem;font-weight:900;color:#f59e0b">${fmtM(annual.avgNeededPerMonth)}</div>
-        <div style="font-size:10px;color:#64748b">Jun \u2013 Dec (${annual.monthsLeft} months)</div>
+        <div style="font-size:10px;color:#64748b">${annual.monthsLeft} months remaining</div>
       </div>
       <div style="text-align:center">
         <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Operating GM</div>
@@ -1168,8 +1168,12 @@ document.addEventListener('click', e => {
   if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) sidebar.classList.remove('open');
 });
 
-// ── Monthly Revenue Admin (Phase 2B) ─────────────────────────────────────────
-const REV_ACTUALS_KEY = 'avalonRevenueActuals';
+// ── Financial Data Storage Keys ────────────────────────────────────────────────
+const REV_ACTUALS_KEY      = 'avalonRevenueActuals';      // { "Jan": 21100, "note_Jan": "...", ... }
+const DIV_ACTUALS_KEY      = 'avalonDivisionActuals';     // { landscape:{ Jan:{revenue,cogs,gmPct} }, maintenance:{...}, snow:{...} }
+const ANNUAL_OVERRIDES_KEY = 'avalonAnnualOverrides';     // { grossMarginPct, trueNetIncome, loanMonthly, cogs, grossProfit, ... }
+const PNL_FILES_KEY        = 'avalonPnlFiles';            // [{ id, name, date, type, size, data(base64 or csv-text) }]
+
 function loadRevenueActuals() {
   try { return JSON.parse(localStorage.getItem(REV_ACTUALS_KEY)) || {}; }
   catch(e) { return {}; }
@@ -1177,30 +1181,101 @@ function loadRevenueActuals() {
 function saveRevenueActuals(actuals) {
   localStorage.setItem(REV_ACTUALS_KEY, JSON.stringify(actuals));
 }
+function loadDivisionActuals() {
+  try { return JSON.parse(localStorage.getItem(DIV_ACTUALS_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+function saveDivisionActuals(d) {
+  localStorage.setItem(DIV_ACTUALS_KEY, JSON.stringify(d));
+}
+function loadAnnualOverrides() {
+  try { return JSON.parse(localStorage.getItem(ANNUAL_OVERRIDES_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+function saveAnnualOverrides(o) {
+  localStorage.setItem(ANNUAL_OVERRIDES_KEY, JSON.stringify(o));
+}
+function loadPnlFiles() {
+  try { return JSON.parse(localStorage.getItem(PNL_FILES_KEY)) || []; }
+  catch(e) { return []; }
+}
+function savePnlFiles(files) {
+  localStorage.setItem(PNL_FILES_KEY, JSON.stringify(files));
+}
 
 /**
- * getResolvedFY() — returns a deep copy of AVALON_DATA.fy2026 with
- * localStorage-saved actuals merged in. Also recalculates:
- *   - each month's .actual and .variance
+ * getResolvedFY() — returns a deep copy of AVALON_DATA.fy2026 with ALL
+ * localStorage-saved actuals merged in. Reads:
+ *   1. avalonRevenueActuals (company-level monthly totals)
+ *   2. avalonDivisionActuals (per-division monthly revenue/COGS/GM)
+ *   3. avalonAnnualOverrides (annual-level financial overrides)
+ *
+ * Recomputes dynamically:
+ *   - Each month's .actual and .variance
+ *   - Division .actual from summed division monthly data (if entered)
  *   - annual.actualRevenue, annual.remaining, annual.ytdVariance
- * Call this instead of data.fy2026 anywhere you display live revenue figures.
+ *   - annual.monthsLeft = count of months with NO actual (dynamic!)
+ *   - annual.avgNeededPerMonth = remaining / monthsLeft
  */
 function getResolvedFY() {
   const raw = window.AVALON_DATA.fy2026;
-  // Deep-clone so we never mutate the source
-  const fy = JSON.parse(JSON.stringify(raw));
-  const saved = loadRevenueActuals();
+  const fy = JSON.parse(JSON.stringify(raw)); // deep clone
 
-  // Patch monthly actuals
+  const savedMonthly   = loadRevenueActuals();
+  const savedDivisions = loadDivisionActuals();
+  const savedAnnual    = loadAnnualOverrides();
+
+  // ── 1. Patch per-division actuals from avalonDivisionActuals ──
+  const DIVKEYS = ['landscape', 'maintenance', 'snow'];
+  DIVKEYS.forEach(dk => {
+    if (!fy.divisions[dk]) return;
+    const divData = savedDivisions[dk] || {};
+    const months = Object.keys(divData);
+    if (months.length === 0) return; // no entries for this division yet
+
+    let totalRevenue = 0;
+    let totalCogs    = 0;
+    months.forEach(mon => {
+      const entry = divData[mon] || {};
+      if (entry.revenue != null) totalRevenue += entry.revenue;
+      if (entry.cogs    != null) totalCogs    += entry.cogs;
+    });
+    fy.divisions[dk].actual = totalRevenue;
+    fy.divisions[dk].cogs   = totalCogs;
+    fy.divisions[dk].remaining = fy.divisions[dk].target - totalRevenue;
+    if (totalRevenue > 0) {
+      const gmPct = (totalRevenue - totalCogs) / totalRevenue;
+      fy.divisions[dk].grossMarginPct = gmPct;
+    }
+  });
+
+  // ── 2. Patch monthly totals from avalonRevenueActuals ──
+  //    If division data exists AND no company-level override for a month,
+  //    auto-sum division data into that month.
   fy.monthlyBudget = fy.monthlyBudget.map(m => {
-    const savedVal = saved[m.month];
-    const actual = savedVal !== undefined ? savedVal : m.actual;
+    const savedVal = savedMonthly[m.month];
+    let actual;
+    if (savedVal !== undefined) {
+      actual = savedVal;
+    } else {
+      // Try to auto-sum from division entries for this month
+      let divSum = null;
+      DIVKEYS.forEach(dk => {
+        const entry = (savedDivisions[dk] || {})[m.month];
+        if (entry && entry.revenue != null) {
+          if (divSum === null) divSum = 0;
+          divSum += entry.revenue;
+        }
+      });
+      actual = (divSum !== null) ? divSum : m.actual;
+    }
     const variance = actual != null ? actual - m.budgeted : null;
     return { ...m, actual, variance };
   });
 
-  // Recompute annual YTD figures
+  // ── 3. Recompute annual YTD figures ──
   const completedMonths = fy.monthlyBudget.filter(m => m.actual != null);
+  const pendingMonths   = fy.monthlyBudget.filter(m => m.actual == null);
   const ytdActual   = completedMonths.reduce((s, m) => s + m.actual, 0);
   const ytdBudgeted = completedMonths.reduce((s, m) => s + m.budgeted, 0);
 
@@ -1209,18 +1284,47 @@ function getResolvedFY() {
   fy.annual.remaining     = fy.annual.budgetedRevenue - ytdActual;
   fy.annual.ytdVariance   = ytdActual - ytdBudgeted;
 
-  // Recompute avgNeededPerMonth based on updated remaining
-  const monthsLeft = fy.annual.monthsLeft || 7;
-  fy.annual.avgNeededPerMonth = monthsLeft > 0 ? Math.round(fy.annual.remaining / monthsLeft) : 0;
+  // ── 4. DYNAMIC monthsLeft — count months with NO actual data ──
+  const dynamicMonthsLeft = pendingMonths.length;
+  fy.annual.monthsLeft = dynamicMonthsLeft;
+  fy.annual.avgNeededPerMonth = dynamicMonthsLeft > 0
+    ? Math.round(fy.annual.remaining / dynamicMonthsLeft)
+    : 0;
+
+  // ── 5. Apply annual overrides (editable financial fields) ──
+  Object.keys(savedAnnual).forEach(k => {
+    if (k === '_divOverrides') return; // handled below
+    if (savedAnnual[k] !== undefined && savedAnnual[k] !== null) {
+      fy.annual[k] = savedAnnual[k];
+    }
+  });
+
+  // ── 6. Apply division-level overrides from annuals tab ──
+  const divOverrides = (savedAnnual._divOverrides) || {};
+  DIVKEYS.forEach(dk => {
+    if (!fy.divisions[dk] || !divOverrides[dk]) return;
+    Object.keys(divOverrides[dk]).forEach(field => {
+      if (divOverrides[dk][field] !== undefined) {
+        fy.divisions[dk][field] = divOverrides[dk][field];
+      }
+    });
+  });
 
   return fy;
 }
 window.getResolvedFY = getResolvedFY;
 
 
-function revenueAdmin() {
+// ── Revenue Admin Tab State ───────────────────────────────────────────────────
+let _revTab = 'monthly'; // 'monthly' | 'division' | 'annuals' | 'pnl'
+
+function revenueAdmin(tab) {
+  if (tab) _revTab = tab;
   const fy = getResolvedFY();
-  const savedActuals = loadRevenueActuals(); // needed for note fields
+  const savedActuals   = loadRevenueActuals();
+  const savedDivisions = loadDivisionActuals();
+  const savedAnnual    = loadAnnualOverrides();
+  const pnlFiles       = loadPnlFiles();
   const months = (fy.monthlyBudget || []).map((m, idx) => ({ ...m, idx }));
 
   function fmtM(n) { return n != null ? n.toLocaleString(undefined, { style:'currency', currency:'USD', maximumFractionDigits:0 }) : '—'; }
@@ -1229,104 +1333,354 @@ function revenueAdmin() {
   const ytdActual  = months.filter(m => m.actual != null).reduce((a,m) => a + m.actual, 0);
   const ytdVar     = ytdActual - ytdBudget;
   const ytdVarColor= ytdVar >= 0 ? '#4ade80' : '#f87171';
+  const dynamicMonthsLeft = months.filter(m => m.actual == null).length;
 
-  const tableRows = months.map(m => {
-    const hasActual = m.actual != null;
-    const varColor  = m.variance == null ? '#334155' : m.variance >= 0 ? '#4ade80' : '#f87171';
-    const varSign   = m.variance != null && m.variance > 0 ? '+' : '';
-    return `<tr>
-      <td><span class="rev-month-tag">${escapeHtml(m.month)}</span>${hasActual ? '<span class="rev-locked-badge">saved</span>' : ''}</td>
-      <td class="right" style="color:#64748b">${fmtM(m.budgeted)}</td>
-      <td class="right">
-        <input class="rev-editor-input" type="number" min="0" step="1000"
-          id="rev_actual_${m.idx}"
-          value="${hasActual ? m.actual : ''}"
-          placeholder="enter actual"
-          oninput="revUpdateRow(${m.idx})">
-      </td>
-      <td class="right" id="rev_var_${m.idx}" style="color:${varColor};font-weight:700">${m.variance != null ? varSign + fmtM(m.variance) : '—'}</td>
-      <td>
-        <input style="background:transparent;border:none;border-bottom:1px solid #1e293b;width:100%;color:#94a3b8;font-size:12px;padding:4px 0"
-          placeholder="notes…"
-          id="rev_note_text_${m.idx}"
-          value="${escapeHtml(savedActuals['note_'+m.month]||'')}">
-      </td>
-    </tr>`;
-  }).join('');
+  // ── Tab Nav ──
+  const tabNav = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+      ${[['monthly','📅 Monthly Totals'],['division','🏢 Division Entry'],['annuals','📊 Annual Financials'],['pnl','📎 P&L Files']].map(([t,label]) =>
+        `<button onclick="revenueAdmin('${t}')" style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid ${_revTab===t?'#22d3ee':'#1e293b'};background:${_revTab===t?'#0e3044':'#0f172a'};color:${_revTab===t?'#22d3ee':'#94a3b8'}">${label}</button>`
+      ).join('')}
+    </div>`;
+
+  // ── Summary Banner (always shown) ──
+  const banner = `
+    <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:1px solid #1e4d6b;border-radius:14px;padding:18px;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
+        <div style="text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">YTD Budget</div>
+          <div id="rev_ytd_budget" style="font-size:1.4rem;font-weight:900;color:#e2e8f0">${fmtM(ytdBudget)}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">YTD Actual</div>
+          <div id="rev_ytd_actual" style="font-size:1.4rem;font-weight:900;color:#22d3ee">${fmtM(ytdActual)}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">YTD Variance</div>
+          <div id="rev_ytd_var" style="font-size:1.4rem;font-weight:900;color:${ytdVarColor}">${ytdVar >= 0 ? '+' : ''}${fmtM(ytdVar)}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Remaining</div>
+          <div style="font-size:1.4rem;font-weight:900;color:#f87171">${fmtM(fy.annual.remaining)}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Needed / Mo</div>
+          <div style="font-size:1.4rem;font-weight:900;color:#f59e0b">${fmtM(fy.annual.avgNeededPerMonth)}</div>
+          <div style="font-size:9px;color:#64748b">${dynamicMonthsLeft} months left</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Annual Budget</div>
+          <div style="font-size:1.4rem;font-weight:900;color:#a78bfa">${fmtM(fy.annual.budgetedRevenue)}</div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── Tab: Monthly Totals ──
+  function renderMonthlyTab() {
+    const tableRows = months.map(m => {
+      const hasActual = m.actual != null;
+      const varColor  = m.variance == null ? '#334155' : m.variance >= 0 ? '#4ade80' : '#f87171';
+      const varSign   = m.variance != null && m.variance > 0 ? '+' : '';
+      // Check if this month's total is auto-derived from division data
+      const divs = loadDivisionActuals();
+      let autoDerived = false;
+      if (!savedActuals[m.month]) {
+        let divSum = 0; let hasDiv = false;
+        ['landscape','maintenance','snow'].forEach(dk => {
+          const e = (divs[dk]||{})[m.month];
+          if (e && e.revenue != null) { divSum += e.revenue; hasDiv = true; }
+        });
+        if (hasDiv) autoDerived = true;
+      }
+      return `<tr>
+        <td><span class="rev-month-tag">${escapeHtml(m.month)}</span>${hasActual ? '<span class="rev-locked-badge">' + (autoDerived ? 'auto' : 'saved') + '</span>' : ''}</td>
+        <td class="right" style="color:#64748b">${fmtM(m.budgeted)}</td>
+        <td class="right">
+          <input class="rev-editor-input" type="number" min="0" step="1000"
+            id="rev_actual_${m.idx}"
+            value="${hasActual ? m.actual : ''}"
+            placeholder="enter actual"
+            title="${autoDerived ? 'Auto-summed from division entries. Override here to set a different company total.' : ''}"
+            oninput="revUpdateRow(${m.idx})">
+        </td>
+        <td class="right" id="rev_var_${m.idx}" style="color:${varColor};font-weight:700">${m.variance != null ? varSign + fmtM(m.variance) : '—'}</td>
+        <td>
+          <input style="background:transparent;border:none;border-bottom:1px solid #1e293b;width:100%;color:#94a3b8;font-size:12px;padding:4px 0"
+            placeholder="notes…"
+            id="rev_note_text_${m.idx}"
+            value="${escapeHtml(savedActuals['note_'+m.month]||'')}">
+        </td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="card" style="background:#0a0f1a;border:1px solid #1e293b;padding:0;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1e293b">
+          <h2 style="margin:0;color:#f1f5f9;font-size:1rem">Budget vs Actual — Jan–Dec 2026</h2>
+          <div style="display:flex;gap:8px">
+            <button class="secondary-btn small" onclick="revSaveAll()" style="background:#16a34a;border-color:#16a34a;color:#fff">💾 Save All</button>
+            <button class="secondary-btn small" onclick="revExportCsv()">📥 Export CSV</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="rev-editor-table" id="revTable">
+            <thead><tr>
+              <th>Month</th><th class="right">Budgeted</th><th class="right">Actual Revenue</th><th class="right">Variance</th><th>Notes</th>
+            </tr></thead>
+            <tbody>${tableRows}</tbody>
+            <tfoot>
+              <tr style="background:#0f172a;font-weight:700;border-top:2px solid #1e293b">
+                <td style="padding:12px;color:#e2e8f0">YTD Total</td>
+                <td class="right" style="padding:12px;color:#64748b" id="rev_tfoot_budget">${fmtM(ytdBudget)}</td>
+                <td class="right" style="padding:12px;color:#22d3ee" id="rev_tfoot_actual">${fmtM(ytdActual)}</td>
+                <td class="right" style="padding:12px;color:${ytdVarColor}" id="rev_tfoot_var">${ytdVar >= 0 ? '+' : ''}${fmtM(ytdVar)}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      <p style="color:#64748b;font-size:12px;margin-top:8px">
+        💡 Tip: Enter division-level data in <strong style="color:#22d3ee">Division Entry</strong> tab — monthly totals auto-sum from divisions.
+        Override any month here to set a custom company total.
+      </p>`;
+  }
+
+  // ── Tab: Division Entry ──
+  const DIVISIONS_META = [
+    { key: 'landscape',   label: 'Landscape',    icon: '🌿', color: '#4ade80' },
+    { key: 'maintenance', label: 'Maintenance',   icon: '✂️', color: '#22d3ee' },
+    { key: 'snow',        label: 'Snow & Ice',    icon: '❄️', color: '#a78bfa' }
+  ];
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function renderDivisionTab() {
+    const divSections = DIVISIONS_META.map(div => {
+      const divData = savedDivisions[div.key] || {};
+      const rows = MONTH_NAMES.map(mon => {
+        const entry = divData[mon] || {};
+        const rev  = entry.revenue != null ? entry.revenue : '';
+        const cogs = entry.cogs    != null ? entry.cogs    : '';
+        const gmPctCalc = (entry.revenue && entry.cogs != null)
+          ? Math.round(((entry.revenue - entry.cogs) / entry.revenue) * 100) : '';
+        return `<tr>
+          <td><span class="rev-month-tag">${mon}</span></td>
+          <td><input class="rev-editor-input" type="number" min="0" step="500"
+            id="div_${div.key}_rev_${mon}" value="${rev}" placeholder="revenue"
+            oninput="divUpdateRow('${div.key}','${mon}')"></td>
+          <td><input class="rev-editor-input" type="number" min="0" step="500"
+            id="div_${div.key}_cogs_${mon}" value="${cogs}" placeholder="COGS"
+            oninput="divUpdateRow('${div.key}','${mon}')"></td>
+          <td class="right" id="div_${div.key}_gm_${mon}" style="color:${gmPctCalc !== '' ? (gmPctCalc >= 30 ? '#4ade80' : '#f87171') : '#334155'};font-weight:700">
+            ${gmPctCalc !== '' ? gmPctCalc + '%' : '—'}
+          </td>
+        </tr>`;
+      }).join('');
+
+      // Totals
+      let totalRev = 0, totalCogs = 0;
+      MONTH_NAMES.forEach(mon => {
+        const e = divData[mon] || {};
+        if (e.revenue != null) totalRev  += e.revenue;
+        if (e.cogs    != null) totalCogs += e.cogs;
+      });
+      const totalGm = totalRev > 0 ? Math.round(((totalRev - totalCogs) / totalRev) * 100) : 0;
+      const divObj = fy.divisions[div.key] || {};
+
+      return `
+        <div class="card" style="background:#0a0f1a;border:1px solid #1e293b;padding:0;overflow:hidden;margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1e293b;background:linear-gradient(90deg,#0a1628,#0f172a)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:20px">${div.icon}</span>
+              <div>
+                <div style="font-weight:700;color:#e2e8f0;font-size:15px">${div.label}</div>
+                <div style="font-size:11px;color:#64748b">Target: ${fmtM(divObj.target)} · Actual YTD: <span style="color:${div.color}">${fmtM(totalRev || divObj.actual)}</span></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="font-size:11px;font-weight:700;color:${div.color}">${totalGm}% GM</span>
+              <button class="secondary-btn small" onclick="divSaveDivision('${div.key}')" style="background:#1e4d6b;border-color:#1e4d6b;color:#22d3ee;font-size:11px">💾 Save ${div.label}</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="rev-editor-table" id="divTable_${div.key}">
+              <thead><tr>
+                <th>Month</th><th class="right">Revenue</th><th class="right">COGS</th><th class="right">GM %</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+              <tfoot>
+                <tr style="background:#0f172a;font-weight:700;border-top:2px solid #1e293b">
+                  <td style="padding:10px;color:#e2e8f0">Totals</td>
+                  <td class="right" style="padding:10px;color:#22d3ee" id="div_${div.key}_total_rev">${fmtM(totalRev||null)}</td>
+                  <td class="right" style="padding:10px;color:#64748b" id="div_${div.key}_total_cogs">${fmtM(totalCogs||null)}</td>
+                  <td class="right" style="padding:10px;color:${totalGm >= 30 ? '#4ade80' : '#f87171'};font-weight:700" id="div_${div.key}_total_gm">${totalRev > 0 ? totalGm + '%' : '—'}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <p class="lede" style="margin-bottom:16px">Enter revenue and COGS for each division per month. Monthly totals auto-sum to the company total in the Monthly Totals tab.</p>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="secondary-btn" onclick="divSaveAllDivisions()" style="background:#16a34a;border-color:#16a34a;color:#fff">💾 Save All Divisions</button>
+        <button class="secondary-btn" onclick="divExportCsv()">📥 Export Division CSV</button>
+      </div>
+      ${divSections}`;
+  }
+
+  // ── Tab: Annual Financials ──
+  function renderAnnualsTab() {
+    const a = fy.annual;
+    const fields = [
+      { key:'grossMarginPct',      label:'Gross Margin %',       val: a.grossMarginPct != null ? Math.round(a.grossMarginPct*100) : '', unit:'%',  step:'1', placeholder:'e.g. 39',  note:'Overall company GM' },
+      { key:'cogs',                label:'Total COGS',            val: a.cogs || '',             unit:'$',  step:'1000', placeholder:'e.g. 776854', note:'Total cost of goods sold' },
+      { key:'grossProfit',         label:'Gross Profit',          val: a.grossProfit || '',       unit:'$',  step:'1000', placeholder:'e.g. 504287', note:'Revenue minus COGS' },
+      { key:'totalExpenses',       label:'Total Expenses',        val: a.totalExpenses || '',     unit:'$',  step:'1000', placeholder:'e.g. 394792', note:'Operating expenses' },
+      { key:'netOperatingIncome',  label:'Net Operating Income',  val: a.netOperatingIncome || '',unit:'$',  step:'1000', placeholder:'e.g. 109495', note:'After expenses' },
+      { key:'netIncome',           label:'Net Income',            val: a.netIncome || '',         unit:'$',  step:'1000', placeholder:'e.g. 111783', note:'Before loan payments' },
+      { key:'loans',               label:'Total Loans',           val: a.loans || '',             unit:'$',  step:'1000', placeholder:'e.g. 89059',  note:'Annual loan obligations' },
+      { key:'loanMonthly',         label:'Monthly Loan Payment',  val: a.loanMonthly || '',       unit:'$',  step:'100',  placeholder:'e.g. 7421',   note:'Monthly principal+interest' },
+      { key:'trueNetIncome',       label:'True Net Income',       val: a.trueNetIncome || '',     unit:'$',  step:'1000', placeholder:'e.g. 22723',  note:'Net income minus loans' },
+    ];
+
+    const divFinancials = DIVISIONS_META.map(div => {
+      const d = fy.divisions[div.key] || {};
+      return `
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:700;font-size:14px;color:#e2e8f0;margin-bottom:12px">${div.icon} ${div.label} Division</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+            <div>
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Revenue Target</label>
+              <input class="rev-editor-input" type="number" id="ann_${div.key}_target" value="${d.target||''}" placeholder="target" step="1000" style="width:100%">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Actual YTD Revenue</label>
+              <input class="rev-editor-input" type="number" id="ann_${div.key}_actual" value="${d.actual||''}" placeholder="actual" step="1000" style="width:100%">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">GM Floor %</label>
+              <input class="rev-editor-input" type="number" id="ann_${div.key}_gmfloor" value="${d.grossMarginFloor != null ? Math.round(d.grossMarginFloor*100) : ''}" placeholder="floor %" step="1" min="0" max="100" style="width:100%">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Actual GM %</label>
+              <input class="rev-editor-input" type="number" id="ann_${div.key}_gmpct" value="${d.grossMarginPct != null ? Math.round(d.grossMarginPct*100) : ''}" placeholder="actual GM %" step="1" min="0" max="100" style="width:100%">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">COGS YTD</label>
+              <input class="rev-editor-input" type="number" id="ann_${div.key}_cogs" value="${d.cogs||''}" placeholder="COGS" step="1000" style="width:100%">
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <p class="lede" style="margin-bottom:16px">Edit company-wide and division-level annual financial figures. Changes persist to localStorage and reflect in all dashboards.</p>
+
+      <div style="margin-bottom:20px">
+        <h3 style="color:#f1f5f9;font-size:14px;margin-bottom:12px">Company Annual Figures</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+          ${fields.map(f => `
+          <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:12px">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">${f.label}</label>
+            <div style="display:flex;align-items:center;gap:6px">
+              ${f.unit === '$' ? '<span style="color:#64748b;font-size:13px">$</span>' : ''}
+              <input class="rev-editor-input" type="number" id="ann_${f.key}"
+                value="${f.val}" placeholder="${f.placeholder}" step="${f.step}"
+                style="flex:1">
+              ${f.unit === '%' ? '<span style="color:#64748b;font-size:13px">%</span>' : ''}
+            </div>
+            <div style="font-size:10px;color:#475569;margin-top:4px">${f.note}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h3 style="color:#f1f5f9;font-size:14px;margin-bottom:12px">Division Annual Figures</h3>
+        ${divFinancials}
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="secondary-btn" onclick="annSaveAll()" style="background:#16a34a;border-color:#16a34a;color:#fff">💾 Save All Annual Figures</button>
+        <button class="secondary-btn" onclick="annResetOverrides()" style="background:#7f1d1d;border-color:#991b1b;color:#fca5a5">🔄 Reset to Budget Defaults</button>
+      </div>`;
+  }
+
+  // ── Tab: P&L Files ──
+  function renderPnlTab() {
+    const fileList = pnlFiles.length === 0
+      ? '<p style="color:#64748b;font-size:13px">No files uploaded yet. Upload a monthly P&L CSV or PDF below.</p>'
+      : pnlFiles.map(f => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;margin-bottom:8px">
+          <span style="font-size:20px">${f.type === 'csv' ? '📊' : '📄'}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(f.name)}</div>
+            <div style="font-size:11px;color:#64748b">${f.date} · ${f.size} · ${f.type.toUpperCase()}</div>
+            ${f.period ? `<div style="font-size:11px;color:#22d3ee">Period: ${escapeHtml(f.period)}</div>` : ''}
+          </div>
+          <div style="display:flex;gap:6px">
+            ${f.type === 'csv' ? `<button class="secondary-btn small" onclick="pnlImportCsv('${f.id}')" style="font-size:11px">📥 Import to Divisions</button>` : ''}
+            <button class="secondary-btn small" onclick="pnlDeleteFile('${f.id}')" style="background:#7f1d1d;border-color:#991b1b;color:#fca5a5;font-size:11px">🗑</button>
+          </div>
+        </div>`).join('');
+
+    return `
+      <p class="lede" style="margin-bottom:16px">Upload monthly P&L statements or financial reports. CSV files can be auto-imported into division actuals.</p>
+
+      <div class="card" style="background:#0a0f1a;border:2px dashed #1e4d6b;border-radius:14px;padding:24px;text-align:center;margin-bottom:20px">
+        <div style="font-size:32px;margin-bottom:8px">📎</div>
+        <div style="color:#e2e8f0;font-weight:600;margin-bottom:4px">Upload P&L File</div>
+        <div style="color:#64748b;font-size:12px;margin-bottom:16px">CSV (auto-parsed) or PDF (stored as attachment) · Max 5MB</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:14px">
+          <div>
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Period Label</label>
+            <input id="pnl_period" placeholder="e.g. June 2026" style="padding:8px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;width:160px">
+          </div>
+        </div>
+        <label style="cursor:pointer;display:inline-block">
+          <input type="file" id="pnlFileInput" accept=".csv,.pdf" style="display:none" onchange="pnlHandleUpload(this)">
+          <span style="display:inline-block;padding:10px 24px;background:#1e4d6b;border:1px solid #22d3ee;border-radius:8px;color:#22d3ee;font-weight:600;font-size:13px">Choose File</span>
+        </label>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h3 style="color:#f1f5f9;font-size:14px;margin-bottom:12px">📁 Uploaded Files (${pnlFiles.length})</h3>
+        ${fileList}
+      </div>
+
+      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:16px">
+        <h3 style="color:#f1f5f9;font-size:13px;margin-top:0;margin-bottom:8px">📋 CSV Import Format</h3>
+        <p style="color:#64748b;font-size:12px;margin:0 0 8px">For auto-import to work, your CSV should include these columns:</p>
+        <code style="display:block;background:#0a0f1a;padding:10px 12px;border-radius:6px;color:#22d3ee;font-size:11px;line-height:1.6">
+          Month, Division, Revenue, COGS<br>
+          Jan, Landscape, 25000, 14500<br>
+          Jan, Maintenance, 40000, 28400<br>
+          Jan, Snow, 18000, 7200
+        </code>
+        <p style="color:#64748b;font-size:11px;margin-top:8px">Division values: Landscape / Maintenance / Snow (or Snow &amp; Ice)</p>
+      </div>`;
+  }
+
+  // ── Render selected tab ──
+  let tabContent = '';
+  if (_revTab === 'monthly')   tabContent = renderMonthlyTab();
+  else if (_revTab === 'division') tabContent = renderDivisionTab();
+  else if (_revTab === 'annuals')  tabContent = renderAnnualsTab();
+  else if (_revTab === 'pnl')      tabContent = renderPnlTab();
 
   view.innerHTML = `
     <button class="secondary-btn" onclick="show('manager')">← Back to Manager Tools</button>
     <div class="eyebrow" style="margin-top:16px">Admin — FY2026</div>
-    <h1>Monthly Revenue Editor</h1>
-    <p class="lede">Enter or edit monthly actual revenue. Variance auto-calculates. Dashboard updates immediately on save.</p>
-
-    <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:1px solid #1e4d6b;border-radius:14px;padding:20px;margin-bottom:24px">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px">
-        <div style="text-align:center">
-          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">YTD Budget</div>
-          <div id="rev_ytd_budget" style="font-size:1.6rem;font-weight:900;color:#e2e8f0">${fmtM(ytdBudget)}</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">YTD Actual</div>
-          <div id="rev_ytd_actual" style="font-size:1.6rem;font-weight:900;color:#22d3ee">${fmtM(ytdActual)}</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">YTD Variance</div>
-          <div id="rev_ytd_var" style="font-size:1.6rem;font-weight:900;color:${ytdVarColor}">${ytdVar >= 0 ? '+' : ''}${fmtM(ytdVar)}</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Annual Budget</div>
-          <div style="font-size:1.6rem;font-weight:900;color:#a78bfa">${fmtM(fy.annual.budgetedRevenue)}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="background:#0a0f1a;border:1px solid #1e293b;padding:0;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #1e293b">
-        <h2 style="margin:0;color:#f1f5f9;font-size:1.1rem">Budget vs Actual — Jan–Dec 2026</h2>
-        <div style="display:flex;gap:8px">
-          <button class="secondary-btn small" onclick="revSaveAll()" style="background:#16a34a;border-color:#16a34a;color:#fff">💾 Save All</button>
-          <button class="secondary-btn small" onclick="revExportCsv()">📥 Export CSV</button>
-        </div>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="rev-editor-table" id="revTable">
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th class="right">Budgeted</th>
-              <th class="right">Actual Revenue</th>
-              <th class="right">Variance</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody>${tableRows}</tbody>
-          <tfoot>
-            <tr style="background:#0f172a;font-weight:700;border-top:2px solid #1e293b">
-              <td style="padding:12px;color:#e2e8f0">YTD Total</td>
-              <td class="right" style="padding:12px;color:#64748b" id="rev_tfoot_budget">${fmtM(ytdBudget)}</td>
-              <td class="right" style="padding:12px;color:#22d3ee" id="rev_tfoot_actual">${fmtM(ytdActual)}</td>
-              <td class="right" style="padding:12px;color:${ytdVarColor}" id="rev_tfoot_var">${ytdVar >= 0 ? '+' : ''}${fmtM(ytdVar)}</td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-
-    <div class="card mt" style="background:#0a0f1a;border:1px solid #1e293b">
-      <h3 style="color:#f1f5f9;margin-top:0">How This Works</h3>
-      <ul style="color:#94a3b8;font-size:13px;line-height:1.7;margin:0;padding-left:18px">
-        <li>Enter actual monthly revenue in the <strong style="color:#e2e8f0">Actual Revenue</strong> column</li>
-        <li>Variance calculates automatically (Actual − Budget)</li>
-        <li>Click <strong style="color:#e2e8f0">Save All</strong> to persist. Owner Dashboard + Manager Tools update immediately on next navigation</li>
-        <li>Add notes in the Notes column to explain variances</li>
-        <li>Future months remain editable so you can enter projections</li>
-      </ul>
-    </div>
+    <h1>Financial Data Hub</h1>
+    <p class="lede">Division-first data entry · Monthly totals · Annual P&amp;L · Uploaded statements — all in one place.</p>
+    ${banner}
+    ${tabNav}
+    ${tabContent}
   `;
 }
 
+// ── Monthly Tab helpers ───────────────────────────────────────────────────────
 window.revUpdateRow = function(idx) {
   const fy = window.AVALON_DATA.fy2026;
   const months = fy.monthlyBudget || [];
@@ -1341,7 +1695,6 @@ window.revUpdateRow = function(idx) {
   function fmtM(n) { return n != null ? n.toLocaleString(undefined, { style:'currency', currency:'USD', maximumFractionDigits:0 }) : '—'; }
   const varEl = document.getElementById('rev_var_' + idx);
   if (varEl) { varEl.textContent = variance != null ? varSign + fmtM(variance) : '—'; varEl.style.color = varColor; }
-
   // Recompute YTD from all current inputs
   let ytdBudget = 0, ytdActual = 0;
   months.forEach((mb, i) => {
@@ -1377,7 +1730,7 @@ window.revSaveAll = function() {
     }
   });
   saveRevenueActuals(actuals);
-  showToast('✅ Revenue data saved — dashboard will reflect on reload');
+  showToast('✅ Monthly revenue saved — dashboards updated');
 };
 
 window.revExportCsv = function() {
@@ -1392,6 +1745,203 @@ window.revExportCsv = function() {
   const rows = months.map(m => [m.month, m.budgeted||'', m.actual||'', m.variance||'', m.note].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
   const blob = new Blob([[hdr.join(','), ...rows].join('\n')], { type: 'text/csv' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'avalon-revenue-2026.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+// ── Division Tab helpers ──────────────────────────────────────────────────────
+window.divUpdateRow = function(divKey, mon) {
+  function fmtM(n) { return n != null ? n.toLocaleString(undefined, { style:'currency', currency:'USD', maximumFractionDigits:0 }) : '—'; }
+  const revEl  = document.getElementById(`div_${divKey}_rev_${mon}`);
+  const cogsEl = document.getElementById(`div_${divKey}_cogs_${mon}`);
+  const gmEl   = document.getElementById(`div_${divKey}_gm_${mon}`);
+  if (!revEl || !cogsEl || !gmEl) return;
+  const rev  = revEl.value  !== '' ? parseFloat(revEl.value)  : null;
+  const cogs = cogsEl.value !== '' ? parseFloat(cogsEl.value) : null;
+  if (rev != null && cogs != null) {
+    const gm = Math.round(((rev - cogs) / rev) * 100);
+    gmEl.textContent = gm + '%';
+    gmEl.style.color = gm >= 30 ? '#4ade80' : '#f87171';
+  } else {
+    gmEl.textContent = '—';
+    gmEl.style.color = '#334155';
+  }
+  // Recompute division totals
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let totalRev = 0, totalCogs = 0;
+  MONTHS.forEach(m => {
+    const re = document.getElementById(`div_${divKey}_rev_${m}`);
+    const ce = document.getElementById(`div_${divKey}_cogs_${m}`);
+    const rv = re?.value !== '' && re ? parseFloat(re.value) : null;
+    const cv = ce?.value !== '' && ce ? parseFloat(ce.value) : null;
+    if (rv != null) totalRev  += rv;
+    if (cv != null) totalCogs += cv;
+  });
+  const totalGm = totalRev > 0 ? Math.round(((totalRev - totalCogs) / totalRev) * 100) : 0;
+  const setEl = (id, txt, color) => { const el = document.getElementById(id); if (el) { el.textContent = txt; if (color) el.style.color = color; } };
+  setEl(`div_${divKey}_total_rev`,  fmtM(totalRev  || null));
+  setEl(`div_${divKey}_total_cogs`, fmtM(totalCogs || null));
+  setEl(`div_${divKey}_total_gm`,   totalRev > 0 ? totalGm + '%' : '—', totalGm >= 30 ? '#4ade80' : '#f87171');
+};
+
+window.divSaveDivision = function(divKey) {
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const all = loadDivisionActuals();
+  if (!all[divKey]) all[divKey] = {};
+  MONTHS.forEach(mon => {
+    const re = document.getElementById(`div_${divKey}_rev_${mon}`);
+    const ce = document.getElementById(`div_${divKey}_cogs_${mon}`);
+    if (!re) return;
+    const rev  = re.value  !== '' ? parseFloat(re.value)  : null;
+    const cogs = ce?.value !== '' ? parseFloat(ce.value) : null;
+    if (rev != null || cogs != null) {
+      all[divKey][mon] = {};
+      if (rev  != null) all[divKey][mon].revenue = rev;
+      if (cogs != null) all[divKey][mon].cogs    = cogs;
+    } else {
+      delete all[divKey][mon];
+    }
+  });
+  saveDivisionActuals(all);
+  showToast(`✅ ${divKey.charAt(0).toUpperCase()+divKey.slice(1)} division data saved`);
+};
+
+window.divSaveAllDivisions = function() {
+  ['landscape','maintenance','snow'].forEach(dk => window.divSaveDivision(dk));
+  showToast('✅ All division data saved — dashboards updated');
+};
+
+window.divExportCsv = function() {
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DIVS = [{key:'landscape',label:'Landscape'},{key:'maintenance',label:'Maintenance'},{key:'snow',label:'Snow'}];
+  const all = loadDivisionActuals();
+  const rows = [];
+  MONTHS.forEach(mon => {
+    DIVS.forEach(d => {
+      const e = (all[d.key] || {})[mon] || {};
+      rows.push([mon, d.label, e.revenue||'', e.cogs||''].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+    });
+  });
+  const hdr = 'Month,Division,Revenue,COGS';
+  const blob = new Blob([[hdr, ...rows].join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'avalon-divisions-2026.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+// ── Annual Financials Tab helpers ─────────────────────────────────────────────
+window.annSaveAll = function() {
+  const overrides = loadAnnualOverrides();
+  const FIELDS = ['grossMarginPct','cogs','grossProfit','totalExpenses','netOperatingIncome','netIncome','loans','loanMonthly','trueNetIncome'];
+  FIELDS.forEach(k => {
+    const el = document.getElementById('ann_' + k);
+    if (!el) return;
+    const v = el.value !== '' ? parseFloat(el.value) : null;
+    if (v !== null && !isNaN(v)) {
+      // grossMarginPct is entered as %, convert to decimal
+      overrides[k] = (k === 'grossMarginPct') ? v / 100 : v;
+    } else {
+      delete overrides[k];
+    }
+  });
+  // Division overrides
+  const DIVKEYS = ['landscape','maintenance','snow'];
+  const divActuals = loadDivisionActuals();
+  DIVKEYS.forEach(dk => {
+    if (!divActuals[dk]) divActuals[dk] = {};
+    const ta  = document.getElementById(`ann_${dk}_target`);
+    const ac  = document.getElementById(`ann_${dk}_actual`);
+    const gmf = document.getElementById(`ann_${dk}_gmfloor`);
+    const gmp = document.getElementById(`ann_${dk}_gmpct`);
+    const cg  = document.getElementById(`ann_${dk}_cogs`);
+    // Store division overrides inside a special key in avalonAnnualOverrides
+    if (!overrides._divOverrides) overrides._divOverrides = {};
+    if (!overrides._divOverrides[dk]) overrides._divOverrides[dk] = {};
+    if (ta?.value !== '')  overrides._divOverrides[dk].target        = parseFloat(ta.value);
+    if (ac?.value !== '')  overrides._divOverrides[dk].actual        = parseFloat(ac.value);
+    if (gmf?.value !== '') overrides._divOverrides[dk].grossMarginFloor = parseFloat(gmf.value) / 100;
+    if (gmp?.value !== '') overrides._divOverrides[dk].grossMarginPct   = parseFloat(gmp.value) / 100;
+    if (cg?.value !== '')  overrides._divOverrides[dk].cogs             = parseFloat(cg.value);
+  });
+  saveAnnualOverrides(overrides);
+  showToast('✅ Annual financial figures saved — dashboards updated');
+};
+
+window.annResetOverrides = function() {
+  if (!confirm('Reset all annual overrides to budget defaults? This cannot be undone.')) return;
+  saveAnnualOverrides({});
+  showToast('🔄 Annual figures reset to budget defaults');
+  revenueAdmin('annuals');
+};
+
+// ── P&L Files Tab helpers ─────────────────────────────────────────────────────
+window.pnlHandleUpload = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('⚠️ File too large — max 5MB'); return; }
+  const periodEl = document.getElementById('pnl_period');
+  const period = periodEl ? periodEl.value.trim() : '';
+  const reader = new FileReader();
+  const isCsv = file.name.toLowerCase().endsWith('.csv');
+  reader.onload = function(e) {
+    const files = loadPnlFiles();
+    const newFile = {
+      id: 'pnl_' + Date.now(),
+      name: file.name,
+      period,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      type: isCsv ? 'csv' : 'pdf',
+      size: (file.size / 1024).toFixed(0) + ' KB',
+      data: e.target.result
+    };
+    files.unshift(newFile);
+    savePnlFiles(files);
+    showToast('✅ File uploaded: ' + file.name);
+    if (isCsv) {
+      showToast('📊 CSV detected — use "Import to Divisions" to auto-parse data');
+    }
+    revenueAdmin('pnl');
+  };
+  if (isCsv) reader.readAsText(file);
+  else reader.readAsDataURL(file);
+};
+
+window.pnlDeleteFile = function(fileId) {
+  const files = loadPnlFiles().filter(f => f.id !== fileId);
+  savePnlFiles(files);
+  showToast('🗑 File removed');
+  revenueAdmin('pnl');
+};
+
+window.pnlImportCsv = function(fileId) {
+  const files = loadPnlFiles();
+  const f = files.find(x => x.id === fileId);
+  if (!f || f.type !== 'csv') return;
+  const lines = f.data.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) { showToast('⚠️ CSV is empty or unreadable'); return; }
+  // Parse header
+  const header = lines[0].split(',').map(h => h.replace(/"/g,'').trim().toLowerCase());
+  const colIdx = { month: header.indexOf('month'), division: header.indexOf('division'), revenue: header.indexOf('revenue'), cogs: header.indexOf('cogs') };
+  if (colIdx.month === -1 || colIdx.division === -1 || colIdx.revenue === -1) {
+    showToast('⚠️ CSV must have Month, Division, Revenue columns'); return;
+  }
+  const DIVMAP = { landscape: 'landscape', maintenance: 'maintenance', 'snow & ice': 'snow', snow: 'snow' };
+  const all = loadDivisionActuals();
+  let imported = 0;
+  lines.slice(1).forEach(line => {
+    const cols = line.split(',').map(c => c.replace(/"/g,'').trim());
+    const mon  = cols[colIdx.month];
+    const divLabel = (cols[colIdx.division] || '').toLowerCase().trim();
+    const divKey = DIVMAP[divLabel];
+    if (!divKey || !mon) return;
+    if (!all[divKey]) all[divKey] = {};
+    const rev  = parseFloat(cols[colIdx.revenue]) || null;
+    const cogs = colIdx.cogs !== -1 ? (parseFloat(cols[colIdx.cogs]) || null) : null;
+    if (rev != null) {
+      all[divKey][mon] = { revenue: rev };
+      if (cogs != null) all[divKey][mon].cogs = cogs;
+      imported++;
+    }
+  });
+  saveDivisionActuals(all);
+  showToast(`✅ Imported ${imported} entries from CSV into division actuals`);
+  revenueAdmin('division');
 };
 
 window.revenueAdmin = revenueAdmin;

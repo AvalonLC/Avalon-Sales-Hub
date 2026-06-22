@@ -938,7 +938,7 @@ function renderAdminDashboard(viewEl) {
     <div style="text-align:center">
       <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Needed / Mo</div>
       <div style="font-size:1.6rem;font-weight:900;color:#f59e0b">${fmtM(annual.avgNeededPerMonth)}</div>
-      <div style="font-size:9px;color:#64748b">${annual.monthsLeft || 7} months left</div>
+      <div style="font-size:9px;color:#64748b">${annual.monthsLeft != null ? annual.monthsLeft : 7} months left (dynamic)</div>
     </div>
     <div style="text-align:center">
       <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Operating GM</div>
