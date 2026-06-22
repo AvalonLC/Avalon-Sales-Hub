@@ -227,6 +227,41 @@ async function driveListFiles(query = '', maxResults = 10) {
 function getZapierWebhookUrl() { return getIntState('zapierWebhookUrl') || ''; }
 function isHomeworksConnected() { return !!getZapierWebhookUrl(); }
 
+// Split "First Last" or "Business Name" into Homeworks-compatible fields
+function splitName(fullName = '') {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return { firstName: '', lastName: '', businessName: parts[0] };
+  return { firstName: parts[0], lastName: parts.slice(1).join(' '), businessName: fullName };
+}
+
+// Parse "123 Main St, Vienna, VA 22180" into address components
+function parseAddress(address = '') {
+  const parts = address.split(',').map(s => s.trim());
+  const street = parts[0] || '';
+  const city = parts[1] || '';
+  const stateZip = (parts[2] || '').trim().split(/\s+/);
+  const state = stateZip[0] || 'VA';
+  const zip = stateZip[1] || '';
+  return { street, city, state, zip };
+}
+
+// Map Avalon service line → Homeworks service type tag
+function mapServiceLine(serviceLine = '') {
+  const map = {
+    'Landscape Design': 'landscape_design',
+    'Hardscape': 'hardscape',
+    'Lawn Maintenance': 'lawn_maintenance',
+    'Tree & Shrub': 'tree_shrub',
+    'Irrigation': 'irrigation',
+    'Outdoor Lighting': 'outdoor_lighting',
+    'Drainage': 'drainage',
+    'Seasonal Cleanup': 'seasonal_cleanup',
+    'Snow Removal': 'snow_removal',
+    'Other': 'other'
+  };
+  return map[serviceLine] || serviceLine.toLowerCase().replace(/\s+/g, '_');
+}
+
 async function sendToHomeworks(eventType, payload) {
   const url = getZapierWebhookUrl();
   if (!url) throw new Error('Homeworks webhook URL not configured');
@@ -242,30 +277,118 @@ async function sendToHomeworks(eventType, payload) {
     body: JSON.stringify(body),
     mode: 'no-cors'
   });
-  // no-cors returns opaque response — we assume success if no throw
   return { success: true };
 }
 
+// Push new customer/lead — maps to Homeworks "Add New Customer" form fields
 async function pushLeadToHomeworks(opportunity) {
-  return sendToHomeworks('new_lead', {
-    name: opportunity.client,
-    phone: opportunity.phone,
-    email: opportunity.email,
-    address: opportunity.address,
-    service: opportunity.serviceLine,
-    source: opportunity.source,
-    project: opportunity.project,
-    budget: opportunity.budget,
-    notes: opportunity.notes,
-    status: opportunity.status,
-    created: opportunity.createdAt,
-    avalonId: opportunity.id
+  const { firstName, lastName, businessName } = splitName(opportunity.client);
+  const { street, city, state, zip } = parseAddress(opportunity.address);
+  return sendToHomeworks('new_customer', {
+    // Homeworks "Add New Customer" fields
+    title: '',
+    type: 'Customer',
+    contact_first_name: firstName,
+    contact_last_name: lastName,
+    business_name: businessName,
+    email: opportunity.email || '',
+    mobile_phone: opportunity.phone || '',
+    tags: mapServiceLine(opportunity.serviceLine),
+    // Address fields
+    address1: street,
+    city: city || 'Vienna',
+    state: state || 'VA',
+    zip: zip || '',
+    country: 'United States',
+    // Internal notes
+    notes: [
+      opportunity.project ? `Project: ${opportunity.project}` : '',
+      opportunity.source ? `Source: ${opportunity.source}` : '',
+      opportunity.budget ? `Budget: ${opportunity.budget}` : '',
+      opportunity.urgency ? `Urgency: ${opportunity.urgency}` : '',
+      opportunity.decisionMaker ? `Decision maker: ${opportunity.decisionMaker}` : '',
+      opportunity.prompt ? `Inquiry: ${opportunity.prompt}` : '',
+    ].filter(Boolean).join('\n'),
+    // Avalon meta
+    avalon_id: opportunity.id,
+    avalon_status: opportunity.status,
+    lead_source: opportunity.source || '',
+    created_at: opportunity.createdAt
+  });
+}
+
+// Push estimate — maps to Homeworks "New Estimate" form fields
+async function pushEstimateToHomeworks(opportunity) {
+  const { firstName, lastName, businessName } = splitName(opportunity.client);
+  const { street, city, state, zip } = parseAddress(opportunity.address);
+  return sendToHomeworks('new_estimate', {
+    // Customer identification
+    customer_name: businessName,
+    customer_first_name: firstName,
+    customer_last_name: lastName,
+    customer_email: opportunity.email || '',
+    customer_phone: opportunity.phone || '',
+    // Estimate fields
+    estimate_title: opportunity.project || `${opportunity.serviceLine || 'Landscape'} — ${opportunity.client}`,
+    estimate_date: new Date().toISOString().slice(0, 10),
+    service_type: opportunity.serviceLine || '',
+    service_tag: mapServiceLine(opportunity.serviceLine),
+    // Property
+    property_address: street,
+    property_city: city || 'Vienna',
+    property_state: state || 'VA',
+    property_zip: zip || '',
+    // Notes visible to customer
+    customer_notes: opportunity.desiredOutcome || '',
+    // Internal terms / notes
+    internal_notes: [
+      opportunity.budget ? `Budget discussed: ${opportunity.budget}` : '',
+      opportunity.fitConcerns ? `Fit concerns: ${opportunity.fitConcerns}` : '',
+      opportunity.urgency ? `Urgency: ${opportunity.urgency}` : '',
+    ].filter(Boolean).join('\n'),
+    // Avalon meta
+    avalon_id: opportunity.id,
+    avalon_status: opportunity.status,
+    next_follow_up: opportunity.nextFollowUp || ''
+  });
+}
+
+// Push site visit — maps to Homeworks "Create New Visit" form fields
+async function pushVisitToHomeworks(opportunity, visitDate, visitTime = '09:00', notes = '') {
+  const { firstName, lastName, businessName } = splitName(opportunity.client);
+  const { street, city, state } = parseAddress(opportunity.address);
+  return sendToHomeworks('new_visit', {
+    // Visit fields
+    visit_title: `Site Walk — ${opportunity.client}`,
+    visit_type: 'Site Walk',
+    visit_date: visitDate,
+    visit_time: visitTime,
+    budgeted_hours: '1',
+    billing_option: 'Invoice services',
+    // Customer
+    customer_name: businessName,
+    customer_first_name: firstName,
+    customer_last_name: lastName,
+    customer_email: opportunity.email || '',
+    customer_phone: opportunity.phone || '',
+    // Property
+    property_address: street,
+    property_city: city || 'Vienna',
+    property_state: state || 'VA',
+    location: opportunity.address || '',
+    // Notes
+    description: notes || `Site walk for ${opportunity.project || opportunity.serviceLine || 'landscape project'}. ${opportunity.desiredOutcome || ''}`.trim(),
+    // Line item
+    service_item: opportunity.serviceLine || 'Site Walk / Consultation',
+    // Avalon meta
+    avalon_id: opportunity.id,
+    avalon_status: opportunity.status
   });
 }
 
 async function pushStatusUpdateToHomeworks(opportunity) {
   return sendToHomeworks('status_update', {
-    name: opportunity.client,
+    customer_name: opportunity.client,
     email: opportunity.email,
     avalonId: opportunity.id,
     newStatus: opportunity.status,
@@ -402,15 +525,219 @@ async function integrations() {
       </div>
     </div>
 
-    ${hwOk ? `
+      ${hwOk ? `
+    <!-- Homeworks KPI Dashboard Strip -->
     <div style="border-top:1px solid #334155;padding-top:16px;margin-top:8px">
-      <h3 style="margin:0 0 12px">Push Leads to Homeworks</h3>
-      <p style="font-size:13px;color:var(--muted)">Select any open opportunity to push it to your CRM:</p>
-      <div id="int-hw-opps" style="max-height:320px;overflow-y:auto">${renderHwOpps()}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="margin:0">📊 Account Standing <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:8px">from Homeworks My Day</span></h3>
+        <a href="https://secure.copilotcrm.com" target="_blank" rel="noopener"
+          style="font-size:11px;color:var(--accent);text-decoration:none">Open Homeworks →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+        <div style="background:#1a0a0a;border:1px solid #7f1d1d;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#fca5a5;letter-spacing:.05em;text-transform:uppercase">Past Due</div>
+          <div style="font-size:18px;font-weight:800;color:#f87171;margin-top:4px">$11,082</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Action needed</div>
+        </div>
+        <div style="background:#0c1a2e;border:1px solid #1e3a5f;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#93c5fd;letter-spacing:.05em;text-transform:uppercase">Outstanding</div>
+          <div style="font-size:18px;font-weight:800;color:#60a5fa;margin-top:4px">$78,116</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Awaiting payment</div>
+        </div>
+        <div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#86efac;letter-spacing:.05em;text-transform:uppercase">Credit</div>
+          <div style="font-size:18px;font-weight:800;color:#4ade80;margin-top:4px">$0</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Customer credits</div>
+        </div>
+        <div style="background:#0a1a0e;border:1px solid #14532d;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#6ee7b7;letter-spacing:.05em;text-transform:uppercase">Paid</div>
+          <div style="font-size:18px;font-weight:800;color:#34d399;margin-top:4px">$636K</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Total collected</div>
+        </div>
+      </div>
+
+      <!-- Homeworks Quick Links -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">
+        <a href="https://secure.copilotcrm.com/customers/add-new-customer" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:12px;text-decoration:none;font-weight:500">
+          👤 Add Customer
+        </a>
+        <a href="https://secure.copilotcrm.com/assets/add-new-asset" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:12px;text-decoration:none;font-weight:500">
+          🏡 Add Property
+        </a>
+        <a href="https://secure.copilotcrm.com/finances/estimates/add" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:12px;text-decoration:none;font-weight:500">
+          📋 New Estimate
+        </a>
+        <a href="https://secure.copilotcrm.com/scheduler/addvisit" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:12px;text-decoration:none;font-weight:500">
+          📅 Schedule Visit
+        </a>
+        <a href="https://secure.copilotcrm.com/finances/estimates" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:12px;text-decoration:none;font-weight:500">
+          📊 Estimates List
+        </a>
+        <a href="https://secure.copilotcrm.com/scheduler/month" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:12px;text-decoration:none;font-weight:500">
+          🗓️ Calendar
+        </a>
+      </div>
+
+      <!-- 3-Action Opportunity Sync List -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <h3 style="margin:0;font-size:14px">Sync Opportunities → Homeworks</h3>
+        <span style="font-size:11px;color:var(--muted)">Push as Customer · Estimate · Visit</span>
+      </div>
+      <div id="int-hw-opps" style="max-height:420px;overflow-y:auto">${renderHwOpps()}</div>
     </div>
     ` : ''}
   </section>
 
+</div>
+
+<!-- ── SCHEDULE VISIT MODAL (Homeworks) ──────────────────────────── -->
+<div id="int-visit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1001;align-items:center;justify-content:center">
+  <div style="background:#1e293b;border-radius:16px;padding:32px;width:min(580px,95vw);max-height:90vh;overflow-y:auto;position:relative">
+    <button onclick="document.getElementById('int-visit-modal').style.display='none'"
+      style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="font-size:24px">📅</span>
+      <div>
+        <h2 style="margin:0;font-size:18px">Schedule Site Visit</h2>
+        <div id="int-visit-client-label" style="font-size:13px;color:var(--muted);margin-top:2px"></div>
+      </div>
+    </div>
+    <input type="hidden" id="int-visit-opp-id">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">VISIT TITLE / DESCRIPTION</label>
+        <input id="int-visit-title" type="text" placeholder="e.g. Site Walk — Landscape Design Consult"
+          style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted)">VISIT DATE</label>
+          <input id="int-visit-date" type="date"
+            style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted)">TIME</label>
+          <input id="int-visit-time" type="time" value="09:00"
+            style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted)">BUDGETED HOURS</label>
+          <input id="int-visit-hours" type="number" value="1" min="0.5" max="8" step="0.5"
+            style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted)">BILLING OPTION</label>
+          <select id="int-visit-billing"
+            style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px">
+            <option value="Invoice services">Invoice services</option>
+            <option value="No charge">No charge</option>
+            <option value="Flat rate">Flat rate</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">VISIT TYPE</label>
+        <select id="int-visit-type"
+          style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px">
+          <option value="Site Walk">Site Walk</option>
+          <option value="Consultation">Consultation</option>
+          <option value="Estimate Review">Estimate Review</option>
+          <option value="Follow-up Visit">Follow-up Visit</option>
+          <option value="Maintenance Visit">Maintenance Visit</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">NOTES / DESCRIPTION</label>
+        <textarea id="int-visit-notes" rows="3" placeholder="Scope, property details, what to bring…"
+          style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+      </div>
+      <div id="int-visit-also-gcal" style="display:flex;align-items:center;gap:10px;padding:12px;background:#0f172a;border-radius:8px;border:1px solid #334155">
+        <input type="checkbox" id="int-visit-gcal-check" checked style="width:16px;height:16px;cursor:pointer">
+        <label for="int-visit-gcal-check" style="font-size:13px;cursor:pointer">
+          📅 Also add to <strong>Google Calendar</strong> ${isGoogleConnected() ? '<span style="color:#4ade80;font-size:11px">● Connected</span>' : '<span style="color:#94a3b8;font-size:11px">(connect Google first)</span>'}
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
+        <button class="secondary-btn" onclick="document.getElementById('int-visit-modal').style.display='none'">Cancel</button>
+        <button class="primary-btn" onclick="intSubmitVisit()">
+          📅 Push Visit to Homeworks
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PUSH ESTIMATE MODAL (Homeworks) ──────────────────────────── -->
+<div id="int-estimate-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1001;align-items:center;justify-content:center">
+  <div style="background:#1e293b;border-radius:16px;padding:32px;width:min(560px,95vw);max-height:90vh;overflow-y:auto;position:relative">
+    <button onclick="document.getElementById('int-estimate-modal').style.display='none'"
+      style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="font-size:24px">📋</span>
+      <div>
+        <h2 style="margin:0;font-size:18px">Push as Estimate</h2>
+        <div id="int-est-client-label" style="font-size:13px;color:var(--muted);margin-top:2px"></div>
+      </div>
+    </div>
+    <input type="hidden" id="int-est-opp-id">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">ESTIMATE TITLE / DESCRIPTION</label>
+        <input id="int-est-title" type="text" placeholder="e.g. Landscape Design — Smith Residence"
+          style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted)">ESTIMATE DATE</label>
+          <input id="int-est-date" type="date"
+            style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted)">SERVICE TYPE</label>
+          <select id="int-est-service"
+            style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px">
+            <option value="Landscape Design">Landscape Design</option>
+            <option value="Hardscape">Hardscape</option>
+            <option value="Lawn Maintenance">Lawn Maintenance</option>
+            <option value="Tree & Shrub">Tree &amp; Shrub</option>
+            <option value="Irrigation">Irrigation</option>
+            <option value="Outdoor Lighting">Outdoor Lighting</option>
+            <option value="Drainage">Drainage</option>
+            <option value="Seasonal Cleanup">Seasonal Cleanup</option>
+            <option value="Snow Removal">Snow Removal</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">NOTES VISIBLE TO CUSTOMER</label>
+        <textarea id="int-est-customer-notes" rows="2" placeholder="Scope of work visible to client…"
+          style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">INTERNAL NOTES</label>
+        <textarea id="int-est-internal-notes" rows="2" placeholder="Internal context, budget discussed, concerns…"
+          style="width:100%;margin-top:6px;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+      </div>
+      <div style="padding:10px 14px;background:#0f172a;border:1px solid #334155;border-radius:8px;font-size:12px;color:var(--muted)">
+        ℹ️ This creates the estimate record in Homeworks. Open Homeworks to add line items, pricing, and send to client.
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
+        <button class="secondary-btn" onclick="document.getElementById('int-estimate-modal').style.display='none'">Cancel</button>
+        <button class="primary-btn" onclick="intSubmitEstimate()">
+          📋 Push Estimate to Homeworks
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── COMPOSE EMAIL MODAL ────────────────────────────────────── -->
@@ -503,23 +830,62 @@ async function integrations() {
   }
 }
 
-// ── Render Homeworks opportunity list ─────────────────────────────────────────
+// ── Render Homeworks opportunity list (3-action: Customer | Estimate | Visit) ──
 function renderHwOpps() {
   const opps = (window._avalonState?.opportunities || []).filter(o =>
-    !['Sold / Activation', 'Closed Lost'].includes(o.status)
+    !['Closed Lost'].includes(o.status)
   );
-  if (!opps.length) return '<p style="color:var(--muted);font-size:13px">No open opportunities yet. Add a lead first.</p>';
-  return opps.map(o => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#0f172a;border-radius:8px;margin-bottom:8px">
-      <div>
-        <div style="font-weight:600;font-size:14px">${escapeHtml(o.client)}</div>
-        <div style="font-size:12px;color:var(--muted)">${escapeHtml(o.serviceLine || '')} · ${escapeHtml(o.status)}</div>
+  if (!opps.length) return '<p style="color:var(--muted);font-size:13px">No opportunities yet. Add a lead first.</p>';
+
+  const stageColor = {
+    'New Lead': '#6366f1',
+    'Contacted': '#8b5cf6',
+    'Meeting Set': '#3b82f6',
+    'Proposal / Estimate Sent': '#f59e0b',
+    'Negotiation': '#ef4444',
+    'Sold / Activation': '#10b981',
+  };
+
+  return opps.map(o => {
+    const color = stageColor[o.status] || '#64748b';
+    const addr = (o.address || '').split(',')[0] || '—';
+    return `
+    <div style="background:#0f172a;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid #1e293b">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1e293b">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
+          <div style="min-width:0">
+            <div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client)}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:1px">
+              ${escapeHtml(o.serviceLine || '—')} · ${escapeHtml(addr)}
+            </div>
+          </div>
+        </div>
+        <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:${color}22;color:${color};flex-shrink:0;margin-left:8px">
+          ${escapeHtml(o.status)}
+        </span>
       </div>
-      <button class="secondary-btn" style="font-size:12px;padding:6px 12px" onclick="intPushLead('${escapeHtml(o.id)}')">
-        Push to CRM
-      </button>
+      <div style="display:flex;gap:6px;padding:10px 14px;flex-wrap:wrap">
+        <button onclick="intPushLead('${escapeHtml(o.id)}')"
+          style="flex:1;min-width:90px;padding:7px 10px;background:#1e3a5f;border:1px solid #2563eb;border-radius:7px;color:#93c5fd;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
+          👤 Customer
+        </button>
+        <button onclick="intOpenEstimateModal('${escapeHtml(o.id)}')"
+          style="flex:1;min-width:90px;padding:7px 10px;background:#1c2a14;border:1px solid #4d7c0f;border-radius:7px;color:#86efac;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
+          📋 Estimate
+        </button>
+        <button onclick="intOpenVisitModal('${escapeHtml(o.id)}')"
+          style="flex:1;min-width:90px;padding:7px 10px;background:#1a1030;border:1px solid #6d28d9;border-radius:7px;color:#c4b5fd;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
+          📅 Visit
+        </button>
+        ${o.email ? `<a href="mailto:${escapeHtml(o.email)}"
+          style="flex:none;padding:7px 10px;background:#1a1a1a;border:1px solid #334155;border-radius:7px;color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap">
+          ✉️
+        </a>` : ''}
+      </div>
     </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // ── Google interactions ───────────────────────────────────────────────────────
@@ -767,6 +1133,216 @@ async function intSubmitCalEvent() {
   }
 }
 
+// ── Homeworks Visit Modal ─────────────────────────────────────────────────────
+function intOpenVisitModal(oppId) {
+  const opps = window._avalonState?.opportunities || [];
+  const opp = opps.find(o => o.id === oppId);
+  if (!opp) { showIntToast('Opportunity not found'); return; }
+
+  const modal = document.getElementById('int-visit-modal');
+  if (!modal) return;
+
+  // Pre-fill from opportunity data
+  const titleEl = document.getElementById('int-visit-title');
+  const dateEl = document.getElementById('int-visit-date');
+  const notesEl = document.getElementById('int-visit-notes');
+  const clientLabel = document.getElementById('int-visit-client-label');
+  const oppIdEl = document.getElementById('int-visit-opp-id');
+  const typeEl = document.getElementById('int-visit-type');
+
+  if (oppIdEl) oppIdEl.value = oppId;
+  if (clientLabel) clientLabel.textContent = `${opp.client} · ${opp.serviceLine || opp.status}`;
+  if (titleEl) titleEl.value = `Site Walk — ${opp.client}`;
+  if (dateEl) dateEl.value = opp.nextFollowUp ? opp.nextFollowUp.slice(0,10) : todayISO();
+  if (notesEl) notesEl.value = [
+    opp.project ? `Project: ${opp.project}` : '',
+    opp.desiredOutcome ? `Desired outcome: ${opp.desiredOutcome}` : '',
+    opp.address ? `Property: ${opp.address}` : '',
+  ].filter(Boolean).join('\n');
+  if (typeEl) typeEl.value = 'Site Walk';
+
+  modal.style.display = 'flex';
+}
+
+async function intSubmitVisit() {
+  const oppId = document.getElementById('int-visit-opp-id')?.value;
+  const visitTitle = document.getElementById('int-visit-title')?.value?.trim();
+  const visitDate = document.getElementById('int-visit-date')?.value;
+  const visitTime = document.getElementById('int-visit-time')?.value || '09:00';
+  const visitHours = document.getElementById('int-visit-hours')?.value || '1';
+  const visitType = document.getElementById('int-visit-type')?.value || 'Site Walk';
+  const visitBilling = document.getElementById('int-visit-billing')?.value || 'Invoice services';
+  const visitNotes = document.getElementById('int-visit-notes')?.value?.trim();
+  const alsoGcal = document.getElementById('int-visit-gcal-check')?.checked;
+
+  if (!visitDate) { showIntToast('Visit date is required', 'warn'); return; }
+
+  const opps = window._avalonState?.opportunities || [];
+  const opp = opps.find(o => o.id === oppId);
+  if (!opp) { showIntToast('Opportunity not found'); return; }
+
+  try {
+    // Push to Homeworks via Zapier with all visit fields
+    await sendToHomeworks('new_visit', {
+      visit_title: visitTitle || `Site Walk — ${opp.client}`,
+      visit_type: visitType,
+      visit_date: visitDate,
+      visit_time: visitTime,
+      budgeted_hours: visitHours,
+      billing_option: visitBilling,
+      // Customer fields (Homeworks "Customer *" and "Property *" dropdowns)
+      customer_name: opp.client,
+      ...splitName(opp.client),
+      customer_email: opp.email || '',
+      customer_phone: opp.phone || '',
+      // Property / Location (maps to Homeworks "Location" field)
+      location: opp.address || '',
+      ...parseAddress(opp.address || ''),
+      // Line item (Homeworks "Name" in Line Items table)
+      service_item: opp.serviceLine || 'Site Walk / Consultation',
+      // Notes (Homeworks "Description" field)
+      description: visitNotes || `Site walk for ${opp.project || opp.serviceLine || 'landscape project'}. ${opp.desiredOutcome || ''}`.trim(),
+      // Color indicator for calendar (green = Visit)
+      color: '#4ade80',
+      // Scheduling type
+      scheduling_type: 'Single Visit',
+      // Avalon meta
+      avalon_id: opp.id,
+      avalon_status: opp.status,
+      avalon_service_line: opp.serviceLine || ''
+    });
+
+    showIntToast(`✅ Visit scheduled for ${opp.client} in Homeworks!`, 'success');
+
+    // Optionally also add to Google Calendar
+    if (alsoGcal && isGoogleConnected()) {
+      try {
+        await calCreateEvent({
+          summary: visitTitle || `Site Walk — ${opp.client}`,
+          description: [
+            visitNotes,
+            opp.address ? `Address: ${opp.address}` : '',
+            opp.phone ? `Phone: ${opp.phone}` : '',
+          ].filter(Boolean).join('\n'),
+          startDate: visitDate,
+          startTime: visitTime,
+          durationHours: parseFloat(visitHours),
+          attendees: opp.email ? [opp.email] : []
+        });
+        showIntToast('✅ Also added to Google Calendar!', 'success');
+      } catch(gcalErr) {
+        showIntToast(`⚠️ Homeworks ✓ but Calendar failed: ${gcalErr.message}`, 'warn');
+      }
+    }
+
+    document.getElementById('int-visit-modal').style.display = 'none';
+  } catch(e) {
+    showIntToast(`❌ ${e.message}`, 'error');
+  }
+}
+
+// ── Homeworks Estimate Modal ──────────────────────────────────────────────────
+function intOpenEstimateModal(oppId) {
+  const opps = window._avalonState?.opportunities || [];
+  const opp = opps.find(o => o.id === oppId);
+  if (!opp) { showIntToast('Opportunity not found'); return; }
+
+  const modal = document.getElementById('int-estimate-modal');
+  if (!modal) return;
+
+  const titleEl = document.getElementById('int-est-title');
+  const dateEl = document.getElementById('int-est-date');
+  const serviceEl = document.getElementById('int-est-service');
+  const customerNotesEl = document.getElementById('int-est-customer-notes');
+  const internalNotesEl = document.getElementById('int-est-internal-notes');
+  const clientLabel = document.getElementById('int-est-client-label');
+  const oppIdEl = document.getElementById('int-est-opp-id');
+
+  if (oppIdEl) oppIdEl.value = oppId;
+  if (clientLabel) clientLabel.textContent = `${opp.client} · ${opp.serviceLine || opp.status}`;
+  if (titleEl) titleEl.value = opp.project || `${opp.serviceLine || 'Landscape'} — ${opp.client}`;
+  if (dateEl) dateEl.value = todayISO();
+  if (serviceEl && opp.serviceLine) serviceEl.value = opp.serviceLine;
+  if (customerNotesEl) customerNotesEl.value = opp.desiredOutcome || '';
+  if (internalNotesEl) internalNotesEl.value = [
+    opp.budget ? `Budget discussed: ${opp.budget}` : '',
+    opp.urgency ? `Urgency: ${opp.urgency}` : '',
+    opp.fitConcerns ? `Fit concerns: ${opp.fitConcerns}` : '',
+    opp.decisionMaker ? `Decision maker: ${opp.decisionMaker}` : '',
+  ].filter(Boolean).join('\n');
+
+  modal.style.display = 'flex';
+}
+
+async function intSubmitEstimate() {
+  const oppId = document.getElementById('int-est-opp-id')?.value;
+  const estTitle = document.getElementById('int-est-title')?.value?.trim();
+  const estDate = document.getElementById('int-est-date')?.value;
+  const estService = document.getElementById('int-est-service')?.value;
+  const customerNotes = document.getElementById('int-est-customer-notes')?.value?.trim();
+  const internalNotes = document.getElementById('int-est-internal-notes')?.value?.trim();
+
+  const opps = window._avalonState?.opportunities || [];
+  const opp = opps.find(o => o.id === oppId);
+  if (!opp) { showIntToast('Opportunity not found'); return; }
+
+  try {
+    const { firstName, lastName, businessName } = splitName(opp.client);
+    const { street, city, state, zip } = parseAddress(opp.address || '');
+
+    await sendToHomeworks('new_estimate', {
+      // Homeworks "Estimate Title / Description" field
+      estimate_title: estTitle || `${opp.serviceLine || 'Landscape'} — ${opp.client}`,
+      // Homeworks "Customer" dropdown — looked up by name
+      customer_name: businessName,
+      customer_first_name: firstName,
+      customer_last_name: lastName,
+      customer_email: opp.email || '',
+      customer_phone: opp.phone || '',
+      // Homeworks "Estimate Date" field
+      estimate_date: estDate || todayISO(),
+      // Homeworks "Time Estimate Requested" — defaults to Now
+      time_estimate_requested: 'Now',
+      // Service / item fields
+      service_type: estService || opp.serviceLine || '',
+      service_tag: mapServiceLine(estService || opp.serviceLine || ''),
+      // Property (Homeworks "Property not assigned" → property address)
+      property_address: street,
+      property_city: city || 'Vienna',
+      property_state: state || 'VA',
+      property_zip: zip || '',
+      // Homeworks "Notes Visible for Customer" field
+      customer_notes: customerNotes || opp.desiredOutcome || '',
+      // Internal notes (not shown to customer)
+      internal_notes: internalNotes || [
+        opp.budget ? `Budget discussed: ${opp.budget}` : '',
+        opp.urgency ? `Urgency: ${opp.urgency}` : '',
+        opp.source ? `Source: ${opp.source}` : '',
+      ].filter(Boolean).join('\n'),
+      // Homeworks "Enable Pay in Full Option" — default checked
+      enable_pay_in_full: true,
+      // Discount % — default 0
+      discount_percent: '0.00',
+      // Avalon meta
+      avalon_id: opp.id,
+      avalon_status: opp.status,
+      next_follow_up: opp.nextFollowUp || ''
+    });
+
+    showIntToast(`✅ Estimate pushed to Homeworks for ${opp.client}!`, 'success');
+    document.getElementById('int-estimate-modal').style.display = 'none';
+
+    // Open Homeworks estimates list so they can add line items
+    setTimeout(() => {
+      if (confirm('Estimate created! Open Homeworks to add pricing and line items?')) {
+        window.open('https://secure.copilotcrm.com/finances/estimates', '_blank');
+      }
+    }, 500);
+  } catch(e) {
+    showIntToast(`❌ ${e.message}`, 'error');
+  }
+}
+
 // ── Homeworks interactions ────────────────────────────────────────────────────
 function intSaveZapierUrl() {
   const url = document.getElementById('zapierWebhookInput')?.value?.trim();
@@ -855,3 +1431,8 @@ window.intSearchDrive = intSearchDrive;
 window.intLoadGmail = intLoadGmail;
 window.intLoadCalendar = intLoadCalendar;
 window.intLoadDrive = intLoadDrive;
+// Homeworks enhanced actions
+window.intOpenVisitModal = intOpenVisitModal;
+window.intSubmitVisit = intSubmitVisit;
+window.intOpenEstimateModal = intOpenEstimateModal;
+window.intSubmitEstimate = intSubmitEstimate;
