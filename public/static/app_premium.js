@@ -520,6 +520,178 @@ window.filterPipelineByRep = function(repId) {
   show('pipeline');
 };
 
+
+// ── buildDivisionPipeline() ─────────────────────────────────────────────────
+// Calculates per-division pipeline metrics from state.opportunities[]
+// Division mapping: projectCategory / workType → landscape / maintenance / snow
+function buildDivisionPipeline() {
+  const opps = (window.avalonState && window.avalonState.opportunities) || (typeof state !== 'undefined' ? state.opportunities : []) || [];
+  const todayStr = typeof todayISO === 'function' ? todayISO() : new Date().toISOString().slice(0,10);
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+
+  // Map an opportunity to a division key
+  function getDiv(o) {
+    const cat = (o.projectCategory || '').toLowerCase();
+    const wt  = (o.workType || '').toLowerCase();
+    const sl  = (o.serviceLine || '').toLowerCase();
+    if (cat.includes('snow') || wt.includes('snow') || sl.includes('snow')) return 'snow';
+    if (cat.includes('mainten') || wt.includes('mainten') || sl.includes('mainten')) return 'maintenance';
+    if (cat.includes('landscape') || cat.includes('design') || cat.includes('hardscape') ||
+        cat.includes('drainage') || wt.includes('landscape') || wt.includes('hardscape') ||
+        wt.includes('drainage') || wt.includes('design')) return 'landscape';
+    // fallback by service line
+    if (sl.includes('landscape') || sl.includes('hardscape') || sl.includes('drainage')) return 'landscape';
+    return 'landscape'; // default
+  }
+
+  // Win probability by stage (mirrors HubSpot pipeline)
+  const STAGE_WIN_PROB = {
+    'New Lead': 0.10,
+    'Contacted': 0.15,
+    'Site Visit Scheduled': 0.25,
+    'Site Visit Complete': 0.35,
+    'Estimating': 0.45,
+    'Estimate Sent': 0.55,
+    'Proposal Under Review': 0.65,
+    'Negotiating': 0.75,
+    'Follow-Up': 0.50,
+    'Decision Pending': 0.70,
+    'Sold / Activation': 1.0,
+    'Closed Lost': 0.0,
+  };
+  function winProb(o) {
+    return STAGE_WIN_PROB[o.status] || 0.20;
+  }
+
+  // "Paper on the Street" statuses — formal estimates/proposals in front of customers
+  const POTS_ESTIMATE_STATUSES = ['sent','revised','viewed','awaiting_response','awaiting response'];
+  const POTS_STAGES = ['Estimate Sent','Proposal Under Review','Negotiating','Decision Pending','Follow-Up'];
+
+  const OPEN_STAGES_EXCL = ['Sold / Activation','Closed Lost'];
+
+  const divKeys = ['landscape','maintenance','snow'];
+  const divLabels = { landscape:'Landscape', maintenance:'Maintenance', snow:'Snow & Ice' };
+  const divColors = { landscape:'#22d3ee', maintenance:'#4ade80', snow:'#60a5fa' };
+
+  const result = {};
+  divKeys.forEach(k => {
+    result[k] = {
+      key: k,
+      label: divLabels[k],
+      color: divColors[k],
+      openValue: 0,           // total open pipeline value (all active opps)
+      openEstimateValue: 0,   // value of opps with a formal estimate out
+      paperOnStreet: 0,       // active quoted/proposed value not yet sold or lost
+      weightedPipeline: 0,    // openValue * win probability
+      openCount: 0,           // # active opportunities
+      openEstimateCount: 0,   // # opps with estimate sent/active
+      estimateAgeDays: [],    // array of ages (in days) for open estimates
+      sevenDayRisk: 0,        // # open opps with follow-up due within 7 days
+      soldThisMonth: 0,       // sold value this calendar month
+      soldCountThisMonth: 0,
+      totalSold: 0,           // all time sold value (for close rate)
+      totalClosed: 0,         // sold + lost (for close rate denominator)
+    };
+  });
+
+  opps.forEach(o => {
+    const div = getDiv(o);
+    const d = result[div];
+    if (!d) return;
+    const val = parseFloat(o.jobValue || 0);
+    const estAmt = parseFloat(o.estimateAmount || val); // fall back to jobValue if no estimateAmount
+
+    const isSold = o.status === 'Sold / Activation';
+    const isLost = o.status === 'Closed Lost';
+    const isOpen = !isSold && !isLost;
+
+    // Close rate denominator
+    if (isSold || isLost) d.totalClosed++;
+    if (isSold) {
+      d.totalSold += val;
+      // Sold this month?
+      if (o.updatedAt && o.updatedAt.slice(0,10) >= startOfMonth) {
+        d.soldThisMonth += val;
+        d.soldCountThisMonth++;
+      }
+    }
+
+    if (!isOpen) return;
+
+    // Open pipeline
+    d.openCount++;
+    d.openValue += val;
+    d.weightedPipeline += val * winProb(o);
+
+    // Estimate open?
+    const estStatus = (o.estimateStatus || '').toLowerCase().replace(/ /g,'_');
+    const hasOpenEstimate = POTS_ESTIMATE_STATUSES.includes(estStatus) ||
+                             POTS_ESTIMATE_STATUSES.includes((o.estimateStatus||'').toLowerCase()) ||
+                             POTS_STAGES.includes(o.status);
+    if (hasOpenEstimate && estAmt > 0) {
+      d.openEstimateCount++;
+      d.openEstimateValue += estAmt;
+
+      // Paper on the Street: active quoted value in front of customer
+      d.paperOnStreet += estAmt;
+
+      // Estimate age
+      const sentDate = o.estimateSentDate || o.updatedAt || o.createdAt;
+      if (sentDate) {
+        const sent = new Date(sentDate);
+        const ageMs = now - sent;
+        const ageDays = Math.floor(ageMs / 86400000);
+        if (ageDays >= 0) d.estimateAgeDays.push(ageDays);
+      }
+    }
+
+    // 7-day follow-up risk
+    if (o.nextFollowUp) {
+      const followDate = new Date(o.nextFollowUp + 'T12:00:00');
+      const daysUntil = Math.floor((followDate - now) / 86400000);
+      if (daysUntil >= 0 && daysUntil <= 7) d.sevenDayRisk++;
+    }
+  });
+
+  // Compute derived stats
+  divKeys.forEach(k => {
+    const d = result[k];
+    d.avgEstimateAge = d.estimateAgeDays.length > 0
+      ? Math.round(d.estimateAgeDays.reduce((a,b) => a+b, 0) / d.estimateAgeDays.length)
+      : null;
+    d.oldestEstimateAge = d.estimateAgeDays.length > 0
+      ? Math.max(...d.estimateAgeDays)
+      : null;
+    d.closeRate = d.totalClosed > 0
+      ? Math.round((d.totalSold > 0 ? (d.soldCountThisMonth > 0 ? 1 : 0) : 0) * 100) / 100
+      : null;
+    // Better close rate: sold / (sold + lost) by count
+    const soldCount = opps.filter(o => o.status === 'Sold / Activation' && getDiv(o) === k).length;
+    const lostCount = opps.filter(o => o.status === 'Closed Lost'        && getDiv(o) === k).length;
+    d.closeRatePct = (soldCount + lostCount) > 0
+      ? Math.round((soldCount / (soldCount + lostCount)) * 100)
+      : null;
+  });
+
+  // Totals row
+  result.total = {
+    label: 'Total',
+    color: '#e2e8f0',
+    openValue:         divKeys.reduce((a,k) => a + result[k].openValue, 0),
+    openEstimateValue: divKeys.reduce((a,k) => a + result[k].openEstimateValue, 0),
+    paperOnStreet:     divKeys.reduce((a,k) => a + result[k].paperOnStreet, 0),
+    weightedPipeline:  divKeys.reduce((a,k) => a + result[k].weightedPipeline, 0),
+    openCount:         divKeys.reduce((a,k) => a + result[k].openCount, 0),
+    openEstimateCount: divKeys.reduce((a,k) => a + result[k].openEstimateCount, 0),
+    soldThisMonth:     divKeys.reduce((a,k) => a + result[k].soldThisMonth, 0),
+    sevenDayRisk:      divKeys.reduce((a,k) => a + result[k].sevenDayRisk, 0),
+  };
+
+  return { divisions: result, keys: divKeys };
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 function lead(){
   const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
 
@@ -696,6 +868,46 @@ function lead(){
           + '</label>'
           + repPickerHtml
         + '</div>'
+      + '</div>'
+
+
+      // ── Section 4: Estimate (optional, collapsible) ──
+      + '<div class="lf-section">'  
+        + '<div class="lf-section-header">'  
+          + '<span class="lf-section-num" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">4</span>'  
+          + '<div>'  
+            + '<div class="lf-section-title">Estimate</div>'  
+            + '<div class="lf-section-sub">Track what\'s on the street — formal quotes and proposals</div>'  
+          + '</div>'  
+        + '</div>'  
+        + '<div class="lf-fields">'  
+          + '<label class="lf-field">'  
+            + '<span class="lf-label">Estimate Status</span>'  
+            + '<select name="estimateStatus" class="lf-select">'  
+              + '<option value="">Not started</option>'  
+              + '<option value="draft">Draft — not yet sent</option>'  
+              + '<option value="sent">Sent — awaiting response</option>'  
+              + '<option value="revised">Revised &amp; resent</option>'  
+              + '<option value="viewed">Viewed by customer</option>'  
+              + '<option value="awaiting_response">Awaiting response</option>'  
+              + '<option value="accepted">Accepted</option>'  
+              + '<option value="declined">Declined</option>'  
+              + '<option value="expired">Expired</option>'  
+            + '</select>'  
+          + '</label>'  
+          + '<label class="lf-field">'  
+            + '<span class="lf-label">Estimate Amount ($)</span>'  
+            + '<input name="estimateAmount" type="number" class="lf-input lf-input--value" placeholder="Quoted amount" min="0" step="100">'  
+          + '</label>'  
+          + '<label class="lf-field">'  
+            + '<span class="lf-label">Date Sent to Customer</span>'  
+            + '<input name="estimateSentDate" type="date" class="lf-input">'  
+          + '</label>'  
+          + '<label class="lf-field">'  
+            + '<span class="lf-label"># of Estimates Issued</span>'  
+            + '<input name="estimateCount" type="number" class="lf-input" placeholder="e.g. 1" min="0" step="1" value="0">'  
+          + '</label>'  
+        + '</div>'  
       + '</div>'
 
       // ── Optional detail toggle ──
@@ -876,6 +1088,28 @@ function opportunityDetail(id){
       <div class="form-grid">
         ${inputEdit('client','Client Name',o.client)}${inputEdit('phone','Phone',o.phone)}${inputEdit('email','Email',o.email,'email')}${inputEdit('address','Property Address',o.address)}
         ${selectEdit('serviceLine','Service Line',data.serviceLines,o.serviceLine)}${selectEdit('source','Lead Source',data.leadSources,o.source)}${inputEdit('project','Project / Opportunity Name',o.project)}${inputEdit('urgency','Urgency / Timing',o.urgency)}${inputEdit('decisionMaker','Decision-Maker(s)',o.decisionMaker)}${inputEdit('budget','Budget language / range',o.budget)}
+      </div>
+      <div class="form-grid" style="margin-top:16px;padding-top:16px;border-top:1px solid #1e293b">
+        <div style="grid-column:1/-1;margin-bottom:4px">
+          <span style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7c3aed">Estimate Tracking</span>
+          <span style="font-size:11px;color:#475569;margin-left:8px">Paper on the Street data</span>
+        </div>
+        <label><span>Estimate Status</span>
+          <select id="estimateStatusEdit" name="estimateStatus">
+            <option value="" ${!o.estimateStatus?'selected':''}>Not started</option>
+            <option value="draft"             ${o.estimateStatus==='draft'?'selected':''}>Draft — not yet sent</option>
+            <option value="sent"              ${o.estimateStatus==='sent'?'selected':''}>Sent — awaiting response</option>
+            <option value="revised"           ${o.estimateStatus==='revised'?'selected':''}>Revised &amp; resent</option>
+            <option value="viewed"            ${o.estimateStatus==='viewed'?'selected':''}>Viewed by customer</option>
+            <option value="awaiting_response" ${o.estimateStatus==='awaiting_response'?'selected':''}>Awaiting response</option>
+            <option value="accepted"          ${o.estimateStatus==='accepted'?'selected':''}>Accepted</option>
+            <option value="declined"          ${o.estimateStatus==='declined'?'selected':''}>Declined</option>
+            <option value="expired"           ${o.estimateStatus==='expired'?'selected':''}>Expired</option>
+          </select>
+        </label>
+        ${inputEdit('estimateAmount','Estimate Amount ($)',o.estimateAmount,'number')}
+        ${inputEdit('estimateSentDate','Date Sent to Customer',o.estimateSentDate,'date')}
+        ${inputEdit('estimateCount','# Estimates Issued',o.estimateCount,'number')}
       </div>
       ${textarea('prompt','What prompted the inquiry?',o.prompt)}${textarea('desiredOutcome','Desired outcome / what good looks like',o.desiredOutcome)}${textarea('fitConcerns','Fit concerns / risk flags',o.fitConcerns)}
     </form>
@@ -1548,6 +1782,40 @@ function manager(){
       </div>
     </div>
 
+    <!-- ── DIVISION PIPELINE / PAPER ON THE STREET ── -->
+    <div class="card mt" id="divPipelineSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="margin:0;font-size:16px">Pipeline by Division</h2>
+          <div style="font-size:11px;color:#64748b;margin-top:3px">
+            <strong style="color:#a78bfa">Paper on the Street</strong>
+            <span style="color:#475569"> = active quoted / proposed value currently in front of customers, not yet sold or lost</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="dpRepFilter" onchange="window._renderDpTable&&window._renderDpTable()" style="padding:5px 10px;background:#0f172a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f0;font-size:11px">
+            <option value="">All Reps</option>
+            ${(window.REPS||[]).filter(r=>r.role==='rep').map(r=>'<option value="'+r.id+'">'+r.name+'</option>').join('')}
+          </select>
+          <select id="dpEstFilter" onchange="window._renderDpTable&&window._renderDpTable()" style="padding:5px 10px;background:#0f172a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f0;font-size:11px">
+            <option value="">All Estimate Statuses</option>
+            <option value="sent">Sent</option>
+            <option value="revised">Revised</option>
+            <option value="viewed">Viewed</option>
+            <option value="awaiting_response">Awaiting Response</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="dpTableWrap" style="overflow-x:auto;margin-top:8px"></div>
+
+      <div style="margin-top:20px;border-top:1px solid #1e293b;padding-top:16px">
+        <h3 style="font-size:13px;font-weight:700;color:#94a3b8;margin:0 0 10px;text-transform:uppercase;letter-spacing:.08em">Estimate Aging — Open Paper</h3>
+        <div id="dpAgingWrap" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px"></div>
+      </div>
+    </div>
+
+
     <div class="card mt">
       <h2>\ud83d\udd35 HubSpot 7-Stage Pipeline \u2014 Win Probabilities &amp; Gate Fields</h2>
       <p class="muted small-text">${escapeHtml((data.hubspotPipeline||{}).description||'')}</p>
@@ -1628,8 +1896,175 @@ function manager(){
       </div>
     </div>
     ${statCards()}
+
   `;
+  setTimeout(window._renderDpTable, 80);
 }
+
+// ── Division Pipeline table render ────────────────────────────────────────
+window._renderDpTable = function() {
+    const repFilter = (document.getElementById('dpRepFilter')||{}).value || '';
+    const estFilter = (document.getElementById('dpEstFilter')||{}).value || '';
+    const opps = (typeof state !== 'undefined' ? state.opportunities : []) || [];
+    const POTS_STATUSES = ['sent','revised','viewed','awaiting_response','awaiting response'];
+    const POTS_STAGES   = ['Estimate Sent','Proposal Under Review','Negotiating','Decision Pending','Follow-Up'];
+
+    function getDiv(o) {
+      const cat = (o.projectCategory||'').toLowerCase();
+      const wt  = (o.workType||'').toLowerCase();
+      const sl  = (o.serviceLine||'').toLowerCase();
+      if (cat.includes('snow')||wt.includes('snow')||sl.includes('snow')) return 'snow';
+      if (cat.includes('mainten')||wt.includes('mainten')||sl.includes('mainten')) return 'maintenance';
+      return 'landscape';
+    }
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+    const STAGE_WIN = {'New Lead':.10,'Contacted':.15,'Site Visit Scheduled':.25,'Site Visit Complete':.35,
+      'Estimating':.45,'Estimate Sent':.55,'Proposal Under Review':.65,'Negotiating':.75,
+      'Follow-Up':.50,'Decision Pending':.70,'Sold / Activation':1.0,'Closed Lost':0.0};
+
+    const KEYS = ['landscape','maintenance','snow'];
+    const LABELS = {landscape:'Landscape',maintenance:'Maintenance',snow:'Snow & Ice'};
+    const COLORS = {landscape:'#22d3ee',maintenance:'#4ade80',snow:'#60a5fa'};
+
+    const stats = {};
+    KEYS.forEach(k => { stats[k] = {openVal:0,estVal:0,pots:0,weighted:0,openCt:0,estCt:0,ageDays:[],risk7:0,soldMo:0,soldMoCt:0,sold:0,soldCt:0,lost:0,lostCt:0}; });
+
+    opps.forEach(o => {
+      if (repFilter && o.repId !== repFilter) return;
+      const estSt = (o.estimateStatus||'').toLowerCase().replace(/ /g,'_');
+      if (estFilter && estSt !== estFilter) return;
+
+      const d = stats[getDiv(o)];
+      if (!d) return;
+      const val = parseFloat(o.jobValue||0);
+      const estAmt = parseFloat(o.estimateAmount||val);
+      const isSold = o.status==='Sold / Activation';
+      const isLost = o.status==='Closed Lost';
+
+      if (isSold) { d.sold+=val; d.soldCt++; if ((o.updatedAt||'').slice(0,10)>=startOfMonth){d.soldMo+=val;d.soldMoCt++;} }
+      if (isLost) { d.lostCt++; }
+      if (isSold||isLost) return;
+
+      d.openCt++; d.openVal+=val; d.weighted+=val*(STAGE_WIN[o.status]||0.20);
+      const hasEst = POTS_STATUSES.includes(estSt)||POTS_STATUSES.includes((o.estimateStatus||'').toLowerCase())||POTS_STAGES.includes(o.status);
+      if (hasEst&&estAmt>0) {
+        d.estCt++; d.estVal+=estAmt; d.pots+=estAmt;
+        const sentDate = o.estimateSentDate||o.updatedAt||o.createdAt;
+        if (sentDate) { const age=Math.floor((now-new Date(sentDate))/86400000); if(age>=0)d.ageDays.push(age); }
+      }
+      if (o.nextFollowUp) { const days=Math.floor((new Date(o.nextFollowUp+'T12:00:00')-now)/86400000); if(days>=0&&days<=7)d.risk7++; }
+    });
+
+    function fm(n){ return n!=null?n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}):'—'; }
+    function cr(d){ const tot=d.soldCt+d.lostCt; return tot>0?Math.round(d.soldCt/tot*100)+'%':'—'; }
+    function avgAge(d){ return d.ageDays.length>0?Math.round(d.ageDays.reduce((a,b)=>a+b,0)/d.ageDays.length):null; }
+    function maxAge(d){ return d.ageDays.length>0?Math.max(...d.ageDays):null; }
+    function ageColor(days){ if(days==null)return'#475569'; if(days<=7)return'#4ade80'; if(days<=14)return'#fbbf24'; if(days<=30)return'#f97316'; return'#f87171'; }
+
+    const totals = {
+      openVal:KEYS.reduce((a,k)=>a+stats[k].openVal,0),
+      estVal:KEYS.reduce((a,k)=>a+stats[k].estVal,0),
+      pots:KEYS.reduce((a,k)=>a+stats[k].pots,0),
+      weighted:KEYS.reduce((a,k)=>a+stats[k].weighted,0),
+      openCt:KEYS.reduce((a,k)=>a+stats[k].openCt,0),
+      estCt:KEYS.reduce((a,k)=>a+stats[k].estCt,0),
+      risk7:KEYS.reduce((a,k)=>a+stats[k].risk7,0),
+      soldMo:KEYS.reduce((a,k)=>a+stats[k].soldMo,0),
+    };
+
+    const headerRow = `<tr style="background:#0f172a">
+      <th style="padding:8px 10px;text-align:left;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Division</th>
+      <th style="padding:8px 10px;text-align:right;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Open Pipeline</th>
+      <th style="padding:8px 10px;text-align:right;color:#a78bfa;border-bottom:1px solid #1e293b;font-size:11px" title="Active quoted/proposed value in front of customers, not yet sold or lost">Paper on the Street</th>
+      <th style="padding:8px 10px;text-align:right;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Open Est. Value</th>
+      <th style="padding:8px 10px;text-align:right;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Weighted</th>
+      <th style="padding:8px 10px;text-align:center;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Active Opps</th>
+      <th style="padding:8px 10px;text-align:center;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Open Ests</th>
+      <th style="padding:8px 10px;text-align:center;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Avg Age</th>
+      <th style="padding:8px 10px;text-align:center;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Oldest</th>
+      <th style="padding:8px 10px;text-align:center;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">7d Risk</th>
+      <th style="padding:8px 10px;text-align:right;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Sold Mo.</th>
+      <th style="padding:8px 10px;text-align:center;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">Close Rate</th>
+    </tr>`;
+
+    const divRows = KEYS.map(k => {
+      const d = stats[k]; const avg=avgAge(d); const mx=maxAge(d);
+      return `<tr style="border-bottom:1px solid #0f172a">
+        <td style="padding:8px 10px;font-weight:700;color:${COLORS[k]}">${LABELS[k]}</td>
+        <td style="padding:8px 10px;text-align:right;font-weight:600">${fm(d.openVal)}</td>
+        <td style="padding:8px 10px;text-align:right;font-weight:800;color:#a78bfa">${fm(d.pots)}</td>
+        <td style="padding:8px 10px;text-align:right;color:#94a3b8">${fm(d.estVal)}</td>
+        <td style="padding:8px 10px;text-align:right;color:#94a3b8">${fm(d.weighted)}</td>
+        <td style="padding:8px 10px;text-align:center">${d.openCt}</td>
+        <td style="padding:8px 10px;text-align:center">${d.estCt}</td>
+        <td style="padding:8px 10px;text-align:center;color:${ageColor(avg)};font-weight:600">${avg!=null?avg+'d':'—'}</td>
+        <td style="padding:8px 10px;text-align:center;color:${ageColor(mx)};font-weight:600">${mx!=null?mx+'d':'—'}</td>
+        <td style="padding:8px 10px;text-align:center;color:${d.risk7>0?'#fbbf24':'#4ade80'};font-weight:700">${d.risk7}</td>
+        <td style="padding:8px 10px;text-align:right;color:#4ade80;font-weight:700">${fm(d.soldMo)}</td>
+        <td style="padding:8px 10px;text-align:center;font-weight:700;color:#00d4ff">${cr(d)}</td>
+      </tr>`;
+    }).join('');
+
+    const totRow = `<tr style="background:#0d1829;border-top:2px solid #1e293b">
+      <td style="padding:9px 10px;font-weight:800;color:#e2e8f0">Total</td>
+      <td style="padding:9px 10px;text-align:right;font-weight:800;color:#e2e8f0">${fm(totals.openVal)}</td>
+      <td style="padding:9px 10px;text-align:right;font-weight:900;color:#a78bfa">${fm(totals.pots)}</td>
+      <td style="padding:9px 10px;text-align:right;font-weight:700;color:#94a3b8">${fm(totals.estVal)}</td>
+      <td style="padding:9px 10px;text-align:right;color:#94a3b8">${fm(totals.weighted)}</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700">${totals.openCt}</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700">${totals.estCt}</td>
+      <td colspan="2" style="padding:9px 10px;text-align:center;color:#475569">—</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700;color:${totals.risk7>0?'#fbbf24':'#4ade80'}">${totals.risk7}</td>
+      <td style="padding:9px 10px;text-align:right;font-weight:800;color:#4ade80">${fm(totals.soldMo)}</td>
+      <td style="padding:9px 10px"></td>
+    </tr>`;
+
+    const tableWrap = document.getElementById('dpTableWrap');
+    if (tableWrap) {
+      tableWrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
+        <thead>${headerRow}</thead>
+        <tbody>${divRows}${totRow}</tbody>
+      </table>`;
+    }
+
+    // Aging buckets
+    const allAgeDays = KEYS.flatMap(k => {
+      const d = stats[k];
+      return d.ageDays.map(age => ({age, label:LABELS[k], color:COLORS[k], val:0}));
+    });
+    // Re-compute aging by day bucket across all opps
+    const buckets = [{label:'0–7 days',max:7,count:0,val:0,color:'#4ade80'},{label:'8–14 days',min:8,max:14,count:0,val:0,color:'#fbbf24'},{label:'15–30 days',min:15,max:30,count:0,val:0,color:'#f97316'},{label:'30+ days',min:31,count:0,val:0,color:'#f87171'}];
+    const POTS_S = ['sent','revised','viewed','awaiting_response','awaiting response'];
+    const POTS_ST = ['Estimate Sent','Proposal Under Review','Negotiating','Decision Pending','Follow-Up'];
+    opps.forEach(o => {
+      if (repFilter && o.repId !== repFilter) return;
+      const estSt2 = (o.estimateStatus||'').toLowerCase().replace(/ /g,'_');
+      if (estFilter && estSt2 !== estFilter) return;
+      if (['Sold / Activation','Closed Lost'].includes(o.status)) return;
+      const hasEst2 = POTS_S.includes(estSt2)||POTS_S.includes((o.estimateStatus||'').toLowerCase())||POTS_ST.includes(o.status);
+      if (!hasEst2) return;
+      const sentDate2 = o.estimateSentDate||o.updatedAt||o.createdAt;
+      if (!sentDate2) return;
+      const age2 = Math.floor((now-new Date(sentDate2))/86400000);
+      const estAmt2 = parseFloat(o.estimateAmount||o.jobValue||0);
+      const b = age2<=7?buckets[0]:age2<=14?buckets[1]:age2<=30?buckets[2]:buckets[3];
+      b.count++; b.val+=estAmt2;
+    });
+
+    const agingWrap = document.getElementById('dpAgingWrap');
+    if (agingWrap) {
+      agingWrap.innerHTML = buckets.map(b => `
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">${b.label}</div>
+          <div style="font-size:22px;font-weight:800;color:${b.color}">${b.count}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px">estimates</div>
+          <div style="font-size:13px;font-weight:700;color:${b.color};margin-top:4px">${b.val>0?b.val.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}):'—'}</div>
+        </div>`).join('');
+    }
+  }
+
 function settings(){
   const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
   const _ia = _cr && _cr.role === 'admin';

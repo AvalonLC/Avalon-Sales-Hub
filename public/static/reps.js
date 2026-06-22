@@ -1062,6 +1062,25 @@ ${(()=>{
         </div>`;
       }).join('')}
     </div>
+
+<!-- ── SECTION 3B: PIPELINE BY DIVISION ── -->
+<div style="margin-bottom:24px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div>
+      <h2 style="margin:0;font-size:16px">Pipeline by Division</h2>
+      <div style="font-size:11px;color:#64748b;margin-top:3px">
+        <strong style="color:#a78bfa">Paper on the Street</strong>
+        = active quoted propd value currently in front of customers, not yet sold or lost
+      </div>
+    </div>
+    <button onclick="show('manager')" style="padding:6px 14px;background:rgba(167,139,250,.12);border:1px solid rgba(124,58,237,.4);border-radius:8px;color:#a78bfa;font-size:11px;font-weight:700;cursor:pointer">
+      Full Drill-Down →
+    </button>
+  </div>
+  <div id="dashDivPipeline" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+</div>
+
+
   </div>
 </div>
 
@@ -1252,6 +1271,57 @@ ${(()=>{
 </div>
 
 `;
+
+
+  // ── Populate Paper on the Street division cards ──────────────────────────
+  setTimeout(function() {
+    var wrap = document.getElementById('dashDivPipeline');
+    if (!wrap) return;
+    if (typeof buildDivisionPipeline !== 'function') {
+      wrap.innerHTML = '<p style="color:#475569;font-size:12px;padding:12px">Division pipeline data will appear once leads are added.</p>';
+      return;
+    }
+    var dp = buildDivisionPipeline();
+    var KEYS = dp.keys;
+    var divs = dp.divisions;
+    function fm(n){ return n!=null?n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}):'\u2014'; }
+    function ageColor(d){ if(d==null)return'#475569'; if(d<=7)return'#4ade80'; if(d<=14)return'#fbbf24'; if(d<=30)return'#f97316'; return'#f87171'; }
+    wrap.innerHTML = KEYS.map(function(k) {
+      var d = divs[k];
+      var potsColor = d.paperOnStreet > 0 ? '#a78bfa' : '#475569';
+      var crStr = d.closeRatePct != null ? d.closeRatePct + '%' : '\u2014';
+      var avgAgeStr = d.avgEstimateAge != null ? d.avgEstimateAge + 'd' : '\u2014';
+      var oldestStr = d.oldestEstimateAge != null ? d.oldestEstimateAge + 'd' : '\u2014';
+      return '<div style="background:linear-gradient(135deg,#0d1e35,#0a1628);border:1px solid #1e3a5f;border-radius:14px;padding:18px">'
+        + '<div style="font-size:13px;font-weight:800;color:' + d.color + ';margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">' + d.label + '</div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Open Pipeline</div><div style="font-size:15px;font-weight:800;color:#e2e8f0">' + fm(d.openValue) + '</div></div>'
+          + '<div><div style="font-size:9px;color:#a78bfa;text-transform:uppercase;font-weight:600" title="Active quoted/proposed value not yet sold or lost">Paper on Street</div><div style="font-size:15px;font-weight:800;color:' + potsColor + '">' + fm(d.paperOnStreet) + '</div></div>'
+          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Weighted</div><div style="font-size:13px;font-weight:700;color:#94a3b8">' + fm(d.weightedPipeline) + '</div></div>'
+          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Sold This Mo.</div><div style="font-size:13px;font-weight:700;color:#4ade80">' + fm(d.soldThisMonth) + '</div></div>'
+          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Active Opps</div><div style="font-size:16px;font-weight:800;color:#e2e8f0">' + d.openCount + '</div></div>'
+          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Open Ests</div><div style="font-size:16px;font-weight:800;color:#e2e8f0">' + d.openEstimateCount + '</div></div>'
+          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Avg Est. Age</div><div style="font-size:13px;font-weight:700;color:' + ageColor(d.avgEstimateAge) + '">' + avgAgeStr + '</div></div>'
+          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Oldest Est.</div><div style="font-size:13px;font-weight:700;color:' + ageColor(d.oldestEstimateAge) + '">' + oldestStr + '</div></div>'
+          + '<div><div style="font-size:9px;color:#fbbf24;text-transform:uppercase;font-weight:600">7d Follow-Up Risk</div><div style="font-size:16px;font-weight:800;color:' + (d.sevenDayRisk>0?'#fbbf24':'#4ade80') + '">' + d.sevenDayRisk + '</div></div>'
+          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Close Rate</div><div style="font-size:13px;font-weight:700;color:#00d4ff">' + crStr + '</div></div>'
+        + '</div>'
+      + '</div>';
+    }).join('') + '<div style="background:linear-gradient(135deg,#0a1628,#071525);border:1px solid #334155;border-radius:14px;padding:18px">'
+      + '<div style="font-size:13px;font-weight:800;color:#e2e8f0;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Total</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Open Pipeline</div><div style="font-size:15px;font-weight:800;color:#e2e8f0">' + fm(divs.total.openValue) + '</div></div>'
+        + '<div><div style="font-size:9px;color:#a78bfa;text-transform:uppercase;font-weight:600">Paper on Street</div><div style="font-size:15px;font-weight:800;color:#a78bfa">' + fm(divs.total.paperOnStreet) + '</div></div>'
+        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Weighted</div><div style="font-size:13px;font-weight:700;color:#94a3b8">' + fm(divs.total.weightedPipeline) + '</div></div>'
+        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Sold This Mo.</div><div style="font-size:13px;font-weight:700;color:#4ade80">' + fm(divs.total.soldThisMonth) + '</div></div>'
+        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Active Opps</div><div style="font-size:16px;font-weight:800;color:#e2e8f0">' + divs.total.openCount + '</div></div>'
+        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Open Ests</div><div style="font-size:16px;font-weight:800;color:#e2e8f0">' + divs.total.openEstimateCount + '</div></div>'
+        + '<div><div style="font-size:9px;color:#fbbf24;text-transform:uppercase;font-weight:600">7d Risk Total</div><div style="font-size:16px;font-weight:800;color:' + (divs.total.sevenDayRisk>0?'#fbbf24':'#4ade80') + '">' + divs.total.sevenDayRisk + '</div></div>'
+        + '<div></div>'
+      + '</div>'
+    + '</div>';
+  }, 100);
+
 
   window.viewRepPipeline = function(repId) {
     show('pipeline');
