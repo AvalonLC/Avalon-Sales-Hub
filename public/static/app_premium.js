@@ -1168,6 +1168,297 @@ document.addEventListener('click', e => {
   if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) sidebar.classList.remove('open');
 });
 
+// ══════════════════════════════════════════════════════════════════════════════
+// UNIVERSAL EXPORT MODAL — showExportModal(title, buildDataFn)
+// Opens an overlay with 3 format buttons: CSV / Excel (.xlsx) / PDF
+// buildDataFn must return { headers: [...], rows: [[...], ...], title: '...' }
+// ══════════════════════════════════════════════════════════════════════════════
+
+window.showExportModal = function(title, buildDataFn) {
+  // Remove any existing export modal
+  const existing = document.getElementById('exportModalOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'exportModalOverlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;
+    display:flex;align-items:center;justify-content:center;padding:20px
+  `;
+  overlay.innerHTML = `
+    <div style="background:#0f172a;border:1px solid #1e4d6b;border-radius:16px;padding:28px;width:100%;max-width:400px;box-shadow:0 25px 60px rgba(0,0,0,0.6)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Export Data</div>
+          <h2 style="margin:0;color:#f1f5f9;font-size:1.1rem">${escapeHtml(title)}</h2>
+        </div>
+        <button onclick="document.getElementById('exportModalOverlay').remove()"
+          style="background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94a3b8;cursor:pointer;padding:6px 10px;font-size:16px;line-height:1">✕</button>
+      </div>
+      <p style="color:#64748b;font-size:13px;margin:0 0 20px">Choose your preferred format:</p>
+      <div style="display:grid;gap:10px">
+        <button onclick="exportAsCSV('${escapeHtml(title)}', window._exportDataFn)"
+          style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#0a1628;border:1px solid #1e293b;border-radius:12px;cursor:pointer;color:#e2e8f0;font-size:14px;font-weight:600;text-align:left;transition:border-color .15s"
+          onmouseover="this.style.borderColor='#22d3ee'" onmouseout="this.style.borderColor='#1e293b'">
+          <span style="font-size:24px">📄</span>
+          <div>
+            <div>CSV</div>
+            <div style="font-size:11px;font-weight:400;color:#64748b">Comma-separated, opens in Excel / Sheets</div>
+          </div>
+        </button>
+        <button onclick="exportAsXLSX('${escapeHtml(title)}', window._exportDataFn)"
+          style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#0a1628;border:1px solid #1e293b;border-radius:12px;cursor:pointer;color:#e2e8f0;font-size:14px;font-weight:600;text-align:left;transition:border-color .15s"
+          onmouseover="this.style.borderColor='#4ade80'" onmouseout="this.style.borderColor='#1e293b'">
+          <span style="font-size:24px">📊</span>
+          <div>
+            <div>Excel (.xlsx)</div>
+            <div style="font-size:11px;font-weight:400;color:#64748b">Native Excel workbook with formatting</div>
+          </div>
+        </button>
+        <button onclick="exportAsPDF('${escapeHtml(title)}', window._exportDataFn)"
+          style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#0a1628;border:1px solid #1e293b;border-radius:12px;cursor:pointer;color:#e2e8f0;font-size:14px;font-weight:600;text-align:left;transition:border-color .15s"
+          onmouseover="this.style.borderColor='#f87171'" onmouseout="this.style.borderColor='#1e293b'">
+          <span style="font-size:24px">📋</span>
+          <div>
+            <div>PDF</div>
+            <div style="font-size:11px;font-weight:400;color:#64748b">Print-ready formatted report</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  `;
+  // Store data builder so buttons can call it
+  window._exportDataFn = buildDataFn;
+  document.body.appendChild(overlay);
+  // Close on backdrop click
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+};
+
+// ── CSV Export ─────────────────────────────────────────────────────────────
+window.exportAsCSV = function(title, buildDataFn) {
+  const { headers, rows } = buildDataFn();
+  const escape = v => `"${String(v == null ? '' : v).replace(/"/g,'""')}"`;
+  const lines = [headers.map(escape).join(','), ...rows.map(r => r.map(escape).join(','))];
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = title.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  document.getElementById('exportModalOverlay')?.remove();
+  showToast('✅ CSV exported — ' + title);
+};
+
+// ── Excel (.xlsx) Export — pure JS, no dependencies ────────────────────────
+// Builds a minimal but valid .xlsx file using the OOXML spec.
+// Cells with numeric values use number format; headers are bold.
+window.exportAsXLSX = function(title, buildDataFn) {
+  const { headers, rows } = buildDataFn();
+
+  // Helper: encode XML chars
+  const xe = s => String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+
+  // Build shared strings table
+  const strings = [];
+  const strIdx = {};
+  const si = v => {
+    const s = String(v == null ? '' : v);
+    if (strIdx[s] == null) { strIdx[s] = strings.length; strings.push(s); }
+    return strIdx[s];
+  };
+
+  // Pre-register all strings
+  headers.forEach(h => si(h));
+  rows.forEach(row => row.forEach(cell => {
+    const n = parseFloat(String(cell));
+    if (isNaN(n) || String(cell).trim() === '') si(cell);
+  }));
+
+  // Worksheet rows XML
+  const colLetter = i => {
+    let s = '', n = i;
+    while (n >= 0) { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; }
+    return s;
+  };
+
+  const buildRow = (rowData, rowNum, styleId) => {
+    const cells = rowData.map((cell, ci) => {
+      const col = colLetter(ci);
+      const ref = `${col}${rowNum}`;
+      const n = parseFloat(String(cell));
+      const isNum = !isNaN(n) && String(cell).trim() !== '' && cell !== '';
+      if (isNum) {
+        return `<c r="${ref}" s="${styleId}" t="n"><v>${n}</v></c>`;
+      } else {
+        return `<c r="${ref}" s="${styleId}" t="s"><v>${si(cell)}</v></c>`;
+      }
+    });
+    return `<row r="${rowNum}">${cells.join('')}</row>`;
+  };
+
+  const wsRows = [
+    buildRow(headers, 1, 1), // style 1 = bold header
+    ...rows.map((r, i) => buildRow(r, i + 2, 0))
+  ].join('');
+
+  const dimension = `A1:${colLetter(headers.length - 1)}${rows.length + 1}`;
+
+  // XML parts
+  const sharedStringsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${strings.length}" uniqueCount="${strings.length}">
+${strings.map(s => `<si><t>${xe(s)}</t></si>`).join('')}
+</sst>`;
+
+  const worksheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <dimension ref="${dimension}"/>
+  <sheetData>${wsRows}</sheetData>
+</worksheet>`;
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="2">
+    <font><sz val="11"/><name val="Calibri"/></font>
+    <font><b/><sz val="11"/><name val="Calibri"/></font>
+  </fonts>
+  <fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+  <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="2">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/>
+  </cellXfs>
+</styleSheet>`;
+
+  const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+          xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="${xe(title.substring(0,31))}" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`;
+
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const relsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+  const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
+
+  // Build zip using JSZip if available, otherwise fall back to CSV with .xlsx extension notice
+  const doZip = (JSZip) => {
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', contentTypesXml);
+    zip.file('_rels/.rels', relsXml);
+    zip.file('xl/workbook.xml', workbookXml);
+    zip.file('xl/_rels/workbook.xml.rels', workbookRels);
+    zip.file('xl/worksheets/sheet1.xml', worksheetXml);
+    zip.file('xl/sharedStrings.xml', sharedStringsXml);
+    zip.file('xl/styles.xml', stylesXml);
+    zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      .then(blob => {
+        const fn = title.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.xlsx';
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fn;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        document.getElementById('exportModalOverlay')?.remove();
+        showToast('✅ Excel exported — ' + title);
+      });
+  };
+
+  if (window.JSZip) {
+    doZip(window.JSZip);
+  } else {
+    // Load JSZip from CDN on demand (only when user actually clicks Excel)
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+    script.onload = () => doZip(window.JSZip);
+    script.onerror = () => {
+      showToast('⚠️ Excel export unavailable offline — using CSV instead');
+      window.exportAsCSV(title, buildDataFn);
+    };
+    document.head.appendChild(script);
+  }
+};
+
+// ── PDF Export — print-styled hidden div ───────────────────────────────────
+window.exportAsPDF = function(title, buildDataFn) {
+  const { headers, rows } = buildDataFn();
+  const xe = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const tableRows = rows.map((r, ri) => `
+    <tr style="background:${ri % 2 === 0 ? '#f8fafc' : '#ffffff'}">
+      ${r.map(cell => `<td style="padding:7px 10px;border:1px solid #e2e8f0;font-size:12px;color:#1e293b">${xe(cell)}</td>`).join('')}
+    </tr>`).join('');
+
+  const printDiv = document.createElement('div');
+  printDiv.id = 'avalonPrintArea';
+  printDiv.innerHTML = `
+    <div style="font-family:'Segoe UI',Arial,sans-serif;padding:24px;max-width:900px;margin:0 auto">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #0e3044">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px">Avalon Landscaping</div>
+          <h1 style="margin:0;font-size:20px;color:#0e3044;font-weight:800">${xe(title)}</h1>
+          <div style="font-size:11px;color:#64748b;margin-top:4px">Generated ${new Date().toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'long',day:'numeric'})}</div>
+        </div>
+        <div style="font-size:10px;color:#94a3b8;text-align:right">FY 2026</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-family:inherit">
+        <thead>
+          <tr style="background:#0e3044">
+            ${headers.map(h => `<th style="padding:9px 10px;text-align:left;color:#fff;font-size:12px;font-weight:700;border:1px solid #1e4d6b">${xe(h)}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div style="margin-top:20px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px">
+        Avalon Landscaping — Confidential — ${new Date().getFullYear()}
+      </div>
+    </div>`;
+
+  // Inject print CSS
+  const style = document.createElement('style');
+  style.id = 'avalonPrintStyle';
+  style.textContent = `
+    @media print {
+      body > *:not(#avalonPrintArea) { display: none !important; }
+      #avalonPrintArea { display: block !important; position: fixed; inset: 0; background: #fff; z-index: 99999; }
+      @page { margin: 1cm; size: A4 landscape; }
+    }
+    #avalonPrintArea { display: none; }
+  `;
+
+  document.head.appendChild(style);
+  document.body.appendChild(printDiv);
+  document.getElementById('exportModalOverlay')?.remove();
+
+  setTimeout(() => {
+    window.print();
+    // Clean up after print dialog closes
+    setTimeout(() => {
+      printDiv.remove();
+      style.remove();
+    }, 1000);
+  }, 150);
+};
+
 // ── Financial Data Storage Keys ────────────────────────────────────────────────
 const REV_ACTUALS_KEY      = 'avalonRevenueActuals';      // { "Jan": 21100, "note_Jan": "...", ... }
 const DIV_ACTUALS_KEY      = 'avalonDivisionActuals';     // { landscape:{ Jan:{revenue,cogs,gmPct} }, maintenance:{...}, snow:{...} }
@@ -1204,110 +1495,89 @@ function savePnlFiles(files) {
 }
 
 /**
- * getResolvedFY() — returns a deep copy of AVALON_DATA.fy2026 with ALL
- * localStorage-saved actuals merged in. Reads:
- *   1. avalonRevenueActuals (company-level monthly totals)
- *   2. avalonDivisionActuals (per-division monthly revenue/COGS/GM)
- *   3. avalonAnnualOverrides (annual-level financial overrides)
+ * getResolvedFY() — STRICT CASCADE
+ * Data flows ONE WAY: avalonDivisionActuals → monthly totals → annual totals.
+ * Division entries are the ONLY input for revenue. Monthly and annual values
+ * are always computed — never independently overridden.
  *
- * Recomputes dynamically:
- *   - Each month's .actual and .variance
- *   - Division .actual from summed division monthly data (if entered)
- *   - annual.actualRevenue, annual.remaining, annual.ytdVariance
- *   - annual.monthsLeft = count of months with NO actual (dynamic!)
- *   - annual.avgNeededPerMonth = remaining / monthsLeft
+ * avalonRevenueActuals  → stores ONLY note_* keys (no revenue values)
+ * avalonDivisionActuals → per-division monthly revenue/COGS (the source of truth)
+ * avalonAnnualOverrides → non-revenue fields only (expenses, loans, etc.)
  */
 function getResolvedFY() {
   const raw = window.AVALON_DATA.fy2026;
-  const fy = JSON.parse(JSON.stringify(raw)); // deep clone
+  const fy  = JSON.parse(JSON.stringify(raw)); // deep clone
 
-  const savedMonthly   = loadRevenueActuals();
   const savedDivisions = loadDivisionActuals();
+  const savedNotes     = loadRevenueActuals();   // ONLY note_* keys are used
   const savedAnnual    = loadAnnualOverrides();
 
-  // ── 1. Patch per-division actuals from avalonDivisionActuals ──
-  const DIVKEYS = ['landscape', 'maintenance', 'snow'];
+  const DIVKEYS   = ['landscape', 'maintenance', 'snow'];
+  const MONTH_ORD = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // STEP 1: Per-division YTD totals — sum all months from avalonDivisionActuals
   DIVKEYS.forEach(dk => {
     if (!fy.divisions[dk]) return;
     const divData = savedDivisions[dk] || {};
-    const months = Object.keys(divData);
-    if (months.length === 0) return; // no entries for this division yet
-
-    let totalRevenue = 0;
-    let totalCogs    = 0;
-    months.forEach(mon => {
-      const entry = divData[mon] || {};
-      if (entry.revenue != null) totalRevenue += entry.revenue;
-      if (entry.cogs    != null) totalCogs    += entry.cogs;
+    let totalRev = 0, totalCogs = 0, hasAnyEntry = false;
+    MONTH_ORD.forEach(mon => {
+      const e = divData[mon];
+      if (!e) return;
+      hasAnyEntry = true;
+      if (e.revenue != null) totalRev  += e.revenue;
+      if (e.cogs    != null) totalCogs += e.cogs;
     });
-    fy.divisions[dk].actual = totalRevenue;
-    fy.divisions[dk].cogs   = totalCogs;
-    fy.divisions[dk].remaining = fy.divisions[dk].target - totalRevenue;
-    if (totalRevenue > 0) {
-      const gmPct = (totalRevenue - totalCogs) / totalRevenue;
-      fy.divisions[dk].grossMarginPct = gmPct;
+    if (hasAnyEntry) {
+      fy.divisions[dk].actual    = totalRev;
+      fy.divisions[dk].cogs      = totalCogs;
+      fy.divisions[dk].remaining = fy.divisions[dk].target - totalRev;
+      fy.divisions[dk].grossMarginPct = totalRev > 0 ? (totalRev - totalCogs) / totalRev : 0;
     }
+    // Division-level overrides (target, gmFloor only — not actual/cogs which come from division entries)
+    const divOvr = (savedAnnual._divOverrides || {})[dk] || {};
+    if (divOvr.grossMarginFloor != null) fy.divisions[dk].grossMarginFloor = divOvr.grossMarginFloor;
+    if (divOvr.target           != null) fy.divisions[dk].target           = divOvr.target;
   });
 
-  // ── 2. Patch monthly totals from avalonRevenueActuals ──
-  //    If division data exists AND no company-level override for a month,
-  //    auto-sum division data into that month.
+  // STEP 2: Monthly totals — ALWAYS sum from division entries (no company-level override)
   fy.monthlyBudget = fy.monthlyBudget.map(m => {
-    const savedVal = savedMonthly[m.month];
-    let actual;
-    if (savedVal !== undefined) {
-      actual = savedVal;
-    } else {
-      // Try to auto-sum from division entries for this month
-      let divSum = null;
-      DIVKEYS.forEach(dk => {
-        const entry = (savedDivisions[dk] || {})[m.month];
-        if (entry && entry.revenue != null) {
-          if (divSum === null) divSum = 0;
-          divSum += entry.revenue;
-        }
-      });
-      actual = (divSum !== null) ? divSum : m.actual;
-    }
+    let monthTotal = null;
+    DIVKEYS.forEach(dk => {
+      const e = (savedDivisions[dk] || {})[m.month];
+      if (e && e.revenue != null) {
+        monthTotal = (monthTotal === null ? 0 : monthTotal) + e.revenue;
+      }
+    });
+    // If no division data exists for this month, fall back to data.js seed value
+    const hasDivData = DIVKEYS.some(dk => {
+      const e = (savedDivisions[dk] || {})[m.month];
+      return e !== undefined;
+    });
+    const actual   = hasDivData ? monthTotal : m.actual;
+    const note     = savedNotes['note_' + m.month] || '';
     const variance = actual != null ? actual - m.budgeted : null;
-    return { ...m, actual, variance };
+    return { ...m, actual, variance, note };
   });
 
-  // ── 3. Recompute annual YTD figures ──
+  // STEP 3: Annual revenue — always sum from completed months (never overridden)
   const completedMonths = fy.monthlyBudget.filter(m => m.actual != null);
   const pendingMonths   = fy.monthlyBudget.filter(m => m.actual == null);
   const ytdActual   = completedMonths.reduce((s, m) => s + m.actual, 0);
   const ytdBudgeted = completedMonths.reduce((s, m) => s + m.budgeted, 0);
 
   fy.annual = { ...fy.annual };
-  fy.annual.actualRevenue = ytdActual;
-  fy.annual.remaining     = fy.annual.budgetedRevenue - ytdActual;
-  fy.annual.ytdVariance   = ytdActual - ytdBudgeted;
+  fy.annual.actualRevenue     = ytdActual;
+  fy.annual.remaining         = fy.annual.budgetedRevenue - ytdActual;
+  fy.annual.ytdVariance       = ytdActual - ytdBudgeted;
+  fy.annual.monthsLeft        = pendingMonths.length;
+  fy.annual.avgNeededPerMonth = pendingMonths.length > 0
+    ? Math.round(fy.annual.remaining / pendingMonths.length) : 0;
 
-  // ── 4. DYNAMIC monthsLeft — count months with NO actual data ──
-  const dynamicMonthsLeft = pendingMonths.length;
-  fy.annual.monthsLeft = dynamicMonthsLeft;
-  fy.annual.avgNeededPerMonth = dynamicMonthsLeft > 0
-    ? Math.round(fy.annual.remaining / dynamicMonthsLeft)
-    : 0;
-
-  // ── 5. Apply annual overrides (editable financial fields) ──
-  Object.keys(savedAnnual).forEach(k => {
-    if (k === '_divOverrides') return; // handled below
-    if (savedAnnual[k] !== undefined && savedAnnual[k] !== null) {
-      fy.annual[k] = savedAnnual[k];
-    }
-  });
-
-  // ── 6. Apply division-level overrides from annuals tab ──
-  const divOverrides = (savedAnnual._divOverrides) || {};
-  DIVKEYS.forEach(dk => {
-    if (!fy.divisions[dk] || !divOverrides[dk]) return;
-    Object.keys(divOverrides[dk]).forEach(field => {
-      if (divOverrides[dk][field] !== undefined) {
-        fy.divisions[dk][field] = divOverrides[dk][field];
-      }
-    });
+  // STEP 4: Non-revenue annual overrides only (expenses, loans, margins)
+  const NON_REV_KEYS = ['cogs','grossProfit','grossMarginPct','totalExpenses',
+                        'netOperatingIncome','netIncome','loans','loanMonthly','trueNetIncome'];
+  NON_REV_KEYS.forEach(k => {
+    if (savedAnnual[k] != null) fy.annual[k] = savedAnnual[k];
   });
 
   return fy;
@@ -1377,38 +1647,37 @@ function revenueAdmin(tab) {
 
   // ── Tab: Monthly Totals ──
   function renderMonthlyTab() {
+    // Revenue values are READ-ONLY — computed by summing division entries.
+    // Only the Notes column is editable. To change revenue, use Division Entry tab.
+    const savedNotes = loadRevenueActuals(); // only note_* keys
     const tableRows = months.map(m => {
       const hasActual = m.actual != null;
       const varColor  = m.variance == null ? '#334155' : m.variance >= 0 ? '#4ade80' : '#f87171';
       const varSign   = m.variance != null && m.variance > 0 ? '+' : '';
-      // Check if this month's total is auto-derived from division data
+      // Determine which divisions contributed data for this month
       const divs = loadDivisionActuals();
-      let autoDerived = false;
-      if (!savedActuals[m.month]) {
-        let divSum = 0; let hasDiv = false;
-        ['landscape','maintenance','snow'].forEach(dk => {
-          const e = (divs[dk]||{})[m.month];
-          if (e && e.revenue != null) { divSum += e.revenue; hasDiv = true; }
-        });
-        if (hasDiv) autoDerived = true;
-      }
+      const divBreakdown = ['landscape','maintenance','snow'].map(dk => {
+        const e = (divs[dk]||{})[m.month];
+        return (e && e.revenue != null) ? e.revenue : null;
+      });
+      const hasDivData = divBreakdown.some(v => v != null);
       return `<tr>
-        <td><span class="rev-month-tag">${escapeHtml(m.month)}</span>${hasActual ? '<span class="rev-locked-badge">' + (autoDerived ? 'auto' : 'saved') + '</span>' : ''}</td>
+        <td><span class="rev-month-tag">${escapeHtml(m.month)}</span>${hasActual ? '<span class="rev-locked-badge">auto</span>' : ''}</td>
         <td class="right" style="color:#64748b">${fmtM(m.budgeted)}</td>
         <td class="right">
-          <input class="rev-editor-input" type="number" min="0" step="1000"
-            id="rev_actual_${m.idx}"
-            value="${hasActual ? m.actual : ''}"
-            placeholder="enter actual"
-            title="${autoDerived ? 'Auto-summed from division entries. Override here to set a different company total.' : ''}"
-            oninput="revUpdateRow(${m.idx})">
+          <div style="font-weight:700;color:${hasActual ? '#22d3ee' : '#475569'};font-size:14px;padding:6px 4px">
+            ${hasActual ? fmtM(m.actual) : '<span style="color:#334155">—</span>'}
+          </div>
+          ${hasDivData ? `<div style="font-size:10px;color:#475569;line-height:1.4">
+            🌿 ${fmtM(divBreakdown[0])} · ✂️ ${fmtM(divBreakdown[1])} · ❄️ ${fmtM(divBreakdown[2])}
+          </div>` : ''}
         </td>
-        <td class="right" id="rev_var_${m.idx}" style="color:${varColor};font-weight:700">${m.variance != null ? varSign + fmtM(m.variance) : '—'}</td>
+        <td class="right" style="color:${varColor};font-weight:700">${m.variance != null ? varSign + fmtM(m.variance) : '—'}</td>
         <td>
           <input style="background:transparent;border:none;border-bottom:1px solid #1e293b;width:100%;color:#94a3b8;font-size:12px;padding:4px 0"
             placeholder="notes…"
             id="rev_note_text_${m.idx}"
-            value="${escapeHtml(savedActuals['note_'+m.month]||'')}">
+            value="${escapeHtml(savedNotes['note_'+m.month]||'')}">
         </td>
       </tr>`;
     }).join('');
@@ -1418,22 +1687,22 @@ function revenueAdmin(tab) {
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1e293b">
           <h2 style="margin:0;color:#f1f5f9;font-size:1rem">Budget vs Actual — Jan–Dec 2026</h2>
           <div style="display:flex;gap:8px">
-            <button class="secondary-btn small" onclick="revSaveAll()" style="background:#16a34a;border-color:#16a34a;color:#fff">💾 Save All</button>
-            <button class="secondary-btn small" onclick="revExportCsv()">📥 Export CSV</button>
+            <button class="secondary-btn small" onclick="revSaveNotes()" style="background:#16a34a;border-color:#16a34a;color:#fff">💾 Save Notes</button>
+            <button class="secondary-btn small" onclick="showExportModal('Monthly Revenue', buildMonthlyExportData)">📥 Export</button>
           </div>
         </div>
         <div style="overflow-x:auto">
           <table class="rev-editor-table" id="revTable">
             <thead><tr>
-              <th>Month</th><th class="right">Budgeted</th><th class="right">Actual Revenue</th><th class="right">Variance</th><th>Notes</th>
+              <th>Month</th><th class="right">Budgeted</th><th class="right">Actual Revenue <span style="font-size:10px;color:#475569;font-weight:400">(from divisions)</span></th><th class="right">Variance</th><th>Notes</th>
             </tr></thead>
             <tbody>${tableRows}</tbody>
             <tfoot>
               <tr style="background:#0f172a;font-weight:700;border-top:2px solid #1e293b">
                 <td style="padding:12px;color:#e2e8f0">YTD Total</td>
-                <td class="right" style="padding:12px;color:#64748b" id="rev_tfoot_budget">${fmtM(ytdBudget)}</td>
-                <td class="right" style="padding:12px;color:#22d3ee" id="rev_tfoot_actual">${fmtM(ytdActual)}</td>
-                <td class="right" style="padding:12px;color:${ytdVarColor}" id="rev_tfoot_var">${ytdVar >= 0 ? '+' : ''}${fmtM(ytdVar)}</td>
+                <td class="right" style="padding:12px;color:#64748b">${fmtM(ytdBudget)}</td>
+                <td class="right" style="padding:12px;color:#22d3ee">${fmtM(ytdActual)}</td>
+                <td class="right" style="padding:12px;color:${ytdVarColor}">${ytdVar >= 0 ? '+' : ''}${fmtM(ytdVar)}</td>
                 <td></td>
               </tr>
             </tfoot>
@@ -1441,10 +1710,12 @@ function revenueAdmin(tab) {
         </div>
       </div>
       <p style="color:#64748b;font-size:12px;margin-top:8px">
-        💡 Tip: Enter division-level data in <strong style="color:#22d3ee">Division Entry</strong> tab — monthly totals auto-sum from divisions.
-        Override any month here to set a custom company total.
+        🔒 Monthly totals are <strong style="color:#22d3ee">automatically computed</strong> from division entries — they cannot be edited directly.
+        To change revenue, go to the <strong style="color:#22d3ee">Division Entry</strong> tab.
       </p>`;
   }
+
+
 
   // ── Tab: Division Entry ──
   const DIVISIONS_META = [
@@ -1525,7 +1796,7 @@ function revenueAdmin(tab) {
       <p class="lede" style="margin-bottom:16px">Enter revenue and COGS for each division per month. Monthly totals auto-sum to the company total in the Monthly Totals tab.</p>
       <div style="display:flex;gap:8px;margin-bottom:16px">
         <button class="secondary-btn" onclick="divSaveAllDivisions()" style="background:#16a34a;border-color:#16a34a;color:#fff">💾 Save All Divisions</button>
-        <button class="secondary-btn" onclick="divExportCsv()">📥 Export Division CSV</button>
+        <button class="secondary-btn" onclick="showExportModal('Division Actuals 2026', buildDivisionExportData)">📥 Export</button>
       </div>
       ${divSections}`;
   }
@@ -1556,8 +1827,8 @@ function revenueAdmin(tab) {
               <input class="rev-editor-input" type="number" id="ann_${div.key}_target" value="${d.target||''}" placeholder="target" step="1000" style="width:100%">
             </div>
             <div>
-              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Actual YTD Revenue</label>
-              <input class="rev-editor-input" type="number" id="ann_${div.key}_actual" value="${d.actual||''}" placeholder="actual" step="1000" style="width:100%">
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Actual YTD Revenue <span style="font-size:9px;color:#475569">(auto)</span></label>
+              <div style="padding:8px 10px;background:#0a0f1a;border:1px solid #0f172a;border-radius:8px;color:#22d3ee;font-weight:700;font-size:14px">${d.actual != null ? d.actual.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '—'}</div>
             </div>
             <div>
               <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">GM Floor %</label>
@@ -1603,6 +1874,7 @@ function revenueAdmin(tab) {
 
       <div style="display:flex;gap:8px">
         <button class="secondary-btn" onclick="annSaveAll()" style="background:#16a34a;border-color:#16a34a;color:#fff">💾 Save All Annual Figures</button>
+        <button class="secondary-btn" onclick="showExportModal('Annual Financials 2026', buildAnnualExportData)">📥 Export</button>
         <button class="secondary-btn" onclick="annResetOverrides()" style="background:#7f1d1d;border-color:#991b1b;color:#fca5a5">🔄 Reset to Budget Defaults</button>
       </div>`;
   }
@@ -1713,38 +1985,89 @@ window.revUpdateRow = function(idx) {
   setEl('rev_tfoot_var', (ytdVar >= 0 ? '+' : '') + fmtM(ytdVar), ytdVarColor);
 };
 
-window.revSaveAll = function() {
+window.revSaveNotes = function() {
+  // Under the strict cascade architecture, only notes are saved here.
+  // Revenue values come exclusively from Division Entry (avalonDivisionActuals).
   const fy = window.AVALON_DATA.fy2026;
   const months = fy.monthlyBudget || [];
-  const actuals = loadRevenueActuals();
+  const savedNotes = loadRevenueActuals(); // only note_* keys
   months.forEach((m, idx) => {
-    const inp = document.getElementById('rev_actual_' + idx);
-    if (!inp) return;
-    const val = inp.value !== '' && inp.value != null ? parseFloat(inp.value) : undefined;
-    if (val !== undefined && !isNaN(val)) actuals[m.month] = val;
-    else delete actuals[m.month];
     const noteInp = document.getElementById('rev_note_text_' + idx);
     if (noteInp) {
-      if (noteInp.value.trim()) actuals['note_' + m.month] = noteInp.value.trim();
-      else delete actuals['note_' + m.month];
+      if (noteInp.value.trim()) savedNotes['note_' + m.month] = noteInp.value.trim();
+      else delete savedNotes['note_' + m.month];
     }
+    // Ensure no revenue keys sneak in
+    delete savedNotes[m.month];
   });
-  saveRevenueActuals(actuals);
-  showToast('✅ Monthly revenue saved — dashboards updated');
+  saveRevenueActuals(savedNotes);
+  showToast('✅ Monthly notes saved');
 };
 
+// Keep legacy revSaveAll as alias so any stale HTML references don't break
+window.revSaveAll = window.revSaveNotes;
+
 window.revExportCsv = function() {
-  const fy = window.AVALON_DATA.fy2026;
-  const saved = loadRevenueActuals();
-  const months = (fy.monthlyBudget || []).map(m => {
-    const actual = saved[m.month] != null ? saved[m.month] : m.actual;
-    const variance = actual != null ? actual - m.budgeted : null;
-    return { month: m.month, budgeted: m.budgeted, actual, variance, note: saved['note_'+m.month]||'' };
+  showExportModal('Monthly Revenue 2026', buildMonthlyExportData);
+};
+
+// Data builder for monthly export (CSV / Excel / PDF)
+window.buildMonthlyExportData = function() {
+  const fy = getResolvedFY();
+  const headers = ['Month','Budgeted','Actual','Variance','Notes'];
+  const rows = (fy.monthlyBudget || []).map(m => [
+    m.month,
+    m.budgeted != null ? m.budgeted : '',
+    m.actual   != null ? m.actual   : '',
+    m.variance != null ? m.variance : '',
+    m.note     || ''
+  ]);
+  return { headers, rows, title: 'Monthly Revenue 2026' };
+};
+
+// Data builder for division export
+window.buildDivisionExportData = function() {
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DIVS   = [{key:'landscape',label:'Landscape'},{key:'maintenance',label:'Maintenance'},{key:'snow',label:'Snow'}];
+  const all    = loadDivisionActuals();
+  const headers = ['Month','Division','Revenue','COGS','GM%'];
+  const rows = [];
+  MONTHS.forEach(mon => {
+    DIVS.forEach(d => {
+      const e = (all[d.key] || {})[mon] || {};
+      const rev  = e.revenue != null ? e.revenue : '';
+      const cogs = e.cogs    != null ? e.cogs    : '';
+      const gm   = (e.revenue && e.cogs != null)
+        ? Math.round(((e.revenue - e.cogs) / e.revenue) * 100) + '%' : '';
+      rows.push([mon, d.label, rev, cogs, gm]);
+    });
   });
-  const hdr = ['Month','Budgeted','Actual','Variance','Notes'];
-  const rows = months.map(m => [m.month, m.budgeted||'', m.actual||'', m.variance||'', m.note].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
-  const blob = new Blob([[hdr.join(','), ...rows].join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'avalon-revenue-2026.csv'; a.click(); URL.revokeObjectURL(a.href);
+  return { headers, rows, title: 'Division Actuals 2026' };
+};
+
+// Data builder for annual financials export
+window.buildAnnualExportData = function() {
+  const fy = getResolvedFY();
+  const a  = fy.annual;
+  const headers = ['Metric','Value'];
+  const rows = [
+    ['Budgeted Revenue', a.budgetedRevenue || ''],
+    ['Actual Revenue (YTD)', a.actualRevenue || ''],
+    ['YTD Variance', a.ytdVariance || ''],
+    ['Remaining', a.remaining || ''],
+    ['Months Left', a.monthsLeft || ''],
+    ['Avg Needed / Month', a.avgNeededPerMonth || ''],
+    ['Gross Margin %', a.grossMarginPct != null ? Math.round(a.grossMarginPct*100)+'%' : ''],
+    ['Total COGS', a.cogs || ''],
+    ['Gross Profit', a.grossProfit || ''],
+    ['Total Expenses', a.totalExpenses || ''],
+    ['Net Operating Income', a.netOperatingIncome || ''],
+    ['Net Income', a.netIncome || ''],
+    ['Total Loans', a.loans || ''],
+    ['Monthly Loan Payment', a.loanMonthly || ''],
+    ['True Net Income', a.trueNetIncome || ''],
+  ];
+  return { headers, rows, title: 'Annual Financials 2026' };
 };
 
 // ── Division Tab helpers ──────────────────────────────────────────────────────
@@ -1801,7 +2124,17 @@ window.divSaveDivision = function(divKey) {
     }
   });
   saveDivisionActuals(all);
-  showToast(`✅ ${divKey.charAt(0).toUpperCase()+divKey.slice(1)} division data saved`);
+  // Update division header YTD display live
+  let totalRev = 0, totalCogs = 0;
+  MONTHS.forEach(mon => {
+    const e = all[divKey][mon] || {};
+    if (e.revenue != null) totalRev  += e.revenue;
+    if (e.cogs    != null) totalCogs += e.cogs;
+  });
+  function fmtM(n) { return n != null ? n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '—'; }
+  // Also update the banner summary after save via re-rendering
+  const label = divKey.charAt(0).toUpperCase() + divKey.slice(1);
+  showToast(`✅ ${label} saved — monthly totals updated`);
 };
 
 window.divSaveAllDivisions = function() {
@@ -1810,19 +2143,7 @@ window.divSaveAllDivisions = function() {
 };
 
 window.divExportCsv = function() {
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const DIVS = [{key:'landscape',label:'Landscape'},{key:'maintenance',label:'Maintenance'},{key:'snow',label:'Snow'}];
-  const all = loadDivisionActuals();
-  const rows = [];
-  MONTHS.forEach(mon => {
-    DIVS.forEach(d => {
-      const e = (all[d.key] || {})[mon] || {};
-      rows.push([mon, d.label, e.revenue||'', e.cogs||''].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
-    });
-  });
-  const hdr = 'Month,Division,Revenue,COGS';
-  const blob = new Blob([[hdr, ...rows].join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'avalon-divisions-2026.csv'; a.click(); URL.revokeObjectURL(a.href);
+  showExportModal('Division Actuals 2026', buildDivisionExportData);
 };
 
 // ── Annual Financials Tab helpers ─────────────────────────────────────────────
@@ -1951,27 +2272,27 @@ window.revenueAdmin = revenueAdmin;
 // divisionMonthlyActuals + monthlyBudget so dashboards show real numbers immediately.
 // User edits always take priority — this never overwrites existing data.
 (function seedBaselineActuals() {
+  // Runs once on first load: pre-populates avalonDivisionActuals from data.js if empty.
+  // avalonRevenueActuals is NOT seeded with revenue — only division data is the source of truth.
   const raw = window.AVALON_DATA && window.AVALON_DATA.fy2026;
   if (!raw) return;
 
-  // ── Seed avalonDivisionActuals ──
+  // Seed avalonDivisionActuals from data.js divisionMonthlyActuals
   const existingDiv = loadDivisionActuals();
   const hasAnyDiv = Object.keys(existingDiv).some(k => Object.keys(existingDiv[k] || {}).length > 0);
   if (!hasAnyDiv && raw.divisionMonthlyActuals) {
     saveDivisionActuals(raw.divisionMonthlyActuals);
   }
 
-  // ── Seed avalonRevenueActuals ──
-  // Only seed the months that have hardcoded actuals in data.js and haven't been
-  // overridden yet. This ensures the monthly editor reflects Jan–May right away.
+  // Clean up any legacy revenue values from avalonRevenueActuals (keep only note_* keys)
   const existingRev = loadRevenueActuals();
-  const hasSavedMonths = Object.keys(existingRev).filter(k => !k.startsWith('note_')).length > 0;
-  if (!hasSavedMonths && raw.monthlyBudget) {
-    const seeded = {};
-    raw.monthlyBudget.forEach(m => {
-      if (m.actual != null) seeded[m.month] = m.actual;
+  const hasLegacyRevenue = Object.keys(existingRev).some(k => !k.startsWith('note_'));
+  if (hasLegacyRevenue) {
+    const notesOnly = {};
+    Object.keys(existingRev).forEach(k => {
+      if (k.startsWith('note_')) notesOnly[k] = existingRev[k];
     });
-    if (Object.keys(seeded).length > 0) saveRevenueActuals(seeded);
+    saveRevenueActuals(notesOnly);
   }
 })();
 
