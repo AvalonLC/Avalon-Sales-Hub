@@ -34,8 +34,20 @@ const REPS = [
     base: { rateTraining: 20, ratePostTraining: 21 },
     commissionPlan: 'ryan'
   },
+  {
+    id: 'jen',
+    name: 'Jen',
+    title: 'Office Manager — Sales Operations',
+    role: 'office_manager',
+    pin: '3333',
+    avatar: '📋',
+    color: '#f59e0b',
+    email: 'admin@avalon-lc.com',
+    base: null,
+    commissionPlan: null
+  }
   // Add new reps here — copy the Ryan structure and give them a unique id/pin
-  // { id: 'sarah', name: 'Sarah', title: 'Account Manager', role: 'rep', pin: '3333', avatar: '⭐', color: '#f59e0b', base: { rateTraining: 20, ratePostTraining: 21 }, commissionPlan: 'ryan' }
+  // { id: 'sarah', name: 'Sarah', title: 'Account Manager', role: 'rep', pin: '4444', avatar: '⭐', color: '#a78bfa', base: { rateTraining: 20, ratePostTraining: 21 }, commissionPlan: 'ryan' }
 ];
 
 // ── Commission Plans ───────────────────────────────────────────────────────────
@@ -110,6 +122,21 @@ function isAdmin() {
   const rep = getCurrentRep();
   return rep?.role === 'admin';
 }
+
+function isOfficeManager() {
+  const rep = getCurrentRep();
+  return rep?.role === 'office_manager';
+}
+
+// Returns true for both admin and office_manager — use for "elevated" access checks
+function isElevated() {
+  const rep = getCurrentRep();
+  return rep?.role === 'admin' || rep?.role === 'office_manager';
+}
+
+window.isAdmin = isAdmin;
+window.isOfficeManager = isOfficeManager;
+window.isElevated = isElevated;
 
 // ── Per-Rep State ─────────────────────────────────────────────────────────────
 function getRepStateKey(repId) { return `avalonRepState_${repId}`; }

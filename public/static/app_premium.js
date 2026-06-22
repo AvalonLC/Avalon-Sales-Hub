@@ -33,8 +33,11 @@ function show(viewName='today', param){
   // ── Permission gate ──────────────────────────────────────
   const _rep = window.getCurrentRep ? window.getCurrentRep() : null;
   const _isAdmin = _rep && _rep.role === 'admin';
-  const _adminOnly = ['manager','settings'];
-  if (_adminOnly.includes(viewName) && !_isAdmin) {
+  const _isOM = _rep && _rep.role === 'office_manager';
+  // Only pure reps (Ryan) are blocked from manager/settings — office_manager (Jen) gets read-only access
+  const _blockedViews = ['manager','settings'];
+  const _repBlocked = _blockedViews.includes(viewName) && _rep && _rep.role === 'rep';
+  if (_repBlocked) {
     view.innerHTML = `<div class="card" style="text-align:center;padding:48px 24px;margin-top:40px">
       <div style="font-size:48px;margin-bottom:16px">🔒</div>
       <h2 style="color:#f87171;margin-bottom:8px">Admin Access Only</h2>
@@ -65,16 +68,19 @@ window.show = show;
     const rep = window.getCurrentRep ? window.getCurrentRep() : null;
     if (rep) {
       const isAdmin = rep.role === 'admin';
+      const isOM = rep.role === 'office_manager';
       // Footer: show rep identity + role badge
       const footer = document.querySelector('.sidebar-footer');
       if (footer) {
-        const adminBadge = isAdmin
+        const roleBadge = isAdmin
           ? `<span style="display:inline-block;background:#00d4ff;color:#0a0f1a;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;letter-spacing:.05em;vertical-align:middle;margin-left:4px">OWNER</span>`
+          : isOM
+          ? `<span style="display:inline-block;background:#f59e0b;color:#0a0f1a;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;letter-spacing:.05em;vertical-align:middle;margin-left:4px">OFFICE MGR</span>`
           : '';
-        footer.innerHTML = `<span style="color:${rep.color};font-weight:700">${rep.avatar} ${rep.name}${adminBadge}</span><br><span style="font-size:11px;color:#64748b">${rep.title}</span><br><button onclick="logoutRep();renderLoginScreen()" style="margin-top:6px;background:none;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;padding:4px 10px;cursor:pointer;width:100%">Switch Account</button>`;
+        footer.innerHTML = `<span style="color:${rep.color};font-weight:700">${rep.avatar} ${rep.name}${roleBadge}</span><br><span style="font-size:11px;color:#64748b">${rep.title}</span><br><button onclick="logoutRep();renderLoginScreen()" style="margin-top:6px;background:none;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;padding:4px 10px;cursor:pointer;width:100%">Switch Account</button>`;
       }
-      // Nav items: dim + disable admin-only items for non-admins
-      if (!isAdmin) {
+      // Nav items: dim + disable admin-only items for plain reps only (not office_manager)
+      if (!isAdmin && !isOM) {
         document.querySelectorAll('.nav-item').forEach(btn => {
           const v = btn.dataset.view;
           if (v === 'manager' || v === 'settings') {
@@ -210,7 +216,7 @@ function pipeline(selectedId){
   if(selectedId){ return opportunityDetail(selectedId); }
 
   const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
-  const adminView = currentRep?.role === 'admin';
+  const adminView = currentRep?.role === 'admin' || currentRep?.role === 'office_manager';
   const activeRepFilter = window._pipelineRepFilter || (adminView ? 'all' : (currentRep?.id || 'all'));
   const activeTypeFilter = window._pipelineTypeFilter || 'all';
   const activeCatFilter = window._pipelineCatFilter || 'all';
@@ -249,8 +255,8 @@ function pipeline(selectedId){
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;align-items:center">
       ${(()=>{
         const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
-        const _ia = _cr && _cr.role === 'admin';
-        if (!_ia) return ''; // Ryan: no rep filter — always sees only his own
+        const _ia = _cr && (_cr.role === 'admin' || _cr.role === 'office_manager');
+        if (!_ia) return ''; // Ryan (rep): no rep filter — always sees only his own
         return `<div style="display:flex;gap:6px;flex-wrap:wrap">
           <span style="font-size:12px;color:var(--muted);align-self:center">Rep:</span>
           <button class="tab ${activeRepFilter==='all'?'active':''}" onclick="window._pipelineRepFilter='all';show('pipeline')">All</button>
@@ -311,7 +317,7 @@ function lead(){
         ${select('status','Status',data.statuses, 'New Lead')}
         ${(()=>{
           const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
-          const _ia = _cr && _cr.role === 'admin';
+          const _ia = _cr && (_cr.role === 'admin' || _cr.role === 'office_manager');
           if (!_ia) return `<input type="hidden" name="repId" value="${_cr ? _cr.id : ''}">`;
           return `<label><span>Assigned Rep</span><select name="repId">
             <option value="">— Select rep —</option>
@@ -349,7 +355,7 @@ function opportunityDetail(id){
       <div><div class="eyebrow">Opportunity</div><h1>${escapeHtml(o.client||'Unnamed Lead')}</h1><p class="lede">${escapeHtml(o.project||o.serviceLine||'Opportunity')} • ${escapeHtml(o.address||'No address')}</p></div>
       <div class="detail-actions">
         <button class="primary-btn" onclick="saveOpportunity('${o.id}')">Save Changes</button>
-        ${(()=>{ const _cr = window.getCurrentRep ? window.getCurrentRep() : null; const _ia = _cr && _cr.role === 'admin'; return _ia ? `<button class="secondary-btn" onclick="duplicateOpportunity('${o.id}')">Duplicate</button><button class="danger-btn" onclick="deleteOpportunity('${o.id}')">Delete</button>` : ''; })()}
+        ${(()=>{ const _cr = window.getCurrentRep ? window.getCurrentRep() : null; const _ia = _cr && _cr.role === 'admin'; const _iom = _cr && _cr.role === 'office_manager'; return _ia ? `<button class="secondary-btn" onclick="duplicateOpportunity('${o.id}')">Duplicate</button><button class="danger-btn" onclick="deleteOpportunity('${o.id}')">Delete</button>` : _iom ? `<button class="secondary-btn" onclick="duplicateOpportunity('${o.id}')">Duplicate</button>` : ''; })()}
       </div>
     </div>
     <div class="grid grid-3 mt">
@@ -369,18 +375,29 @@ function opportunityDetail(id){
       <section class="card"><h2>Useful Tools</h2><div class="tool-list"><button onclick="show('forms','discovery')">Discovery Planner</button><button onclick="show('forms','site-walk')">Site Walk Checklist</button><button onclick="show('forms','proposal-review')">Proposal Review</button><button onclick="show('templates')">Follow-Up Templates</button><button onclick="show('objections')">Objection Handling</button><button onclick="show('forms','handoff')">Sold Job Activation</button></div></section>
     ${(()=>{
       const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
-      if (!_cr || _cr.role !== 'admin') return '';
+      const _isAdm = _cr && _cr.role === 'admin';
+      const _isOM  = _cr && _cr.role === 'office_manager';
+      if (!_isAdm && !_isOM) return '';
       const _ca = state.opportunities.find(x=>x.id==='${o.id}') || {};
-      return `<section class="card" style="border:2px solid #00d4ff">
-        <h2>🔑 Admin Controls <span style="font-size:11px;font-weight:400;color:#64748b;margin-left:6px">Tyler Only</span></h2>
-        <div class="grid grid-3" style="gap:12px;margin-top:12px">
+      // Commission Approved checkbox — Tyler (admin) only
+      const _commApprovedHtml = _isAdm ? `
           <div>
             <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Commission Approved</label>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
               <input type="checkbox" id="commApproved" ${_ca.commissionApproved?'checked':''} onchange="setOppField('${o.id}','commissionApproved',this.checked);showToast('Commission approval updated')">
               <span style="font-size:13px">${_ca.commissionApproved ? '✅ Approved' : '⏳ Pending approval'}</span>
             </label>
-          </div>
+          </div>` : `
+          <div style="opacity:.5">
+            <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Commission Approved</label>
+            <span style="font-size:12px;color:#64748b">🔒 Tyler (Owner) only</span>
+          </div>`;
+      const _borderColor = _isAdm ? '#00d4ff' : '#f59e0b';
+      const _panelTitle  = _isAdm ? '🔑 Admin Controls <span style="font-size:11px;font-weight:400;color:#64748b;margin-left:6px">Tyler Only</span>' : '📋 Office Controls <span style="font-size:11px;font-weight:400;color:#64748b;margin-left:6px">Jen — Sales Ops</span>';
+      return `<section class="card" style="border:2px solid ${_borderColor}">
+        <h2>${_panelTitle}</h2>
+        <div class="grid grid-3" style="gap:12px;margin-top:12px">
+          ${_commApprovedHtml}
           <div>
             <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Payment Collected</label>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
@@ -397,7 +414,7 @@ function opportunityDetail(id){
           </div>
         </div>
         <div style="margin-top:12px;padding:10px;background:#0f172a;border-radius:8px;font-size:12px;color:#64748b">
-          💡 Commission is paid only after both "Commission Approved" and "Payment Collected" are checked. For $10K+ landscape jobs, approval is always required before commission is calculated.
+          💡 Commission is paid only after both "Commission Approved" and "Payment Collected" are checked. Commission approval is Tyler's decision only. Jen can mark payment collected and reassign reps.
         </div>
       </section>`;
     })()}
@@ -648,7 +665,7 @@ function manager(){
 
   view.innerHTML = `
     <div class="eyebrow">Leadership Rhythm \u2014 FY2026</div>
-    <h1>Manager Tools <span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px">${escapeHtml(fy.budgetVersion)}</span></h1>
+    <h1>Manager Tools <span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px">${escapeHtml(fy.budgetVersion)}</span>${(()=>{ const _cr = window.getCurrentRep ? window.getCurrentRep() : null; return (_cr && _cr.role === 'office_manager') ? '<span style="font-size:12px;color:#f59e0b;font-weight:400;margin-left:10px;vertical-align:middle;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:8px;padding:2px 8px">📋 Office Manager View — Read Only</span>' : ''; })()}</h1>
     <p class="lede">Real division P&amp;L, monthly actuals, HubSpot pipeline gates, pricing discipline, and team scorecard.</p>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:28px;background:linear-gradient(135deg,#0a1628,#0f172a);border:1px solid #1e4d6b;border-radius:14px;padding:20px">
@@ -805,6 +822,7 @@ function manager(){
 function settings(){
   const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
   const _ia = _cr && _cr.role === 'admin';
+  const _iom = _cr && _cr.role === 'office_manager';
   const adminSections = _ia ? `
     <section class="card" style="border:1px solid #334155">
       <h2>📥 Import</h2>
@@ -816,15 +834,25 @@ function settings(){
       <h2>⚠️ Reset All Data</h2>
       <p>Clears all opportunities, notes, and checklist progress on this browser. <strong style="color:#f87171">Admin only — cannot be undone.</strong></p>
       <button class="danger-btn" onclick="resetAll()">Reset All Local Data</button>
+    </section>` : _iom ? `
+    <section class="card" style="background:#0a0f1a;border:1px solid #f59e0b30;opacity:.75">
+      <h2>🔒 Import / Reset</h2>
+      <p class="muted">Import and data reset are restricted to Tyler (Owner / Admin). Contact Tyler if a data restore is needed.</p>
     </section>` : `
     <section class="card" style="background:#0a0f1a;border:1px solid #1e293b;opacity:.6">
       <h2>🔒 Import / Reset</h2>
       <p class="muted">Import and data reset are restricted to Tyler (Admin).</p>
     </section>`;
 
+  const _viewLabel = _ia
+    ? '<span style="font-size:13px;color:#00d4ff;font-weight:400;margin-left:8px">· Owner / Admin View</span>'
+    : _iom
+    ? '<span style="font-size:13px;color:#f59e0b;font-weight:400;margin-left:8px">· Office Manager View</span>'
+    : '<span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px">· Rep View</span>';
+
   view.innerHTML = `
     <div class="eyebrow">Data and Setup</div>
-    <h1>Settings ${_ia ? '<span style="font-size:13px;color:#00d4ff;font-weight:400;margin-left:8px">· Owner / Admin View</span>' : '<span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px">· Rep View</span>'}</h1>
+    <h1>Settings ${_viewLabel}</h1>
     <p class="lede">Export your pipeline data for backup or reporting. Data is saved locally in the browser.</p>
     <div class="grid grid-2 mt">
       <section class="card">
