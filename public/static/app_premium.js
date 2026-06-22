@@ -522,52 +522,242 @@ window.filterPipelineByRep = function(repId) {
 
 function lead(){
   const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
-  view.innerHTML = `
-    <div class="eyebrow">Stage 1</div>
-    <h1>Lead Intake</h1>
-    <p class="lede">Capture enough information to route the opportunity correctly and set the right next step.</p>
-    <form class="card form" id="leadForm">
-      <div class="form-grid">
-        ${input('client','Client Name',true)}
-        ${input('phone','Phone')}
-        ${input('email','Email','email')}
-        ${input('address','Property Address')}
-        ${select('clientType','Client Type',['Residential','Commercial'])}
-        ${select('projectCategory','Project Category',['Landscape / Enhancement','Maintenance - One Time','Maintenance - Recurring','Hardscape','Drainage','Design / Build','Irrigation','Outdoor Lighting','Other'])}
-        ${select('serviceLine','Service Line',data.serviceLines)}
-        ${select('source','Lead Source',data.leadSources)}
-        ${select('leadSource','Commission Lead Source',['company_lead','self_generated','assisted'],'company_lead')}
-        ${select('workType','Work Type (commission)',['landscape','maintenance_onetime','maintenance_recurring','maintenance_upsell','hardscape','drainage','design_build'],'landscape')}
-        ${input('jobValue','Estimated Job Value ($)','number')}
-        <div id="commPreview" style="font-size:12px;color:#4ade80;padding:4px 2px;display:none;grid-column:1/-1;font-weight:600"></div>
 
-        ${input('project','Project / Opportunity Name')}
-        ${input('urgency','Urgency / Timing')}
-        ${input('decisionMaker','Decision-Maker(s)')}
-        ${input('budget','Budget language / range')}
-        ${input('nextFollowUp','Next Follow-Up Date','date')}
-        ${select('status','Status',data.statuses, 'New Lead')}
-        ${(()=>{
-          const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
-          const _ia = _cr && (_cr.role === 'admin' || _cr.role === 'office_manager');
-          if (!_ia) return `<input type="hidden" name="repId" value="${_cr ? _cr.id : ''}">`;
-          return `<label><span>Assigned Rep</span><select name="repId">
-            <option value="">— Select rep —</option>
-            ${(window.REPS||[]).map(r=>`<option value="${r.id}">${r.avatar} ${r.name}</option>`).join('')}
-          </select></label>`;
-        })()}
-      </div>
-      ${textarea('prompt','What prompted the inquiry?')}
-      ${textarea('desiredOutcome','Desired outcome / what good looks like')}
-      ${textarea('fitConcerns','Fit concerns / risk flags')}
-      <div class="footer-actions"><button class="primary-btn" type="submit">Save Lead</button><button type="button" class="secondary-btn" onclick="show('forms','lead-intake')">Open Intake Checklist</button></div>
-    </form>
-  `;
+  // Rep picker HTML (admin/manager only)
+  const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
+  const _ia = _cr && (_cr.role === 'admin' || _cr.role === 'office_manager');
+  const repPickerHtml = _ia
+    ? '<label class="lf-field"><span class="lf-label">Assigned Rep</span><select name="repId" class="lf-select"><option value="">— Select rep —</option>'
+        + (window.REPS||[]).map(r=>'<option value="' + r.id + '">' + r.avatar + ' ' + r.name + '</option>').join('')
+        + '</select></label>'
+    : '<input type="hidden" name="repId" value="' + (_cr ? _cr.id : '') + '">';
+
+  // Project category tile data
+  const _cats = [
+    {v:'Landscape / Enhancement', icon:'🌿', short:'Landscape'},
+    {v:'Maintenance - Recurring',  icon:'🔁', short:'Recurring Maint.'},
+    {v:'Maintenance - One Time',   icon:'🧹', short:'One-Time Maint.'},
+    {v:'Hardscape',                icon:'🪨', short:'Hardscape'},
+    {v:'Drainage',                 icon:'💧', short:'Drainage'},
+    {v:'Design / Build',           icon:'📐', short:'Design / Build'},
+    {v:'Irrigation',               icon:'💦', short:'Irrigation'},
+    {v:'Outdoor Lighting',         icon:'💡', short:'Lighting'},
+    {v:'Other',                    icon:'📋', short:'Other'},
+  ];
+  const catTilesHtml = _cats.map(c =>
+    '<button type="button" class="cat-tile" data-cat="' + c.v + '">'
+    + '<span class="cat-tile-icon">' + c.icon + '</span>'
+    + '<span class="cat-tile-label">' + c.short + '</span>'
+    + '</button>'
+  ).join('');
+
+  // Service line options
+  const slOptions = (data.serviceLines||[]).map(o => '<option>' + escapeHtml(o) + '</option>').join('');
+
+  // Status options
+  const stOptions = (data.statuses||[]).map(o => '<option' + (o==='New Lead'?' selected':'') + '>' + escapeHtml(o) + '</option>').join('');
+
+  // Lead source options
+  const lsOptions = (data.leadSources||[]).map(o => '<option>' + escapeHtml(o) + '</option>').join('');
+
+  view.innerHTML =
+    '<div class="lf-hero">'
+      + '<div class="lf-hero-eyebrow">New Opportunity</div>'
+      + '<h1 class="lf-hero-title">🌱 Let\'s capture this lead</h1>'
+      + '<p class="lf-hero-sub">Every great project starts here. Fill in what you know — you can always add more later.</p>'
+    + '</div>'
+    + '<form id="leadForm">'
+
+      // ── Section 1: Who is it? ──
+      + '<div class="lf-section">'
+        + '<div class="lf-section-header">'
+          + '<span class="lf-section-num">1</span>'
+          + '<div>'
+            + '<div class="lf-section-title">Who is it?</div>'
+            + '<div class="lf-section-sub">Contact details for the prospect</div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="lf-fields">'
+          + '<label class="lf-field lf-field--full">'
+            + '<span class="lf-label">Client Name <span class="lf-required">*</span></span>'
+            + '<input name="client" type="text" required class="lf-input lf-input--lg" placeholder="e.g. Sarah Johnson">'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Phone</span>'
+            + '<input name="phone" type="tel" class="lf-input" placeholder="(555) 000-0000">'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Email</span>'
+            + '<input name="email" type="email" class="lf-input" placeholder="name@example.com">'
+          + '</label>'
+          + '<label class="lf-field lf-field--full">'
+            + '<span class="lf-label">Property Address</span>'
+            + '<input name="address" type="text" class="lf-input" placeholder="Street, City, State">'
+          + '</label>'
+          + '<div class="lf-field lf-field--full">'
+            + '<span class="lf-label">Client Type</span>'
+            + '<div class="lf-toggle-group">'
+              + '<input type="radio" name="clientType" id="ct-res" value="Residential" checked class="lf-toggle-radio">'
+              + '<label for="ct-res" class="lf-toggle-btn">🏡 Residential</label>'
+              + '<input type="radio" name="clientType" id="ct-com" value="Commercial" class="lf-toggle-radio">'
+              + '<label for="ct-com" class="lf-toggle-btn">🏢 Commercial</label>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
+      + '</div>'
+
+      // ── Section 2: What's the job? ──
+      + '<div class="lf-section">'
+        + '<div class="lf-section-header">'
+          + '<span class="lf-section-num">2</span>'
+          + '<div>'
+            + '<div class="lf-section-title">What\'s the job?</div>'
+            + '<div class="lf-section-sub">Project type, scope, and value</div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="lf-fields">'
+          + '<div class="lf-field lf-field--full">'
+            + '<span class="lf-label">Project Category</span>'
+            + '<div class="lf-cat-tiles">' + catTilesHtml + '</div>'
+            + '<input type="hidden" name="projectCategory" id="projectCategoryInput">'
+          + '</div>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Service Line</span>'
+            + '<select name="serviceLine" class="lf-select"><option value="">Select...</option>' + slOptions + '</select>'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Project / Opportunity Name</span>'
+            + '<input name="project" type="text" class="lf-input" placeholder="e.g. Backyard renovation">'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Estimated Job Value ($)</span>'
+            + '<input name="jobValue" type="number" class="lf-input lf-input--value" placeholder="0" min="0" step="100">'
+          + '</label>'
+          + '<div id="commPreview" class="lf-comm-preview" style="display:none">'
+            + '<span class="lf-comm-icon">💰</span>'
+            + '<span id="commPreviewText"></span>'
+          + '</div>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Work Type <span class="lf-hint">(for commission)</span></span>'
+            + '<select name="workType" class="lf-select">'
+              + '<option value="landscape" selected>Landscape</option>'
+              + '<option value="maintenance_onetime">Maintenance – One Time</option>'
+              + '<option value="maintenance_recurring">Maintenance – Recurring</option>'
+              + '<option value="maintenance_upsell">Maintenance – Upsell</option>'
+              + '<option value="hardscape">Hardscape</option>'
+              + '<option value="drainage">Drainage</option>'
+              + '<option value="design_build">Design / Build</option>'
+            + '</select>'
+          + '</label>'
+        + '</div>'
+      + '</div>'
+
+      // ── Section 3: Routing & next step ──
+      + '<div class="lf-section">'
+        + '<div class="lf-section-header">'
+          + '<span class="lf-section-num">3</span>'
+          + '<div>'
+            + '<div class="lf-section-title">Routing &amp; next step</div>'
+            + '<div class="lf-section-sub">Where does this go, and what happens next?</div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="lf-fields">'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Lead Source</span>'
+            + '<select name="source" class="lf-select"><option value="">Select...</option>' + lsOptions + '</select>'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Commission Source</span>'
+            + '<select name="leadSource" class="lf-select">'
+              + '<option value="company_lead" selected>Company Lead</option>'
+              + '<option value="self_generated">Self-Generated</option>'
+              + '<option value="assisted">Assisted</option>'
+            + '</select>'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Urgency / Timing</span>'
+            + '<input name="urgency" type="text" class="lf-input" placeholder="e.g. Wants it done by June">'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Decision-Maker(s)</span>'
+            + '<input name="decisionMaker" type="text" class="lf-input" placeholder="Who signs off?">'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Budget</span>'
+            + '<input name="budget" type="text" class="lf-input" placeholder="Budget range or language">'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Next Follow-Up</span>'
+            + '<input name="nextFollowUp" type="date" class="lf-input">'
+          + '</label>'
+          + '<label class="lf-field">'
+            + '<span class="lf-label">Status</span>'
+            + '<select name="status" class="lf-select"><option value="">Select...</option>' + stOptions + '</select>'
+          + '</label>'
+          + repPickerHtml
+        + '</div>'
+      + '</div>'
+
+      // ── Optional detail toggle ──
+      + '<div class="lf-detail-toggle" id="detailToggle" onclick="window._toggleLeadDetail()">'
+        + '<span id="detailToggleLabel">+ Add notes &amp; context</span>'
+        + '<span class="lf-detail-chevron" id="detailChevron">›</span>'
+      + '</div>'
+      + '<div class="lf-detail-panel" id="detailPanel" style="display:none">'
+        + '<div class="lf-fields">'
+          + '<label class="lf-field lf-field--full">'
+            + '<span class="lf-label">What prompted the inquiry?</span>'
+            + '<textarea name="prompt" rows="3" class="lf-textarea" placeholder="How did they hear about us? What triggered the call?"></textarea>'
+          + '</label>'
+          + '<label class="lf-field lf-field--full">'
+            + '<span class="lf-label">Desired outcome / what good looks like</span>'
+            + '<textarea name="desiredOutcome" rows="3" class="lf-textarea" placeholder="What does success look like for the client?"></textarea>'
+          + '</label>'
+          + '<label class="lf-field lf-field--full">'
+            + '<span class="lf-label">Fit concerns / risk flags</span>'
+            + '<textarea name="fitConcerns" rows="3" class="lf-textarea" placeholder="Anything that might be a problem?"></textarea>'
+          + '</label>'
+        + '</div>'
+      + '</div>'
+
+      // ── Footer actions ──
+      + '<div class="lf-footer">'
+        + '<button class="primary-btn lf-save-btn" type="submit">Save Lead →</button>'
+        + '<button type="button" class="secondary-btn" onclick="show(\'forms\',\'lead-intake\')">Open Intake Checklist</button>'
+      + '</div>'
+
+    + '</form>';
+
+  // Detail panel toggle
+  window._toggleLeadDetail = function() {
+    const panel = document.getElementById('detailPanel');
+    const label = document.getElementById('detailToggleLabel');
+    const chev  = document.getElementById('detailChevron');
+    if (!panel) return;
+    const open = panel.style.display !== 'none';
+    panel.style.display = open ? 'none' : 'block';
+    if (label) label.textContent = open ? '+ Add notes & context' : '− Hide notes';
+    if (chev)  chev.style.transform = open ? '' : 'rotate(90deg)';
+  };
+
+  // Category tile selection
+  setTimeout(() => {
+    const catInput = document.getElementById('projectCategoryInput');
+    document.querySelectorAll('.cat-tile').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-tile').forEach(b => b.classList.remove('cat-tile--active'));
+        btn.classList.add('cat-tile--active');
+        if (catInput) catInput.value = btn.dataset.cat;
+      });
+    });
+  }, 50);
+
   // T35: Commission preview — wire live calc after DOM settles
   setTimeout(() => {
-    const jvInput = document.getElementById('commPreviewInput') || document.querySelector('[name="jobValue"]');
+    const jvInput = document.querySelector('[name="jobValue"]');
     const wtSelect = document.querySelector('[name="workType"]');
     const preview = document.getElementById('commPreview');
+    const previewText = document.getElementById('commPreviewText');
     function updateCommPreview() {
       if (!preview) return;
       const val = Number(jvInput?.value || 0);
@@ -576,8 +766,9 @@ function lead(){
       const rates = { landscape:.08, maintenance_onetime:.06, maintenance_recurring:.10, hardscape:.07, drainage:.07, design_build:.07 };
       const rate = rates[wt] || .07;
       const est  = val * rate;
-      preview.textContent = '💰 Est. commission: ' + est.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}) + ' (' + Math.round(rate*100) + '%)';
-      preview.style.display = 'block';
+      const commStr = est.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+      if (previewText) previewText.textContent = 'Est. commission: ' + commStr + ' (' + Math.round(rate*100) + '%)';
+      preview.style.display = 'flex';
     }
     if (jvInput)  jvInput.addEventListener('input', updateCommPreview);
     if (wtSelect) wtSelect.addEventListener('change', updateCommPreview);
@@ -615,7 +806,7 @@ function lead(){
       warn.id = 'dup-warn';
       warn.className = 'dup-warn';
       warn.innerHTML = '<strong>⚠️ Possible duplicate' + (dupes.length > 1 ? 's' : '') + '</strong> — similar lead' + (dupes.length > 1 ? 's' : '') + ' already in pipeline:<br>' +
-        dupes.map(o => `<span onclick="show('pipeline','${o.id}')" style="cursor:pointer;color:#00d4ff;text-decoration:underline">${escapeHtml(o.client||'—')} · ${escapeHtml(o.status||'')}</span>`).join('<br>');
+        dupes.map(o => '<span onclick="show(\'pipeline\',\'' + o.id + '\')" style="cursor:pointer;color:#00d4ff;text-decoration:underline">' + escapeHtml(o.client||'—') + ' · ' + escapeHtml(o.status||'') + '</span>').join('<br>');
       const form = document.getElementById('leadForm');
       if (form) form.prepend(warn);
     }
