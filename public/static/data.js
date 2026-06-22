@@ -5,14 +5,30 @@ window.AVALON_DATA = {
     "tagline": "Consultative. Profitable. Operationally clean. Easy to trust."
   },
   "serviceLines": [
-    "Maintenance Contract",
-    "Seasonal Service",
-    "Enhancement",
-    "Drainage / Hardscape",
+    "Landscape / Enhancement",
+    "Maintenance – One-Time",
+    "Maintenance – Recurring",
+    "Hardscape / Drainage",
     "Design-Build",
+    "Irrigation",
+    "Outdoor Lighting",
     "Commercial Scope",
     "Specialty / Site Work",
     "Other"
+  ],
+  "projectCategories": [
+    { "id": "landscape", "label": "Landscape / Enhancement", "type": "landscape", "icon": "🌿" },
+    { "id": "maintenance_onetime", "label": "Maintenance – One-Time", "type": "maintenance", "icon": "✂️" },
+    { "id": "maintenance_recurring", "label": "Maintenance – Recurring", "type": "maintenance", "icon": "🔁" },
+    { "id": "hardscape", "label": "Hardscape / Drainage", "type": "landscape", "icon": "🪨" },
+    { "id": "design_build", "label": "Design-Build", "type": "landscape", "icon": "📐" },
+    { "id": "irrigation", "label": "Irrigation", "type": "landscape", "icon": "💧" },
+    { "id": "lighting", "label": "Outdoor Lighting", "type": "landscape", "icon": "💡" },
+    { "id": "commercial", "label": "Commercial Scope", "type": "commercial", "icon": "🏢" }
+  ],
+  "clientTypes": [
+    { "id": "residential", "label": "Residential", "icon": "🏡" },
+    { "id": "commercial", "label": "Commercial", "icon": "🏢" }
   ],
   "leadSources": [
     "Website",
@@ -21,6 +37,10 @@ window.AVALON_DATA = {
     "Google",
     "Social Media",
     "Yard Sign",
+    "Door Hanger",
+    "Cold Call",
+    "Neighborhood Canvass",
+    "Job-Site Canvass",
     "Networking",
     "Past Client",
     "Other"
@@ -38,409 +58,600 @@ window.AVALON_DATA = {
     "On Hold",
     "Closed Lost"
   ],
+  "salesProcess": {
+    "title": "The 6-Step Avalon Sales Process",
+    "subtitle": "Every engagement follows these exact, non-negotiable milestones. Skipping a step creates process friction and burns estimating hours.",
+    "stat": "+25% company-wide sales increase when a consistent process is followed. (Dave Kurlan, Objective Management Group)",
+    "steps": [
+      {
+        "num": "01",
+        "title": "Rapport",
+        "tagline": "Establish trust within 7 seconds.",
+        "description": "Enter the prospect's world. Real rapport is not small talk — it is active listening, matching communication style, and entering their reality to understand operational and lifestyle pains. The client decides in 7 seconds if they trust you.",
+        "socialRapport": ["Small talk about weather, sports, or traffic.", "Surface-level chatter that delays professional depth.", "Fails to establish expertise or build lasting credibility.", "Client views you as a typical transactional contractor."],
+        "realRapport": ["Active listening and displaying mutual respect.", "Match and mirror communication styles.", "Entering their reality to understand operational/lifestyle pains.", "Establish yourself as a trusted advisor, not a dynamic vendor."],
+        "communicationStyles": [
+          { "type": "Visual", "description": "Think in pictures — value aesthetics, renderings, physical samples.", "triggers": "\"see,\" \"looks,\" \"appear,\" \"show me,\" \"reveal,\" \"imagine,\" \"crystal clear\"" },
+          { "type": "Auditory", "description": "Focus on sound, flow, spoken details. Respond highly to clear verbal reviews.", "triggers": "\"hear,\" \"sounds good,\" \"listen,\" \"tune in,\" \"it resonates\"" },
+          { "type": "Kinesthetic", "description": "Focus on texture, comfort, physical sensation — want to touch materials.", "triggers": "\"feel,\" \"touch,\" \"grasp,\" \"concrete,\" \"solid,\" \"tap into\"" },
+          { "type": "Auditory Digital", "description": "Value data, systems, logic, specifications, contracts, and structured steps.", "triggers": "\"process,\" \"understand,\" \"think,\" \"decide,\" \"system,\" \"analyze\"" }
+        ],
+        "nlpTips": ["Fast Talker? Speed up your delivery. Slow/Deliberate Talker? Slow down and insert pauses.", "Kinesthetic Client? Hand them a heavy paving stone or masonry sample early.", "Auditory Digital? Present the project roadmap step-by-step before opening the 3D drawings."]
+      },
+      {
+        "num": "02",
+        "title": "Mutual Agreements (T.A.P.P.O.)",
+        "tagline": "Set the roadmap. Commitments build massive trust.",
+        "description": "Mutual Agreements are commitments that provide comfort, clarity, and progression throughout the sales funnel. T.A.P.P.O. is the framework — set it at every meeting.",
+        "tappo": [
+          { "letter": "T", "word": "Time", "description": "State exactly how much time is committed for the meeting." },
+          { "letter": "A", "word": "Agenda", "description": "Identify what the prospect wants to cover and what you need to cover." },
+          { "letter": "P", "word": "People", "description": "Clarify who will be present. Never present to one spouse only." },
+          { "letter": "P", "word": "Process", "description": "Explain what will occur during the meeting step by step." },
+          { "letter": "O", "word": "Outcome", "description": "Mutually define what the next step will be at the end." }
+        ],
+        "nonNegotiables": [
+          "No budget qualification = No site plan or breakdown shared.",
+          "Unidentified decision-makers = No final proposal review.",
+          "Mutual Agreement broken = Stop work immediately and debrief."
+        ]
+      },
+      {
+        "num": "03",
+        "title": "Discovery (CBRs + 3+ Rule)",
+        "tagline": "Uncover Core Buying Reasons using the 3+ Funneling Rule.",
+        "description": "CBRs (Core Buying Reasons) are the deep emotional drivers behind the purchase. Ask 3+ layered funnel questions before accepting any surface-level answer. Surface-level answers burn estimating hours on unqualified work.",
+        "cbrQuestions": [
+          "What prompted you to reach out today specifically?",
+          "What is not working today with the current condition?",
+          "What would make this project feel like a complete win 6 months after it's done?",
+          "What has stopped you from addressing this before now?",
+          "Who else needs to be part of this decision?",
+          "Have you thought about the level of investment you are comfortable with?"
+        ],
+        "questioningTactics": [
+          { "num": "01", "title": "The 3+ Funneling Rule", "description": "Never accept the first answer. Ask at least 3 deeper follow-up questions to reach the real Core Buying Reason. Surface answers like 'I just want it to look nice' hide emotional drivers like 'my daughter's wedding is in 4 months'." },
+          { "num": "02", "title": "Pain to Pleasure Shift", "description": "Once pain and consequences are thoroughly established, transition toward a collaborative, forward-looking solution. 'Based on what we've walked through today, where would you like me to focus my design recommendations?'" },
+          { "num": "03", "title": "Implication & Consequence", "description": "Uncover the cost of inaction. 'What happens next spring if we don't fix this retaining wall or the standing water?'" },
+          { "num": "04", "title": "Nurturing & Validating Statements", "description": "Validate ideas to build trust. 'I appreciate your candor in sharing that with me. It sounds like a highly frustrating situation...' This makes them comfortable sharing deep emotional or financial constraints." },
+          { "num": "05", "title": "Struggling Statements", "description": "Play vulnerable to make the prospect help you. 'Help me out here, I'm a bit confused... earlier you mentioned X, but now we're looking at Y?' Removes vendor tension and keeps you from sounding salesy." },
+          { "num": "06", "title": "Effective Listening Discipline", "description": "We think at 3,000 words/min but listen at 150. 75% of the time we are distracted. Silence is power — pause 3 seconds after they finish. Nod and validate. Clarify definitions. Use verbatim feedback loops: 'Just to ensure I fully understand, when you say low-maintenance, you mean zero weeding or resealing, correct?'" }
+        ]
+      },
+      {
+        "num": "04",
+        "title": "Budget",
+        "tagline": "Align money tolerance with emotional Core Buying Reasons.",
+        "description": "Your money tolerance governs how you sell. Reframe 'Cost' to 'Investment' — link their hard dollars back to emotional Core Buying Reasons. Never apologize for premium pricing. Never allow 1:1 comparison to generic hourly contractors.",
+        "reframingRules": [
+          "Link the $120,000 price tag directly back to hosting their daughter's wedding or securing structural integrity.",
+          "Establish money limits during initial walk: 'What is your comfortable investment tolerance for this backyard transition?'",
+          "Never apologize for the high pricing of premium materials.",
+          "Never allow the client to compare your custom-engineered masonry proposal 1:1 with generic hourly contractors.",
+          "No budget qualification = No site plan or breakdown shared."
+        ],
+        "talkTrack": "I know budget is a sensitive topic, so I'll be direct. We typically see projects like this ranging from [range]. I'm not asking you to commit to a number — I just want to make sure I'm building something that makes sense for your situation. Is there a range that would feel comfortable for you to invest, assuming we can deliver what you're describing?"
+      },
+      {
+        "num": "05",
+        "title": "Decision",
+        "tagline": "Qualify the who, when, and how of their procurement decision.",
+        "description": "Before presenting design plans or estimates, qualify the decision-making process completely. Pushing forward without this step is a fatal process error.",
+        "pillars": [
+          { "title": "Who is Involved?", "description": "Identify all decision-makers and key stakeholders/influencers — spouses, architects, HOA boards. Never present a design to only one spouse.", "check": "What happens if you both don't agree on the layout?" },
+          { "title": "How is it Made?", "description": "Understand their evaluation criteria. What specific metrics or details must they see to make a decision? What was their past landscape contractor experience?", "check": "How did you select your interior builder?" },
+          { "title": "When will it occur?", "description": "Establish a definitive, hard timeline. Map backward from graduation, wedding, or summer season deadlines to calculate excavation and planting start dates.", "check": "To host by June, we must break ground by March." }
+        ],
+        "rehearsalProtocol": "When only one contact can attend, rehearse with them how they'll present Avalon to the final decision-maker. 'When you show these drainage plans to your spouse tonight, what questions do you expect them to ask? How can I best arm you with those answers?'"
+      },
+      {
+        "num": "06",
+        "title": "Presentation",
+        "tagline": "Pitch tailored designs connected back to Core Buying Reasons.",
+        "description": "Never send a proposal via email for the client to read alone. Present the proposal in person or via live video call, walking through solutions step-by-step. A successful close is the natural, frictionless consequence of solid Mutual Agreements throughout the entire funnel.",
+        "presentationSteps": [
+          { "step": "1-2", "title": "Review CBRs → Present in CBR Order", "description": "Begin by restating their emotional Core Buying Reasons. Walk them through their painful driveway swamp or graduation goal first. Then pitch solutions starting with their highest priority emotional item." },
+          { "step": "3-4", "title": "Check Agreement → Review Investment", "description": "Stop after every single design solution. Ask: 'Do you agree that this French drain system completely resolves your backyard pooling?' Only after they've signed off on the design do you present pricing — state it confidently as an investment." },
+          { "step": "5-6", "title": "Address Concerns → Ask for a Decision", "description": "Encourage questions. Handle technical stone or plant objections using Acknowledge → Reframe → Forward-question. Then ask for a commitment. Avoid: 'Let me know what you think.' Instead: secure a signed contract or deposit with a clear start date." }
+        ],
+        "handoffPacket": {
+          "title": "Sales-to-Production Handoff",
+          "phases": [
+            { "phase": "Phase 1: The Handoff Packet", "items": ["Signed SOW & Design Plan", "Complete Cost Breakdown (COGs)", "Client CBR & Communication Profile", "Material delivery and access layout"] },
+            { "phase": "Phase 2: The Alignment Meeting", "items": ["SOW walkthrough line-by-line", "Identify heavy machinery access paths", "Crew Leader signs off on estimated hours", "Review high-risk drainage specs"] },
+            { "phase": "Phase 3: The Driveway Handshake", "items": ["Sales Rep meets on site on day one of mobilization", "Restate the Mutual Agreement live", "Crew Leader takes over daily client comms", "Verify property lines and utility markouts"] }
+          ]
+        }
+      }
+    ]
+  },
   "stages": [
     {
       "id": 1,
       "title": "Lead Intake and Routing",
+      "processStep": "Pre-Step",
       "owner": "Sales Lead / Admin Support",
       "purpose": "Decide what kind of opportunity this is before anyone starts selling.",
       "artifact": "Lead record with service line, owner, source, timing, and next step.",
       "gate": "Enough information exists to schedule a discovery call or site walk.",
       "dayUse": "Open this stage before moving an opportunity through lead intake and routing.",
       "actions": [
-        "Confirm the client need and current status.",
-        "Document the required information in the opportunity record.",
-        "Set or confirm the next clear action with an owner and date.",
-        "Do not move forward until the stage gate is satisfied."
+        "Record name, property address, contact details, lead source, service line, urgency, and preferred next step.",
+        "Identify whether the request is maintenance, seasonal service, enhancement, drainage/hardscape, design-build, commercial scope, or specialty/site work.",
+        "Screen for service area, general fit, timing, and any obvious red flags.",
+        "Assign an owner and schedule the next step before the lead goes cold."
+      ],
+      "questions": [
+        "What prompted you to reach out?",
+        "What type of work are you hoping to have done?",
+        "Where is the property located?",
+        "Is there a specific deadline or event driving the timing?",
+        "Who should be involved in the conversation?"
       ],
       "redFlags": [
-        "No clear next step.",
-        "Decision-maker or budget comfort is unclear.",
-        "Assumptions are not documented.",
-        "The client expectation and internal production reality do not match."
+        "Out of service area.",
+        "Unclear decision-maker — client wants a number without a conversation.",
+        "Timing is unrealistic for scope described.",
+        "Work type does not match Avalon's model.",
+        "No clear next step scheduled before lead goes cold."
       ]
     },
     {
       "id": 2,
       "title": "Discovery and Mutual Agreement",
+      "processStep": "Steps 01–02",
       "owner": "Sales Lead / Account Manager",
-      "purpose": "Create rapport, learn the buyer story, and agree on a clear next step.",
-      "artifact": "Discovery notes with buying reasons, decision map, timing, budget comfort, and fit assessment.",
-      "gate": "Avalon understands the real problem well enough to inspect the site and shape scope.",
+      "purpose": "Create rapport, learn the real buyer story via CBRs, set T.A.P.P.O. agreements, and confirm the next step.",
+      "artifact": "Discovery notes with Core Buying Reasons, decision map, timing, budget comfort, T.A.P.P.O. agreement, and fit assessment.",
+      "gate": "Avalon understands the real CBRs well enough to inspect the site and shape scope. Budget comfort explored.",
       "dayUse": "Open this stage before moving an opportunity through discovery and mutual agreement.",
       "actions": [
-        "Confirm the client need and current status.",
-        "Document the required information in the opportunity record.",
-        "Set or confirm the next clear action with an owner and date.",
-        "Do not move forward until the stage gate is satisfied."
+        "Establish real rapport within the first 7 seconds — match communication style, enter their world.",
+        "Set T.A.P.P.O. (Time, Agenda, People, Process, Outcome) at the start of the meeting.",
+        "Use the 3+ Funneling Rule — ask at least 3 layered questions before accepting any surface-level answer.",
+        "Uncover Core Buying Reasons using implication, consequence, and pain-to-pleasure questioning.",
+        "Apply effective listening discipline — 3-second silences, verbatim feedback loops, no premature solution mode.",
+        "Identify all decision-makers — never present to one spouse alone.",
+        "Explore budget comfort: 'What is your comfortable investment tolerance?'",
+        "Set a mutual agreement for the site walk or proposal process."
+      ],
+      "questions": [
+        "What made you reach out now — specifically?",
+        "What is not working today?",
+        "What would make this project feel like a complete win 6 months after it's done?",
+        "Who else needs to weigh in?",
+        "Have you done work like this before?",
+        "What timing matters most?",
+        "Have you thought about the level of investment you're comfortable with?"
       ],
       "redFlags": [
-        "No clear next step.",
-        "Decision-maker or budget comfort is unclear.",
-        "Assumptions are not documented.",
-        "The client expectation and internal production reality do not match."
+        "Client refuses to share priorities or buying reasons.",
+        "Decision process is hidden — one spouse absent.",
+        "Budget expectations are far below likely scope.",
+        "Multiple stakeholders are not aligned.",
+        "No T.A.P.P.O. set — meeting has no structure.",
+        "Rep accepted first surface-level answer without 3+ funneling."
       ]
     },
     {
       "id": 3,
       "title": "Site Walk and Opportunity Qualification",
+      "processStep": "Steps 02–03",
       "owner": "Sales Lead with Estimator / Project Lead as needed",
-      "purpose": "Confirm site conditions, constraints, quality expectations, and project fit.",
-      "artifact": "Site walk notes with measurements, photos, scope clarity, and fit decision.",
+      "purpose": "Confirm site conditions, constraints, quality expectations, and project fit. Deepen CBR understanding on-site.",
+      "artifact": "Site walk notes with photos, measurements, scope clarity, CBR reinforcement, risk notes, and fit decision.",
       "gate": "Avalon can accurately estimate and deliver this project at acceptable quality and margin.",
       "dayUse": "Open this stage before moving an opportunity through site walk and qualification.",
       "actions": [
-        "Walk the full site with the client and document all relevant conditions.",
-        "Confirm scope, quality expectations, and timeline with the client.",
-        "Identify any red flags, constraints, or risks before estimating.",
-        "Make the fit decision before leaving the site."
+        "Walk the site with the client — revisit their Core Buying Reasons while walking.",
+        "Take photos and measurements that support estimating and production.",
+        "Inspect access, drainage, grade, utilities, existing hardscape, plant health, staging areas, and material handling constraints.",
+        "Separate must-haves from nice-to-haves.",
+        "Hand kinesthetic clients a paving stone or material sample — build physical trust.",
+        "Classify as: straightforward quote, scoped proposal, or roadmap/preconstruction package.",
+        "Make the fit decision before leaving the site — be direct."
+      ],
+      "questions": [
+        "Which areas matter most to you?",
+        "What would you change first if we phased the project?",
+        "Where have you seen water, erosion, settling, or access issues?",
+        "Are there HOA, utility, neighbor, or permit issues we should know about?",
+        "What do you want to avoid?"
       ],
       "redFlags": [
-        "Scope is vague after walking the site.",
-        "Client has unrealistic price or timeline expectations.",
-        "Site access, HOA, or permit complications not addressed.",
-        "Fit decision was deferred without a clear reason."
+        "Missing access to critical areas.",
+        "Unknown utilities or significant drainage ambiguity.",
+        "Unclear property lines.",
+        "Scope keeps expanding without priority — client can't decide what matters most.",
+        "Fit decision was not made before leaving the site.",
+        "No photos or measurements taken."
       ]
     },
     {
       "id": 4,
-      "title": "Scope Development",
-      "owner": "Sales Lead with Estimator",
-      "purpose": "Define exactly what Avalon will deliver, what is excluded, and what assumptions are baked in.",
-      "artifact": "Scope document with inclusions, exclusions, assumptions, and allowances.",
-      "gate": "Scope is specific enough to estimate accurately and defend in writing.",
-      "dayUse": "Open this stage before moving an opportunity into estimating.",
+      "title": "Internal Scope Development",
+      "processStep": "Step 03–04",
+      "owner": "Sales Lead / Estimator",
+      "purpose": "Convert site walk findings into a complete, defensible scope before estimating begins.",
+      "artifact": "Scoped worksheet, material list, labor activity breakdown, assumptions, exclusions, and risk flags.",
+      "gate": "Scope is complete enough to estimate without guessing. All risks are flagged.",
+      "dayUse": "Open this stage before moving an opportunity through internal scope development.",
       "actions": [
-        "Draft the full scope of work with line-item inclusions.",
-        "Document all exclusions and assumptions explicitly.",
-        "Confirm scope aligns with client expectations from the site walk.",
-        "Get internal agreement before estimating begins."
+        "Break the work into logical sections: plant material, landscaping services, hardscaping/drainage, miscellaneous, and coordination items.",
+        "Define quantities, labor activities, materials, assumptions, exclusions, dependencies, and risk flags.",
+        "Identify permit, engineering, utility, subcontractor, disposal, access, or staging concerns.",
+        "Confirm whether the scope needs options, phases, allowances, or exclusions.",
+        "Write exclusions in plain language — every unknown must be called out."
+      ],
+      "questions": [
+        "What exactly are we furnishing and installing?",
+        "What is included, excluded, assumed, or unknown?",
+        "Where could production lose time or margin?",
+        "What does the client need to decide now versus later?"
       ],
       "redFlags": [
-        "Scope includes vague language like 'as needed' without limits.",
-        "Exclusions have not been communicated to the client.",
-        "Estimating started before scope was locked.",
-        "Client-facing scope and internal scope differ."
+        "Missing quantities — labor hours guessed.",
+        "No defined production method for complex work.",
+        "No exclusions written for unknowns.",
+        "No contingency where risk is high.",
+        "Scope was built from memory — no site walk documentation used."
       ]
     },
     {
       "id": 5,
-      "title": "Estimating and Margin Review",
-      "owner": "Estimator / Sales Lead",
-      "purpose": "Price the work accurately, protect margin, and confirm the project is worth doing.",
-      "artifact": "Estimate with cost breakdown, markup, final price, and margin summary.",
-      "gate": "Estimate meets margin target and has been reviewed by a manager or senior estimator.",
-      "dayUse": "Open this stage before finalizing a price for a proposal.",
+      "title": "Estimating, Costing, and Margin Review",
+      "processStep": "Step 04",
+      "owner": "Estimator / Sales Lead (with Manager review for $2,500+)",
+      "purpose": "Build an estimate that protects labor, material, overhead, contingency, and margin.",
+      "artifact": "Internal estimate, margin check, pricing recommendation, and reviewer sign-off when required.",
+      "gate": "Gross margin target met. Final sales number approved by appropriate authority level.",
+      "dayUse": "Open this stage before moving an opportunity through estimating and costing.",
       "actions": [
-        "Build the estimate from scope, not from guess or gut.",
-        "Apply correct markup for service line and project type.",
-        "Run a margin check before approving the number.",
-        "Document the pricing rationale for the proposal file."
+        "Separate plant/tree material, site materials, labor, equipment, subcontractors, disposal, overhead, contingency, and margin.",
+        "Review labor assumptions against actual production capacity.",
+        "Adjust for hidden risks: access, weather, soil, utilities, unknown existing conditions, phased inefficiency.",
+        "Confirm gross margin target and final sales number.",
+        "Get manager review for $2,500–$10,000 jobs. Tyler approval required for $10,001+ and all hardscape/drainage/design-build."
+      ],
+      "approvalMatrix": [
+        { "range": "Under $2,500", "approval": "Ryan may price using approved templates after training" },
+        { "range": "$2,500 – $10,000", "approval": "Manager review required before final approval" },
+        { "range": "$10,001+", "approval": "Tyler or senior management approval required" },
+        { "range": "Hardscape / Drainage / Grading / Design-Build", "approval": "Management approval always required" }
       ],
       "redFlags": [
-        "Estimate was built without a locked scope.",
-        "Margin was reduced without changing scope.",
-        "No manager sign-off on large or complex projects.",
-        "Contingency was left out of high-risk work."
+        "Labor hours guessed — no production rate reference.",
+        "Materials undercounted or forgotten.",
+        "No contingency on complex work.",
+        "Sales number reduced without scope reduction.",
+        "No reviewer sign-off on jobs requiring approval."
       ]
     },
     {
       "id": 6,
-      "title": "Proposal Preparation and Delivery",
+      "title": "Proposal Strategy and Packaging",
+      "processStep": "Step 05–06",
       "owner": "Sales Lead",
-      "purpose": "Present the investment clearly, protect scope, and frame the decision correctly.",
-      "artifact": "Proposal document with scope, price, exclusions, timeline, and next steps.",
-      "gate": "Proposal is complete, reviewed, and delivered to the decision-maker with a scheduled follow-up.",
-      "dayUse": "Open this stage before sending a proposal.",
+      "purpose": "Build a client-ready proposal that makes it easy to say yes — framed by outcome, not just tasks.",
+      "artifact": "Client-ready proposal with outcome framing, clear scope, investment, timeline, assumptions, exclusions, deposit/authorization, and next-step CTA.",
+      "gate": "Proposal is reviewed and approved per authority matrix. Delivery method confirmed.",
+      "dayUse": "Open this stage before moving an opportunity through proposal packaging.",
       "actions": [
-        "Build the proposal from the approved estimate and scope.",
-        "Include all exclusions and assumptions in plain language.",
-        "Present the proposal directly to the decision-maker when possible.",
-        "Set the follow-up date and expectation before leaving the conversation."
+        "Choose the proposal format based on complexity.",
+        "Frame the client outcome BEFORE listing tasks — link to their Core Buying Reasons.",
+        "Include: clear scope, investment, timeline, assumptions, exclusions, deposit/authorization, next-step call to action.",
+        "Keep internal operational details out of the client proposal.",
+        "Get manager review if required. Set delivery method and follow-up date before sending."
+      ],
+      "proposalStructure": [
+        "1. Project summary and client outcome framing (CBRs first)",
+        "2. Scope of work by section",
+        "3. Investment",
+        "4. Timeline or sequencing",
+        "5. Assumptions and exclusions",
+        "6. Deposit and authorization",
+        "7. Next-step call to action"
       ],
       "redFlags": [
-        "Proposal was emailed without a live presentation or call.",
-        "No follow-up date was set at the time of delivery.",
-        "Exclusions were not communicated before the client saw the price.",
-        "Proposal went to someone other than the decision-maker."
+        "Proposal reads like a material dump — no outcome framing.",
+        "No clear next step or decision date.",
+        "Assumptions and exclusions are hidden in fine print.",
+        "Proposal was emailed without scheduling a review call for complex work.",
+        "Price is presented before value has been established."
       ]
     },
     {
       "id": 7,
-      "title": "Follow-Up and Decision Management",
+      "title": "Proposal Delivery and Presentation",
+      "processStep": "Step 06",
       "owner": "Sales Lead",
-      "purpose": "Stay in contact, resolve objections, and move the client toward a clear decision.",
-      "artifact": "Follow-up log with dates, responses, objections addressed, and next steps.",
-      "gate": "Client has given a clear yes, no, or adjusted decision path.",
-      "dayUse": "Open this stage each time you follow up with a proposal in progress.",
+      "purpose": "Present solutions connected to CBRs, then walk through the investment confidently, and ask for a decision.",
+      "artifact": "Delivered proposal, presentation notes, questions/concerns list, and defined decision timing.",
+      "gate": "All decision-makers present. Client has heard the proposal live. Next step is defined.",
+      "dayUse": "Open this stage before moving an opportunity through proposal delivery.",
       "actions": [
-        "Follow up on or before the date agreed at proposal delivery.",
-        "Ask a clear question: what is the biggest concern right now?",
-        "Address objections directly without discounting scope.",
-        "Move the client toward a decision, not toward another call."
+        "Present live or via video call — NEVER email a complex proposal for the client to read alone.",
+        "Open by restating their Core Buying Reasons before touching the proposal.",
+        "Present solutions in priority order of their CBRs.",
+        "Stop after each solution and confirm agreement: 'Do you agree this resolves your backyard pooling?'",
+        "Only after design sign-off: present the investment, stated confidently as an investment — not a cost.",
+        "Address concerns using Acknowledge → Reframe → Forward-question.",
+        "Ask for a decision or a specific decision date before ending the meeting."
+      ],
+      "questions": [
+        "Does this match what you were hoping to solve?",
+        "Is there anything here that feels unclear or misaligned?",
+        "What questions do you have about the investment?",
+        "What would you need from us to feel comfortable moving forward?",
+        "What is the best next step from here?"
       ],
       "redFlags": [
-        "Follow-up is happening more than three times with no movement.",
-        "Client is avoiding contact without explanation.",
-        "Scope or price is being negotiated without a counteroffer.",
-        "No clear decision date has been agreed."
+        "Proposal emailed with no context on complex work.",
+        "Decision-maker absent from presentation.",
+        "No defined decision date established.",
+        "Price discussed before value was established.",
+        "Rep apologized for the price."
       ]
     },
     {
       "id": 8,
-      "title": "Verbal Yes and Commitment",
+      "title": "Follow-Up, Objections, and Decision Management",
+      "processStep": "Step 06",
       "owner": "Sales Lead",
-      "purpose": "Confirm the client's intent and set up the formal approval process.",
-      "artifact": "Notes confirming verbal yes, agreed price, scope, timeline, and next step for approval.",
-      "gate": "Client has verbally confirmed scope, price, and timing, and has agreed to formal approval.",
-      "dayUse": "Open this stage immediately after a client says yes before moving to contract.",
+      "purpose": "Stay in contact on a defined cadence, resolve real objections, and move clients toward a clear decision.",
+      "artifact": "Follow-up log, objection notes, revised scope if needed, and won/lost/hold status.",
+      "gate": "Client has given a clear yes, no, hold, or revision request. Status is documented.",
+      "dayUse": "Open this stage before moving an opportunity through follow-up and objection handling.",
       "actions": [
-        "Confirm the scope, price, and timeline verbally and in writing.",
-        "Thank the client and set the clear next step for signing.",
-        "Do not begin production conversations until verbal is documented.",
-        "Send a summary email of what was agreed."
+        "Follow up on a defined cadence — Day 3, Day 7, Day 14 — not random check-ins.",
+        "Clarify vague objections before answering them: 'Is it the price, scope, timing, or something else?'",
+        "Revisit Core Buying Reasons and decision priorities.",
+        "Offer revisions ONLY when scope, timing, or investment truly need to change.",
+        "Apply the 5-step objection framework: Pause → Clarify → Reconnect to CBRs → Offer a path → Confirm next step.",
+        "Close the loop when the client goes quiet — set a final follow-up and be honest."
+      ],
+      "objectionFramework": [
+        "1. Pause and acknowledge. Do not defend immediately.",
+        "2. Clarify the real issue: investment, scope, timing, trust, priority, or decision process.",
+        "3. Reconnect the conversation to the client's Core Buying Reasons.",
+        "4. Offer a path: proceed, revise scope, phase, hold, or close out.",
+        "5. Confirm the next step and date."
+      ],
+      "followUpCadence": [
+        { "day": "Day 1", "action": "Confirm proposal was received. Offer to schedule a review call." },
+        { "day": "Day 3", "action": "First follow-up: 'I want to make sure you have everything you need to make a comfortable decision. Any questions come up?'" },
+        { "day": "Day 7", "action": "Second follow-up: Revisit their CBRs. Ask what specifically they're still weighing." },
+        { "day": "Day 14", "action": "Direct decision ask: 'Are we moving forward, is there something holding you back, or is this off the table right now?'" },
+        { "day": "Day 21+", "action": "Final follow-up or hold classification. 'Should I keep this active or close it out for now?'" }
       ],
       "redFlags": [
-        "Verbal yes was vague or conditional.",
-        "No confirmation of scope or price was documented.",
-        "Production was notified before approval was received.",
-        "Client timeline and Avalon scheduling have not been aligned."
+        "No follow-up cadence — random or no contact after proposal sent.",
+        "Rep argues with the objection instead of clarifying it.",
+        "Repeated discounts offered without scope change.",
+        "Opportunity drifts for 14+ days with no next step.",
+        "Client goes quiet and rep takes no action."
       ]
     },
     {
       "id": 9,
-      "title": "Contract and Deposit",
-      "owner": "Sales Lead / Admin",
-      "purpose": "Secure formal approval and deposit to lock the project into production scheduling.",
-      "artifact": "Signed contract and deposit receipt.",
-      "gate": "Signed contract and deposit received.",
-      "dayUse": "Open this stage to complete the formal approval and deposit collection process.",
+      "title": "Sold Job Activation",
+      "processStep": "Post-Close Step 1",
+      "owner": "Sales Lead + Operations",
+      "purpose": "Convert the verbal yes into a locked, documented, production-ready job.",
+      "artifact": "Signed approval, deposit confirmation, activated job file, and production handoff checklist.",
+      "gate": "Signed SOW and deposit received. Scope matches estimate. Production owner assigned.",
+      "dayUse": "Open this stage before moving a sold job through activation.",
       "actions": [
-        "Send the contract based on the approved proposal and scope.",
-        "Collect deposit per Avalon payment terms.",
-        "Confirm receipt of signed contract and deposit before scheduling.",
-        "Deliver a welcome message and set the client's expectations for next steps."
+        "Confirm signed proposal or SOW received.",
+        "Confirm deposit or payment requirement met.",
+        "Lock scope, assumptions, exclusions, and client commitments — no verbal changes accepted.",
+        "Finalize internal cost file and production notes.",
+        "Assign production ownership and confirm scheduling path.",
+        "Identify subs, permits, compliance, utilities, and special materials."
+      ],
+      "questions": [
+        "Is the signed scope the same as the estimate?",
+        "Has deposit been received?",
+        "What does production need to know before scheduling?",
+        "What client expectations must be restated before work begins?"
       ],
       "redFlags": [
-        "Contract was modified from the approved proposal without review.",
-        "Deposit was deferred or waived without manager approval.",
-        "Client was scheduled before contract was signed.",
-        "Scope changed after contract was sent."
+        "Signed scope differs from the estimate — scope creep introduced.",
+        "Deposit missing before scheduling.",
+        "No production owner assigned.",
+        "Unclear start conditions or access.",
+        "Change in scope accepted verbally without written amendment."
       ]
     },
     {
       "id": 10,
-      "title": "Sold Job Activation and Handoff",
-      "owner": "Sales Lead + Project Lead",
-      "purpose": "Transfer all project knowledge cleanly to production so the job starts right.",
-      "artifact": "Handoff packet with scope, contract, site notes, client preferences, and production requirements.",
-      "gate": "Project Lead has confirmed they have everything needed to start the job.",
-      "dayUse": "Open this stage to complete the sold job activation and production handoff.",
+      "title": "Pre-Production Roadmap and Client Communication",
+      "processStep": "Post-Close Step 2",
+      "owner": "Sales Lead + Project Manager",
+      "purpose": "Set clear expectations, confirm client preparation, and establish a communication rhythm before crews arrive.",
+      "artifact": "Client roadmap, pre-production email, communication schedule, and preparation checklist.",
+      "gate": "Client knows start conditions, daily contact, and what to expect. No surprises.",
+      "dayUse": "Open this stage before moving an activated job through pre-production setup.",
       "actions": [
-        "Complete the sold job activation checklist before the handoff meeting.",
-        "Walk the project lead through the scope, client, site, and expectations.",
-        "Transfer all files, photos, notes, and contract documents.",
-        "Confirm the production start date and client notification plan."
+        "For larger jobs: issue a simple roadmap with phases, sequencing, dependencies, and watch-outs.",
+        "Confirm client preparation: access, pets, gates, vehicles, irrigation, utilities, and material staging.",
+        "Set communication rhythm: weekly Friday updates for larger active jobs.",
+        "Explain what may change due to weather, deliveries, site conditions, or change orders.",
+        "The Driveway Handshake: Sales Rep meets on site on Day 1 of mobilization. Walks property with client and Crew Leader. Formally passes the baton."
+      ],
+      "questions": [
+        "Who should receive updates?",
+        "Are there access restrictions — pets, gates, parking, neighbors?",
+        "What needs to happen before crews arrive?",
+        "Is irrigation marked and shut off if needed?"
       ],
       "redFlags": [
-        "Handoff was done by email only with no conversation.",
-        "Site photos or measurements were not transferred.",
-        "Client expectations were not documented for production.",
-        "Production start date was not confirmed before handoff."
+        "Client does not know start conditions or who their daily contact is.",
+        "No communication owner assigned.",
+        "Complex job begins without a pre-production roadmap.",
+        "Sales Rep does not appear on Day 1 for the Driveway Handshake."
       ]
     },
     {
       "id": 11,
-      "title": "Production Liaison",
-      "owner": "Sales Lead / Account Manager",
-      "purpose": "Stay available to support production without interfering with the project lead.",
-      "artifact": "Notes on any scope questions, client concerns, or change orders raised during production.",
-      "gate": "Job is complete, client is satisfied, and any change orders are approved.",
-      "dayUse": "Open this stage if a client question or scope issue comes up during production.",
+      "title": "Production Feedback Loop",
+      "processStep": "Post-Completion Step 1",
+      "owner": "Operations + Sales Lead",
+      "purpose": "Capture what happened vs. what was sold — and use it to improve future estimating and sales behavior.",
+      "artifact": "Production feedback notes, margin variance notes, and process improvement items.",
+      "gate": "All scope misses, labor variances, and client expectation gaps are documented and reviewed.",
+      "dayUse": "Open this stage before closing out a completed job.",
       "actions": [
-        "Check in with the project lead at key milestones.",
-        "Respond to any client questions within one business day.",
-        "Process change orders through proper approval before authorizing.",
-        "Do not override project lead decisions without a conversation."
+        "Capture scope misses, labor overages, material issues, client expectation gaps, and production friction.",
+        "Compare estimate assumptions to actual execution.",
+        "Identify what should change in future discovery, scoping, pricing, or handoff.",
+        "Review lessons in weekly sales/production rhythm.",
+        "Never let a margin loss disappear without review — the same mistake repeating is a system failure."
+      ],
+      "questions": [
+        "What did we miss in the estimate or scope?",
+        "Where did labor differ from estimate?",
+        "What made the job smoother or harder than expected?",
+        "What should sales ask differently next time?",
+        "What should estimating price differently next time?"
       ],
       "redFlags": [
-        "Client is calling sales directly to complain about production.",
-        "Scope creep is happening without a change order.",
-        "Production and client expectations have diverged.",
-        "Sales is micromanaging the project lead."
+        "Same mistake repeats without investigation.",
+        "Production complaints do not reach the sales team.",
+        "Margin loss is never reviewed.",
+        "No feedback loop meeting scheduled."
       ]
     },
     {
       "id": 12,
-      "title": "Closeout, Review, and Referral",
+      "title": "Closeout, Renewal, and Expansion",
+      "processStep": "Post-Completion Step 2",
       "owner": "Sales Lead / Account Manager",
-      "purpose": "Close the job cleanly, collect feedback, and create the next opportunity.",
-      "artifact": "Closeout notes, client satisfaction confirmation, review request sent, and referral conversation documented.",
-      "gate": "Client has confirmed satisfaction, review has been requested, and next opportunity has been identified.",
-      "dayUse": "Open this stage after production confirms job completion.",
+      "purpose": "Close every job cleanly, capture satisfaction, and convert happy clients into future revenue — reviews, referrals, and phase 2.",
+      "artifact": "Closeout note, review/referral request, future opportunity record, and maintenance or phase 2 prompt.",
+      "gate": "Client satisfaction confirmed. Review requested. Next opportunity identified and logged.",
+      "dayUse": "Open this stage when closing out any completed job.",
       "actions": [
-        "Contact the client within two business days of job completion.",
-        "Confirm they are satisfied with the outcome.",
-        "Request a Google review with a direct link.",
-        "Ask about the next project or referral opportunity."
+        "Confirm completion and client satisfaction personally — not through production crew.",
+        "Ask for a review or referral when appropriate: 'Would you be comfortable leaving us a review on Google?'",
+        "Identify phase 2 work, maintenance conversion, seasonal service, or adjacent improvements.",
+        "Log the next opportunity with timing and owner — do not let it drift.",
+        "Close the file with notes useful for future work on this property."
+      ],
+      "questions": [
+        "How does everything look now that the work is complete?",
+        "Is there anything we should address before we close this out?",
+        "Would you like us to help maintain or protect this investment?",
+        "What would you want to tackle next?",
+        "Would you be comfortable leaving us a review?"
       ],
       "redFlags": [
-        "Closeout call was skipped or deferred.",
-        "Review was never requested.",
-        "An unsatisfied client was not escalated before closeout.",
-        "No next-opportunity conversation happened."
+        "Job ends silently with no closeout call.",
+        "No review or referral request made.",
+        "Future work is discussed but not logged.",
+        "Client concerns are unresolved at closeout.",
+        "No maintenance conversion conversation attempted."
       ]
     }
   ],
   "forms": [
     {
-      "id": "lead-intake",
-      "title": "Lead Intake Checklist",
-      "when": "Before routing any new inquiry to the pipeline.",
+      "id": "lead_intake",
+      "title": "Lead Intake Form",
+      "stage": 1,
       "fields": [
-        "Client name and primary contact",
-        "Phone and email",
-        "Property address",
-        "Service line requested",
-        "Lead source",
-        "Project description or problem",
-        "Urgency and preferred timeline",
-        "Decision-maker confirmed",
-        "Budget range or comfort level",
-        "Next follow-up date and owner"
-      ],
-      "checklist": [
-        "Client name and contact documented",
-        "Service line identified and assigned",
-        "Lead source recorded",
-        "Decision-maker confirmed",
-        "Next step set with date and owner",
-        "Opportunity created in tracking system"
+        { "label": "Client Name", "type": "text", "required": true },
+        { "label": "Property Address", "type": "text", "required": true },
+        { "label": "Phone", "type": "tel", "required": true },
+        { "label": "Email", "type": "email", "required": false },
+        { "label": "Lead Source", "type": "select", "options": ["Website", "Referral", "Google", "Social Media", "Yard Sign", "Door Hanger", "Cold Call", "Neighborhood Canvass", "Past Client", "Other"], "required": true },
+        { "label": "Service Line", "type": "select", "options": ["Landscape / Enhancement", "Maintenance – One-Time", "Maintenance – Recurring", "Hardscape / Drainage", "Design-Build", "Irrigation", "Outdoor Lighting", "Commercial Scope", "Other"], "required": true },
+        { "label": "Client Type", "type": "select", "options": ["Residential", "Commercial"], "required": true },
+        { "label": "Urgency / Timing", "type": "text", "required": true },
+        { "label": "What prompted the inquiry?", "type": "textarea", "required": true },
+        { "label": "Decision-maker identified?", "type": "checkbox", "required": false },
+        { "label": "Assigned Owner", "type": "text", "required": true },
+        { "label": "Next Step", "type": "text", "required": true },
+        { "label": "Next Step Date", "type": "date", "required": true }
       ]
     },
     {
       "id": "discovery",
-      "title": "Discovery Call Planner",
-      "when": "Before every initial discovery conversation with a prospect.",
+      "title": "Discovery Notes Form",
+      "stage": 2,
       "fields": [
-        "What prompted the inquiry (in their words)",
-        "What does the ideal outcome look like to them",
-        "What has been tried before",
-        "Who is involved in the decision",
-        "What is the timeline and urgency",
-        "What is their budget comfort range",
-        "What concerns do they have about hiring",
-        "What does success look like 12 months from now"
-      ],
-      "checklist": [
-        "Buying reason documented",
-        "Decision-maker identified",
-        "Timeline and urgency confirmed",
-        "Budget comfort explored",
-        "Fit concerns noted",
-        "Next step agreed and documented",
-        "Follow-up date set"
+        { "label": "Core Buying Reason #1 (Surface)", "type": "text", "required": true },
+        { "label": "Core Buying Reason #2 (Deeper)", "type": "text", "required": true },
+        { "label": "Core Buying Reason #3 (Real / Emotional)", "type": "text", "required": true },
+        { "label": "Decision-makers identified", "type": "text", "required": true },
+        { "label": "T.A.P.P.O. set?", "type": "checkbox", "required": false },
+        { "label": "Budget comfort explored ($)", "type": "text", "required": false },
+        { "label": "Client timeline / deadline", "type": "text", "required": true },
+        { "label": "Past contractor experience / frustrations", "type": "textarea", "required": false },
+        { "label": "Communication style (Visual / Auditory / Kinesthetic / Digital)", "type": "text", "required": false },
+        { "label": "Mutual Agreement for next step", "type": "text", "required": true }
       ]
     },
     {
-      "id": "site-walk",
-      "title": "Site Walk Checklist",
-      "when": "Before every site visit with a prospect or client.",
+      "id": "site_walk",
+      "title": "Site Walk Checklist Form",
+      "stage": 3,
       "fields": [
-        "Site address and access notes",
-        "Client present? Contact on-site",
-        "Scope description confirmed at site",
-        "Site conditions and constraints observed",
-        "Measurements or square footage needed",
-        "Photos taken of key areas",
-        "HOA, permit, or utility considerations",
-        "Quality expectations confirmed",
-        "Fit decision: proceed, modify, or pass",
-        "Next step agreed before leaving"
-      ],
-      "checklist": [
-        "Full site walked",
-        "Scope confirmed or adjusted",
-        "Site photos taken",
-        "Constraints documented",
-        "Quality expectations confirmed",
-        "Fit decision made",
-        "Next step agreed before leaving site"
+        { "label": "Photos taken?", "type": "checkbox", "required": false },
+        { "label": "Measurements captured", "type": "text", "required": true },
+        { "label": "Access / staging notes", "type": "textarea", "required": true },
+        { "label": "Drainage / grade issues noted", "type": "textarea", "required": false },
+        { "label": "Utilities / property lines / HOA concerns", "type": "textarea", "required": false },
+        { "label": "Must-haves (client confirmed)", "type": "textarea", "required": true },
+        { "label": "Nice-to-haves (optional)", "type": "textarea", "required": false },
+        { "label": "Opportunity path selected", "type": "select", "options": ["Straightforward Quote", "Scoped Proposal", "Roadmap / Preconstruction Package"], "required": true },
+        { "label": "Fit decision made?", "type": "checkbox", "required": false },
+        { "label": "Next step confirmed with client", "type": "text", "required": true }
       ]
     },
     {
-      "id": "proposal-review",
-      "title": "Proposal Review Checklist",
-      "when": "Before sending or presenting any proposal.",
+      "id": "scope",
+      "title": "Internal Scope Worksheet",
+      "stage": 4,
       "fields": [
-        "Client name and project description",
-        "Scope matches what was discussed at site",
-        "Price matches approved estimate",
-        "Exclusions and assumptions documented",
-        "Timeline and scheduling terms included",
-        "Payment terms included",
-        "Proposal presentation format confirmed",
-        "Decision-maker confirmed for delivery",
-        "Follow-up date set for after delivery"
-      ],
-      "checklist": [
-        "Scope matches site walk and discovery",
-        "Price matches approved estimate",
-        "Exclusions written in plain language",
-        "Assumptions documented",
-        "Proposal reviewed by manager if required",
-        "Delivery method confirmed (live or email)",
-        "Follow-up date agreed before sending"
+        { "label": "Plant / Material List", "type": "textarea", "required": true },
+        { "label": "Labor Activity Breakdown", "type": "textarea", "required": true },
+        { "label": "Hardscape / Drainage Method", "type": "textarea", "required": false },
+        { "label": "Quantities and Unit Assumptions", "type": "textarea", "required": true },
+        { "label": "Subcontractors / Permits / Utilities", "type": "textarea", "required": false },
+        { "label": "Assumptions", "type": "textarea", "required": true },
+        { "label": "Exclusions", "type": "textarea", "required": true },
+        { "label": "Risk Flags", "type": "textarea", "required": false },
+        { "label": "Contingency %", "type": "text", "required": false }
       ]
     },
     {
-      "id": "follow-up",
-      "title": "Follow-Up Cadence Guide",
-      "when": "After every proposal delivery. Use as a repeatable follow-up structure.",
-      "fields": [
-        "Proposal delivered on (date)",
-        "Day 1-2: Thank-you follow-up sent",
-        "Day 4-5: Check-in call or email",
-        "Day 8-10: Direct ask for decision or concern",
-        "Day 14+: Final decision request or close",
-        "Objection raised (if any)",
-        "Objection addressed with (response)",
-        "Decision outcome"
-      ],
-      "checklist": [
-        "Thank-you sent within 24 hours of proposal",
-        "First follow-up within 3 business days",
-        "Objections identified and addressed",
-        "Clear decision requested by Day 10",
-        "Follow-up outcome documented",
-        "Closed or moved to appropriate pipeline stage"
-      ]
-    },
-    {
-      "id": "handoff",
+      "id": "sold_activation",
       "title": "Sold Job Activation Checklist",
-      "when": "After contract is signed and deposit received. Complete before production handoff.",
+      "stage": 9,
       "fields": [
-        "Client name and contact confirmed",
-        "Contract signed and deposit received",
-        "Scope of work document transferred",
-        "Site photos and measurements transferred",
-        "Client preferences and sensitivities noted",
-        "HOA, permit, or access instructions included",
-        "Production start date confirmed",
-        "Client notification plan agreed",
-        "Project lead confirmed and briefed",
-        "Sales contacts removed from production daily flow"
-      ],
-      "checklist": [
-        "Signed contract in project file",
-        "Deposit confirmed received",
-        "Scope document transferred to production",
-        "Site photos transferred",
-        "Client preferences documented",
-        "Project lead briefed in person or on call",
-        "Production start date confirmed",
-        "Client notified of start date and contact"
+        { "label": "Signed SOW / Proposal received?", "type": "checkbox", "required": false },
+        { "label": "Deposit confirmed ($)", "type": "text", "required": true },
+        { "label": "Approved scope matches estimate?", "type": "checkbox", "required": false },
+        { "label": "Production notes created?", "type": "checkbox", "required": false },
+        { "label": "Materials / subs / permits flagged", "type": "textarea", "required": false },
+        { "label": "Production owner assigned", "type": "text", "required": true },
+        { "label": "Client pre-production communication planned?", "type": "checkbox", "required": false },
+        { "label": "Driveway Handshake scheduled (Day 1 on-site)?", "type": "checkbox", "required": false }
+      ]
+    },
+    {
+      "id": "closeout",
+      "title": "Job Closeout Form",
+      "stage": 12,
+      "fields": [
+        { "label": "Completion confirmed internally?", "type": "checkbox", "required": false },
+        { "label": "Client satisfaction confirmed?", "type": "checkbox", "required": false },
+        { "label": "Open issues (if any)", "type": "textarea", "required": false },
+        { "label": "Review / referral requested?", "type": "checkbox", "required": false },
+        { "label": "Future phase / maintenance opportunity identified", "type": "textarea", "required": false },
+        { "label": "Next opportunity logged (with timing and owner)?", "type": "checkbox", "required": false },
+        { "label": "Lessons learned", "type": "textarea", "required": false }
       ]
     }
   ],
@@ -456,19 +667,44 @@ window.AVALON_DATA = {
       "body": "Hi [Name], this is [Your Name] with Avalon. [Referrer name] suggested I reach out — they mentioned you may be looking at a [project type].\n\nI appreciate the introduction. I'd love to learn more about what you're working on. Do you have a few minutes to talk through it now, or is there a better time this week?"
     },
     {
-      "category": "Discovery",
-      "title": "Opening Discovery Question",
-      "body": "Before I start asking about scope or price, I want to make sure I actually understand what you're trying to solve. So let me ask — what's the main thing that prompted you to start looking at this now?\n\nAnd what would a successful outcome look like for you, say, six months after the project is done?"
+      "category": "First Contact",
+      "title": "Ryan's Outbound Cold Call",
+      "body": "Hi, this is Ryan with Avalon Landscape Construction. I was in the neighborhood doing some work nearby and wanted to introduce myself. We specialize in [landscape / maintenance / enhancement] for [residential / commercial] properties in this area.\n\nIs this a good time for a quick 2-minute introduction? I don't want to take much of your time — I just want to make sure you know who we are if you ever need a reliable team."
     },
     {
-      "category": "Discovery",
-      "title": "Decision-Maker Confirmation",
-      "body": "I want to make sure I'm bringing the right information to the right people. When it comes to a decision like this — is it primarily you, or is there a partner or family member who would be part of the final call?\n\nI ask because I want to make sure whoever needs to be in the conversation is included from the start."
+      "category": "Rapport — T.A.P.P.O. Opening",
+      "title": "Setting Mutual Agreements at Meeting Start",
+      "body": "Before we get into anything, I want to set up a quick roadmap for our time together so we're both on the same page.\n\nTime: I've blocked [X] minutes for us today — does that still work for you?\nAgenda: My goal is to understand what you're looking to accomplish, then walk the site together so I can give you an accurate picture. You had mentioned wanting to cover [their stated goal] — is there anything else?\nPeople: Is everyone who needs to weigh in on this joining us today?\nProcess: I'll ask you some questions first, then we'll walk the site, and I'll share my initial thoughts before I leave.\nOutcome: By the end, we'll both know whether this is a good fit and what the next step looks like.\n\nDoes that sound right to you?"
     },
     {
-      "category": "Discovery",
+      "category": "Discovery — 3+ Funneling",
+      "title": "Core Buying Reason Deep Dive",
+      "body": "Before I start asking about scope or price, I want to make sure I actually understand what you're trying to solve. So let me ask — what's the main thing that prompted you to start looking at this now?\n\n[Wait for answer.]\n\nOkay, help me understand that a bit more — when you say [repeat their answer], what specifically about that is the issue?\n\n[Wait for answer.]\n\nAnd if we could fix that completely — what would that mean for you and your family? What changes?\n\n[This is the real Core Buying Reason. Document it verbatim.]"
+    },
+    {
+      "category": "Discovery — Listening",
+      "title": "Verbatim Feedback Loop",
+      "body": "Just to make sure I fully understand before we walk the site — when you say you want something 'low maintenance,' you mean you don't want to be weeding or resealing anything seasonally, correct? You're looking for a solution that basically takes care of itself?\n\n[Repeat their exact words back. Let them correct you. This is the highest-trust move in the conversation.]"
+    },
+    {
+      "category": "Discovery — Budget",
       "title": "Budget Comfort Exploration",
-      "body": "I know budget is a sensitive topic, so I'll be direct. We typically see projects like this ranging from [range]. I'm not asking you to commit to a number — I just want to make sure I'm building something that makes sense for your situation.\n\nIs there a range that would feel comfortable for you to invest, assuming we can deliver what you're describing?"
+      "body": "I know investment tolerance is a sensitive topic, so I'll be direct rather than dance around it. For a project like what you're describing, we typically see investments in the range of [range]. That's a broad range because every site is different.\n\nI'm not asking you to commit to anything today — I just want to make sure I build you something that makes financial sense for your situation. Is there a range that feels comfortable, assuming we can deliver exactly what you're describing?"
+    },
+    {
+      "category": "Discovery — Decision",
+      "title": "Decision-Maker Confirmation",
+      "body": "I want to make sure I'm bringing the right information to the right people. When it comes to a decision like this — is it primarily you, or is there a partner or family member who would be part of the final call?\n\nI ask because I want to make sure whoever needs to be in the conversation is included from the start. I've found it saves everyone time when the right people are in the room for the proposal — otherwise we end up presenting twice."
+    },
+    {
+      "category": "Discovery — Consequence",
+      "title": "Implication & Consequence Question",
+      "body": "Help me understand the full picture here. What happens if we don't address [the drainage issue / the retaining wall / the overgrown areas] this season?\n\n[Wait for answer.]\n\nAnd then what? What's the downstream impact of leaving that unresolved?\n\n[This surfaces urgency without pressure. Let them feel the cost of inaction.]"
+    },
+    {
+      "category": "Discovery — Struggling Statement",
+      "title": "The Struggling Statement (Vulnerable Close)",
+      "body": "Help me out here — I might be missing something. Earlier you mentioned you wanted to move quickly on this because of the event in June, but now it sounds like the timing might be more flexible. Can you help me understand which is more accurate?\n\n[This removes vendor tension, invites honesty, and surfaces any hidden objections before they become blockers.]"
     },
     {
       "category": "Site Walk",
@@ -482,23 +718,33 @@ window.AVALON_DATA = {
     },
     {
       "category": "Proposal",
-      "title": "Proposal Walk-Through Opening",
-      "body": "Before I walk you through the numbers, I want to recap what we're proposing — because the price only makes sense in context of what's included.\n\nWe're covering [scope summary]. We're explicitly excluding [exclusions]. Our assumptions include [key assumptions].\n\nWith that context, the investment for this scope is [price]. I want to walk you through how we got there."
+      "title": "Proposal Walk-Through Opening (CBRs First)",
+      "body": "Before I walk you through the numbers, I want to start where we started — with what matters most to you.\n\nYou told me that the reason you reached out was [Core Buying Reason — use their words]. And you said that if we didn't fix this, [consequence they named]. That is exactly what this proposal is built around.\n\nEverything I'm about to show you is organized around solving that problem first. Then we'll look at the investment. Sound good?"
     },
     {
       "category": "Proposal",
-      "title": "Anchoring the Price",
-      "body": "The total investment for this scope is [price].\n\nThe way we built this — [brief explanation of cost drivers]. We're not the lowest-cost option in the market, and that's intentional. What you're getting with Avalon is [differentiator].\n\nDoes this feel like the right investment range for what you're trying to accomplish?"
+      "title": "Anchoring the Investment (Not the Price)",
+      "body": "The total investment for this scope is [price].\n\nThe way we built this — [brief explanation of cost drivers: labor, materials, complexity]. We're not the lowest-cost option in the market, and that's intentional. What you're getting with Avalon is [differentiator: quality, warranty, project management, no guessing on the back end].\n\nDoes this feel like the right investment to accomplish what you've told me matters most?"
+    },
+    {
+      "category": "Proposal",
+      "title": "Decision Rehearsal (One Spouse Missing)",
+      "body": "Before we wrap up today, I want to help you with one thing. When you share these plans with [spouse/partner] tonight, what questions do you think they're going to ask?\n\n[Let them answer. Address each one now.]\n\nHere's how I'd frame it for them: [provide their talking points]. That way, when they see the investment, they already understand what it solves and why it's priced the way it is. Does that help?"
     },
     {
       "category": "Follow-Up",
-      "title": "Post-Proposal Check-In",
+      "title": "Post-Proposal Check-In (Day 3)",
       "body": "Hi [Name], this is [Your Name] with Avalon. I sent over the proposal [X days ago] and wanted to follow up. I don't want to pressure you — I just want to make sure you have everything you need to make a comfortable decision.\n\nIs there anything in the proposal you'd like me to clarify, or any concerns that came up since we last spoke?"
     },
     {
       "category": "Follow-Up",
-      "title": "Direct Decision Ask",
-      "body": "I want to be respectful of your time and mine, so I'll be direct. We've talked through the project, you've seen the proposal, and I've addressed the questions I know about.\n\nWhere are you at with this? Are we moving forward, is there something that's holding you back, or is this something that's off the table right now?\n\nAny of those answers are fine — I just want to make sure we're both clear on where things stand."
+      "title": "Objection Clarifier",
+      "body": "I want to make sure I'm actually addressing the right thing. When you say [their objection] — help me understand. Is the concern primarily:\n- The total investment amount?\n- What's included in the scope?\n- The timing of the project?\n- Something about how we'd work together?\n\nAny one of those I can address differently. I just want to make sure I'm not answering the wrong question."
+    },
+    {
+      "category": "Follow-Up",
+      "title": "Direct Decision Ask (Day 14)",
+      "body": "I want to be respectful of your time and mine, so I'll be direct. We've talked through the project, you've seen the proposal, and I've addressed the questions I know about.\n\nWhere are you at with this? Are we moving forward, is there something that's holding you back, or is this something that's off the table right now?\n\nAny of those answers is fine — I just want to make sure we're both clear on where things stand."
     },
     {
       "category": "Closing",
@@ -507,8 +753,13 @@ window.AVALON_DATA = {
     },
     {
       "category": "Closing",
-      "title": "Closing the Lost Job",
-      "body": "I appreciate you letting me know. I want to be honest — I'd love to understand what made the difference, if you're open to sharing. Not to change your mind, but because it helps us improve.\n\nWas it primarily the price, the scope, timing, or something about the fit? I'm asking because it helps us get better for the next conversation."
+      "title": "Asking for the Decision (Avoid Weak Closes)",
+      "body": "We've walked through everything — the design matches what you told me matters most, and the investment reflects what we'd actually need to do this right.\n\nI'd like to move forward. Can we lock this in today?\n\n[Do NOT say 'Let me know what you think.' or 'Take your time.' Ask for the business directly — the close is a natural result of the process.]"
+    },
+    {
+      "category": "Closing",
+      "title": "Closeout and Referral Request",
+      "body": "Now that the project is complete, I wanted to check in personally. Is everything looking the way you expected?\n\n[If yes:] I'm really glad to hear that. If you were happy with the experience, the biggest thing that helps us is a Google review — it only takes a minute and it helps other families in the area find us. I'll send you the link.\n\nAnd honestly — if you know anyone who's been talking about a [landscape / drainage / maintenance] project, I'd love the introduction. We treat referrals the same way we treated you."
     }
   ],
   "templates": [
@@ -528,19 +779,19 @@ window.AVALON_DATA = {
       "category": "Post-Discovery",
       "title": "Discovery Summary and Next Step",
       "subject": "Summary from Our Conversation — Avalon",
-      "body": "Hi [Name],\n\nThanks for the time today. I wanted to capture what we discussed so we're both on the same page.\n\nProject: [Summary of project]\nTimeline: [What was discussed]\nNext step: [Site walk / additional info / proposal]\nDate/time confirmed: [Date]\n\nIf I missed anything or something has changed, just let me know. I'll follow up as planned.\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
+      "body": "Hi [Name],\n\nThanks for the time today. I wanted to capture what we discussed so we're both on the same page.\n\nProject: [Summary of project]\nWhat matters most to you: [Core Buying Reason in their words]\nTimeline: [What was discussed]\nNext step: [Site walk / additional info / proposal]\nDate/time confirmed: [Date]\n\nIf I missed anything or something has changed, just let me know. I'll follow up as planned.\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
     },
     {
       "category": "Post-Site Walk",
       "title": "Site Walk Summary and Estimate Timeline",
       "subject": "Site Walk Summary — [Client Name] Project",
-      "body": "Hi [Name],\n\nThank you for your time today. I enjoyed walking the site and getting a clear picture of what you're looking to accomplish.\n\nHere's a quick recap:\n- Project scope: [Summary]\n- Key notes: [Any conditions or preferences from the walk]\n- Next step: We'll have the estimate ready by [date]\n\nI'll be in touch by then. In the meantime, feel free to reach out if any questions come up.\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
+      "body": "Hi [Name],\n\nThank you for your time today. I enjoyed walking the site and getting a clear picture of what you're looking to accomplish.\n\nHere's a quick recap:\n- Project scope: [Summary]\n- Key notes from the walk: [Any conditions or preferences]\n- Must-haves confirmed: [List]\n- Next step: We'll have the estimate ready by [date]\n\nI'll be in touch by then. In the meantime, feel free to reach out if any questions come up.\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
     },
     {
       "category": "Proposal",
       "title": "Proposal Delivery",
       "subject": "Avalon Proposal — [Project Name]",
-      "body": "Hi [Name],\n\nAttached is the proposal for your [project type] project at [address].\n\nThe scope includes [brief summary]. The total investment for this scope is [price].\n\nI've also included the exclusions and assumptions on page [X], which I want to make sure are clear before you make a decision.\n\nI'd suggest we take 15 minutes to walk through it together — that way any questions get answered quickly and nothing is left unclear. Are you available [day/time] for a quick call?\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
+      "body": "Hi [Name],\n\nAttached is the proposal for your [project type] project at [address].\n\nBefore you dig in, I want to remind you of what we're solving: [their Core Buying Reason in their words]. Everything in this proposal is organized around that.\n\nThe total investment is [price]. I've included the scope, exclusions, assumptions, and next steps inside.\n\nI'd suggest we take 15 minutes to walk through it together — that way any questions get answered quickly and nothing is left unclear. Are you available [day/time]?\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
     },
     {
       "category": "Follow-Up",
@@ -550,9 +801,9 @@ window.AVALON_DATA = {
     },
     {
       "category": "Follow-Up",
-      "title": "Checking In (Day 10)",
-      "subject": "Still Here If You Need Me — Avalon",
-      "body": "Hi [Name],\n\nI don't want to be a nuisance, but I also don't want to assume you've moved on without checking in.\n\nI realize decisions like this take time, and I respect that. If there's anything I can answer, adjust, or clarify, I'd rather you have that conversation with me than leave something unresolved.\n\nWhere are you at with the project right now?\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
+      "title": "Direct Check-In (Day 14)",
+      "subject": "Where Are We At? — Avalon",
+      "body": "Hi [Name],\n\nI don't want to leave this open-ended. We've invested time on both sides, and I'd rather know where things stand than let this drift.\n\nAre we moving forward, is there something I can help address, or is this off the table for now? Any of those answers is completely fine — I just want to be honest with you about where I'm at.\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
     },
     {
       "category": "Post-Sale",
@@ -564,13 +815,13 @@ window.AVALON_DATA = {
       "category": "Post-Sale",
       "title": "Sold Job Welcome",
       "subject": "Welcome to the Avalon Family — Your Project is Confirmed",
-      "body": "Hi [Name],\n\nThank you — your contract and deposit have been received. Your project is officially confirmed.\n\nHere's what to expect:\n- You'll hear from our project team to coordinate access and final details.\n- Estimated start: [Date]\n- Your primary contact during production will be [Project Lead Name] at [contact info].\n\nIf anything comes up before then, you're always welcome to reach out to me directly.\n\nWe're looking forward to doing great work for you.\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
+      "body": "Hi [Name],\n\nThank you — your contract and deposit have been received. Your project is officially confirmed.\n\nHere's what to expect:\n- You'll hear from our project team to coordinate access and final details.\n- Estimated start: [Date]\n- Your primary contact during production will be [Project Lead Name] at [contact info].\n- I'll personally be on-site on Day 1 to make sure the handoff goes smoothly.\n\nIf anything comes up before then, you're always welcome to reach out to me directly.\n\nWe're looking forward to doing great work for you.\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
     },
     {
       "category": "Post-Sale",
       "title": "Closeout and Review Request",
       "subject": "Thank You — How Did We Do?",
-      "body": "Hi [Name],\n\nNow that your project is complete, I wanted to check in personally. Is everything looking the way you expected?\n\nIf there's anything we missed or anything you'd like to discuss, please let me know right away — we always want to make it right.\n\nIf you're happy with the work, we'd really appreciate a quick review on Google. It only takes a minute and it helps other homeowners find us:\n[Google Review Link]\n\nThank you again for the opportunity. We'd love to be your first call for the next project.\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
+      "body": "Hi [Name],\n\nNow that your project is complete, I wanted to check in personally. Is everything looking the way you expected?\n\nIf there's anything we missed or anything you'd like to discuss, please let me know right away — we always want to make it right.\n\nIf you're happy with the work, we'd really appreciate a quick review on Google. It only takes a minute and it helps other families and businesses in the area find us:\n[Google Review Link]\n\nAnd if you know anyone who's been talking about a landscape, maintenance, or enhancement project — we'd love the introduction.\n\nThank you again for the opportunity.\n\nBest,\n[Your Name]\nAvalon Landscape Construction"
     }
   ],
   "objections": [
@@ -590,6 +841,7 @@ window.AVALON_DATA = {
       "meaning": "There is likely an unspoken concern. They may not feel ready to decide, or something in the proposal wasn't clear.",
       "response": [
         "Don't push. Ask what specifically they need to think about.",
+        "Use the objection clarifier: 'Is it the price, scope, timing, or fit?'",
         "Identify the real concern behind the vague response.",
         "Offer a specific time to reconnect rather than leaving it open."
       ],
@@ -601,7 +853,8 @@ window.AVALON_DATA = {
       "response": [
         "Ask to see the other proposal or at least understand what it includes.",
         "Do not match price — instead, explain what's different.",
-        "Protect scope quality rather than cutting to compete."
+        "Protect scope quality rather than cutting to compete.",
+        "Ask what the other contractor's warranty, supervision, and change order process looks like."
       ],
       "say": "I'm glad you're comparing — that's smart. The question I'd want you to ask is: what's in their scope that's not in mine, and vice versa? Price only matters when the scope is identical. If you're comfortable sharing the other quote, I can walk you through the differences. If not, I can at least walk you through what makes ours what it is."
     },
@@ -611,7 +864,8 @@ window.AVALON_DATA = {
       "response": [
         "Do not discount without changing scope.",
         "Offer a scope reduction or phasing option if appropriate.",
-        "Be honest about what cannot be cut without compromising quality."
+        "Be honest about what cannot be cut without compromising quality.",
+        "Connect the scope to their Core Buying Reason: 'If we cut X, we don't solve Y — which was the main thing you said you needed.'"
       ],
       "say": "The short answer is: yes, but only if we change what we're doing. I don't want to strip margin from the same scope — that leads to problems on the job. What I can do is look at what could be phased, reduced, or removed if that gets you to a number that works. What's the most important part of this for you?"
     },
@@ -621,7 +875,8 @@ window.AVALON_DATA = {
       "response": [
         "Explore what would need to be different for the timing to feel right.",
         "Ask what the cost of waiting is — sometimes urgency is real.",
-        "Offer to hold a spot if scheduling allows."
+        "Offer to hold a spot if scheduling allows.",
+        "Map timing to their deadline: 'You mentioned the event in June — to hit that, we'd need to start by [date].'"
       ],
       "say": "That's fair. Help me understand what would need to change for the timing to feel right. Is it a financial thing, a life timing thing, or something about the project itself? I ask because sometimes we can work around timing, and sometimes we can't — but I'd rather know what we're actually dealing with."
     },
@@ -631,6 +886,7 @@ window.AVALON_DATA = {
       "response": [
         "Encourage it — confidence wins over desperation.",
         "Ask what criteria they'll use to decide.",
+        "Tell them what to look for: scope detail, exclusion language, change order process.",
         "Set a follow-up after they've completed their process."
       ],
       "say": "Please do — that's completely reasonable. I'd rather you compare than sign with us without confidence. When you're doing that, here's what I'd suggest paying attention to: scope detail, exclusion language, and what happens if something changes during the project. Those areas are where proposals vary most. When do you plan to have all the quotes back? I'll follow up around then."
@@ -640,233 +896,457 @@ window.AVALON_DATA = {
     {
       "id": "M1",
       "title": "The Avalon Way of Selling",
-      "objective": "Understand why Avalon sells differently and why it works.",
+      "objective": "Understand why Avalon sells differently — consultative, process-driven, and margin-protective — and why it creates a 25% lift in results.",
+      "keyPoints": [
+        "+25% sales increase when a company-wide process is consistently followed (Dave Kurlan, Objective Management Group)",
+        "Sales is not simply sending a price — it is understanding the client, defining the problem, shaping scope, and protecting the business.",
+        "A qualified 'no' is better than a confusing 'maybe' that burns estimating time.",
+        "The best proposal is not the longest proposal — it is the clearest decision tool.",
+        "Objectives are not attacks — they are signals that something still needs to be understood."
+      ],
       "lessons": [
-        "What consultative selling means at Avalon",
-        "The difference between pushing and guiding",
+        "What consultative selling means at Avalon vs. transactional selling",
+        "The Avalon Sales Promise — 8 commitments that define what good sales looks like",
         "Why margin matters to every member of the team",
-        "The role of trust in landscaping sales"
+        "The role of trust in landscape sales — how it's built in 7 seconds and lost in 1 mistake",
+        "Self-limiting beliefs vs. supportive beliefs — the psychology of the close"
       ],
       "quiz": [
         "What is the Avalon sales philosophy in one sentence?",
         "Why does scope clarity protect both the client and Avalon?",
-        "What does 'operationally clean' mean in sales context?"
+        "What does 'operationally clean' mean in sales context?",
+        "What happens to gross margins when proposals are built on unqualified budgets?"
       ]
     },
     {
       "id": "M2",
-      "title": "Lead Intake and Routing",
-      "objective": "Capture the right information and route every lead correctly from the first contact.",
+      "title": "The 6-Step Avalon Sales Process",
+      "objective": "Know all 6 steps by heart and understand why skipping any step creates process friction, burns estimating hours, and destroys margin.",
+      "keyPoints": [
+        "Step 01: Rapport — Real vs. Social. 7 seconds. 4 communication styles. NLP mirroring.",
+        "Step 02: Mutual Agreements — T.A.P.P.O. sets the roadmap and eliminates scope creep.",
+        "Step 03: Discovery — CBRs + 3+ Funneling Rule. Ask 3 layers before accepting any answer.",
+        "Step 04: Budget — Reframe Cost to Investment. No budget = No breakdown shared.",
+        "Step 05: Decision — Qualify who, how, and when before any proposal is built.",
+        "Step 06: Presentation — CBRs first, solutions aligned, investment last, ask for the close."
+      ],
       "lessons": [
-        "The 10 questions every lead record needs",
-        "How to route by service line and urgency",
-        "What makes a lead worth pursuing vs. not",
-        "Setting the right next step in the first 5 minutes"
+        "Why the funnel is sacred — what happens when steps are skipped",
+        "The 4 communication preferences and how to identify them in the first 5 minutes",
+        "T.A.P.P.O. — scripting and role-playing the mutual agreement opening",
+        "The 3+ Funneling Rule in practice — live examples from landscape sales",
+        "Decision qualification — the Rehearsal Protocol for absent decision-makers"
       ],
       "quiz": [
-        "What information must be captured before routing a lead?",
-        "When should a lead be declined at intake?",
-        "What defines a clear next step?"
+        "Name all 5 elements of T.A.P.P.O. and what each one does.",
+        "Why must budget be explored before any site plan or breakdown is shared?",
+        "What is the 3+ Funneling Rule and why does it matter?",
+        "What is the Rehearsal Protocol and when do you use it?"
       ]
     },
     {
       "id": "M3",
-      "title": "Discovery and Listening",
-      "objective": "Run discovery conversations that reveal the real buying reason and create trust.",
+      "title": "Discovery, CBRs, and Listening Discipline",
+      "objective": "Run discovery conversations that reveal the real Core Buying Reason and create deep, lasting trust.",
+      "keyPoints": [
+        "CBRs are the emotional drivers behind the purchase — not the surface request.",
+        "We think at 3,000 words/min but listen at 150. 75% of the time we're distracted.",
+        "Silence is power — pause 3 seconds after they finish. Let them fill the quiet.",
+        "Verbatim feedback loops are the highest-trust move in a discovery conversation.",
+        "Shifting Pain to Pleasure: establish consequences fully before transitioning to solutions."
+      ],
       "lessons": [
-        "The purpose of discovery — it's not to pitch",
-        "How to uncover the buying reason behind the request",
-        "Mapping the decision: who, what, when, and why",
-        "How to explore budget without creating pressure"
+        "The 6 Questioning Tactics: 3+ Funneling, Implication/Consequence, Pain to Pleasure, Nurturing Statements, Struggling Statements, Listening Discipline",
+        "The 4 Listening Traps: Formulating Responses, Premature Fix-it Mode, Assumptive Hearing, Phone Distractions",
+        "Effective Listening Protocol: Silence, Nod/Validate, Clarify Definitions, Verbatim Feedback",
+        "Role-play: CBR deep dive on a drainage project vs. a maintenance upsell",
+        "Practice: 3+ Funnel from 'I just want it to look nice' to the real emotional driver"
       ],
       "quiz": [
-        "What is the single most important thing to learn in discovery?",
-        "How do you confirm the decision-maker without being awkward?",
-        "What signals that a discovery call went well?"
+        "What is a Core Buying Reason and how is it different from a surface request?",
+        "Name the 4 listening traps and what each one costs you.",
+        "What is a verbatim feedback loop and when do you use it?",
+        "How do you shift from pain establishment to pleasure/solution?"
       ]
     },
     {
       "id": "M4",
-      "title": "Site Walks and Qualification",
-      "objective": "Use the site walk to confirm fit, gather data, and set scope expectations before estimating.",
+      "title": "Site Walks and Opportunity Qualification",
+      "objective": "Use the site walk to confirm fit, gather production-grade data, deepen CBR understanding, and set scope expectations before estimating.",
+      "keyPoints": [
+        "Hand kinesthetic clients something to touch — a paving stone, a sample. Do it early.",
+        "The fit decision must be made before you leave the site. Not later. Not by email.",
+        "Opportunity path: Straightforward Quote vs. Scoped Proposal vs. Roadmap/Preconstruction Package.",
+        "Separate must-haves from nice-to-haves on site — with the client present.",
+        "No estimate should begin without photos, measurements, and a written site walk summary."
+      ],
       "lessons": [
-        "What to look for on every site walk",
-        "How to make a clear fit decision at the site",
-        "Documenting site conditions for estimating accuracy",
-        "Setting expectations before leaving the site"
+        "What to inspect on every site walk — access, drainage, grade, utilities, hardscape, plant health",
+        "How to make a clear fit decision on-site and communicate it professionally",
+        "Documenting site conditions for estimating accuracy — the 8 required elements",
+        "Setting scope expectations before leaving — what NOT to promise",
+        "The Site Walk Checklist — walk through it live with a real or mock opportunity"
       ],
       "quiz": [
-        "What is the fit decision and when should it be made?",
-        "What documentation must come out of every site walk?",
-        "What should never be promised on the site walk?"
+        "What is the fit decision and when must it be made?",
+        "What 8 things must you inspect on every site walk?",
+        "What should never be promised on the site walk?",
+        "What documentation must come out of every site walk before estimating begins?"
       ]
     },
     {
       "id": "M5",
-      "title": "Scope Development and Estimating",
-      "objective": "Build scopes that are accurate, defensible, and protect Avalon's margin.",
+      "title": "Scope Development, Estimating, and Margin Protection",
+      "objective": "Build scopes that are accurate, defensible, and protect Avalon's margin — never guess.",
+      "keyPoints": [
+        "Scope first, estimate second — never price before scope is locked.",
+        "Every unknown must be called out as an exclusion — in plain language.",
+        "The approval matrix: Ryan < $2,500 (templates), $2,500–$10,000 (manager), $10,001+ (Tyler), hardscape/drainage always (management).",
+        "No sales number is reduced without a matching scope reduction.",
+        "Contingency is not optional on complex work — it is margin protection."
+      ],
       "lessons": [
-        "What belongs in a scope — and what doesn't",
-        "How to write exclusions that protect Avalon",
-        "The relationship between scope and estimate accuracy",
-        "Margin targets and why they aren't negotiable"
+        "The Internal Scope Structure — 10 required elements",
+        "Writing exclusions that actually protect Avalon",
+        "The Estimate Review Checklist — walk through every line",
+        "The approval matrix — who approves what and why",
+        "Common margin killers in landscape estimating and how to avoid them"
       ],
       "quiz": [
         "What is the difference between a scope and a proposal?",
         "Why must exclusions be documented in writing?",
-        "What happens when scope changes after estimating?"
+        "What happens when scope changes after estimating without a written amendment?",
+        "Who must approve a $12,000 landscape enhancement job?"
       ]
     },
     {
       "id": "M6",
       "title": "Proposal Delivery and Presentation",
-      "objective": "Present proposals in a way that builds confidence and creates momentum toward a decision.",
+      "objective": "Present proposals in a way that builds confidence, connects to CBRs, and creates natural momentum toward a committed decision.",
+      "keyPoints": [
+        "Never email a complex proposal for the client to read alone — present live or on video.",
+        "Always open by restating their CBRs before touching the proposal document.",
+        "Present solutions in CBR priority order — not task order.",
+        "Design sign-off first, then investment — never lead with price.",
+        "Ask for the decision directly: 'Can we lock this in today?' Not 'Let me know what you think.'"
+      ],
       "lessons": [
-        "Why live presentation outperforms email-only delivery",
-        "How to walk through price without apologizing",
-        "Anchoring scope before revealing the number",
-        "Setting the next step at the moment of delivery"
+        "The 6-step presentation sequence: CBR Review → CBR-Order Solutions → Check Agreement → Review Investment → Address Concerns → Ask for Decision",
+        "How to state the investment confidently without apologizing",
+        "The Rehearsal Protocol for absent decision-makers",
+        "Acknowledge → Reframe → Forward-question for technical objections",
+        "The anatomy of a weak close vs. a direct, confident close"
       ],
       "quiz": [
         "What is the biggest mistake salespeople make at proposal delivery?",
-        "How should exclusions be presented?",
+        "In what order should solutions be presented — and why?",
+        "How should exclusions be handled at presentation?",
         "What should always happen before the client leaves the proposal conversation?"
       ]
     },
     {
       "id": "M7",
-      "title": "Follow-Up and Objection Handling",
-      "objective": "Stay in contact, resolve real objections, and move clients toward decisions.",
+      "title": "Follow-Up, Objection Handling, and Decision Management",
+      "objective": "Stay in contact on a defined cadence, resolve real objections using the 5-step framework, and move every opportunity to a clear status.",
+      "keyPoints": [
+        "Follow-up cadence: Day 3, Day 7, Day 14, Day 21+ — not random.",
+        "Clarify before answering: 'Is it the price, scope, timing, or fit?'",
+        "The 5-step objection framework: Pause → Clarify → Reconnect to CBRs → Offer a path → Confirm next step.",
+        "Never discount without changing scope — it trains clients to stall for price reductions.",
+        "Every open opportunity must have a defined next step with a date."
+      ],
       "lessons": [
-        "The Avalon follow-up cadence and why it works",
-        "How to tell the difference between an objection and an excuse",
-        "The six most common objections and how to respond",
-        "When to stop following up — and how to close it gracefully"
+        "The Avalon follow-up cadence — scripted responses for each touchpoint",
+        "How to tell the difference between a real objection and a stall tactic",
+        "The 6 most common objections — full response scripts for each",
+        "When to stop following up — and how to close it gracefully without burning the relationship",
+        "Handling 'I got a cheaper quote' without matching price"
       ],
       "quiz": [
-        "What is the first follow-up question after a proposal?",
-        "How do you respond to 'your price is too high'?",
-        "When is it appropriate to stop following up?"
+        "What is the first follow-up question after sending a proposal?",
+        "How do you respond to 'Your price is too high'? Step by step.",
+        "When is it appropriate to stop following up?",
+        "How do you handle a discount request without dropping the price?"
       ]
     },
     {
       "id": "M8",
-      "title": "Closing and Sold Job Activation",
-      "objective": "Confirm commitments clearly and hand off to production cleanly.",
+      "title": "Closing, Sold Job Activation, and Production Handoff",
+      "objective": "Confirm commitments clearly, lock the scope, and hand off to production in a way that eliminates guessing and protects the client relationship.",
+      "keyPoints": [
+        "The close is the natural result of a well-run process — not a pressure tactic.",
+        "Signed SOW + deposit = activation. Verbal yes alone is not enough.",
+        "The Handoff Packet: SOW, COGs, CBR Profile, Material/Access layout.",
+        "The Alignment Meeting: Sales + Ops + Crew Leader. SOW line-by-line.",
+        "The Driveway Handshake: Sales Rep on-site Day 1. Walk with client and Crew Leader. Pass the baton officially."
+      ],
       "lessons": [
         "What a verbal yes requires — and what it doesn't authorize",
-        "How to confirm scope and price at the close",
-        "The sold job activation checklist and why it matters",
-        "How a clean handoff protects the client relationship"
+        "The Sold Job Activation Checklist — every line, every time",
+        "The 3-phase handoff: Handoff Packet → Alignment Meeting → Driveway Handshake",
+        "How a botched handoff destroys field labor efficiency and client trust",
+        "What Sales must never do after handoff to production"
       ],
       "quiz": [
-        "What must be documented before a verbal yes is acted on?",
-        "What is in the sold job activation handoff packet?",
-        "What should sales never do after handoff to production?"
+        "What must be in the handoff packet before any field crew begins excavation?",
+        "What happens at the Driveway Handshake?",
+        "What is in the Sold Job Activation Checklist?",
+        "What should sales never do after formal handoff to production?"
       ]
     },
     {
       "id": "M9",
-      "title": "Closeout, Reviews, and Referrals",
-      "objective": "Close every job cleanly and convert satisfied clients into future revenue.",
+      "title": "Closeout, Reviews, Referrals, and Revenue Expansion",
+      "objective": "Close every job cleanly, capture satisfaction, and convert happy clients into ongoing revenue — reviews, referrals, maintenance, and phase 2.",
+      "keyPoints": [
+        "Every job ends with a personal closeout conversation from Sales — not production.",
+        "Review request timing: 48–72 hours after final walkthrough.",
+        "Referral conversation: 'We treat referrals the same way we treated you.'",
+        "Maintenance conversion: 'Would you like us to help maintain or protect this investment?'",
+        "Phase 2 prompt: 'What would you want to tackle next?' — log with timing and owner."
+      ],
       "lessons": [
-        "The closeout conversation — timing and structure",
-        "How to ask for a review without being awkward",
-        "Turning a satisfied client into a referral source",
-        "Handling dissatisfied clients before they go public"
+        "The closeout conversation — timing, structure, and what to confirm",
+        "How to ask for a Google review in a way that actually gets results",
+        "Turning a satisfied client into a referral source — the exact language",
+        "Maintenance conversion from a landscape job — the bridge question",
+        "Handling dissatisfied clients before they go public — de-escalation and resolution"
       ],
       "quiz": [
         "When should the closeout call happen?",
         "How do you ask for a review in a way that gets results?",
-        "What is the referral conversation opener?"
+        "What is the referral conversation opener?",
+        "What question opens the door to a phase 2 or maintenance conversation?"
       ]
     }
   ],
   "checklists": [
     {
+      "id": "lead_intake",
+      "title": "Lead Intake Checklist",
+      "stage": 1,
+      "items": [
+        "Client name and contact info captured",
+        "Property address confirmed",
+        "Service line categorized (Landscape / Maintenance / Hardscape / etc.)",
+        "Client type confirmed (Residential / Commercial)",
+        "Lead source recorded",
+        "Urgency and desired timing captured",
+        "What prompted the inquiry — documented in their words",
+        "Decision-maker identified or flagged",
+        "Owner assigned",
+        "Next step scheduled with date and time"
+      ]
+    },
+    {
+      "id": "discovery",
+      "title": "Discovery Checklist",
+      "stage": 2,
+      "items": [
+        "Real rapport established — communication style identified",
+        "T.A.P.P.O. set at the start of the meeting (Time, Agenda, People, Process, Outcome)",
+        "What prompted the inquiry — understood and documented",
+        "3+ Funneling Rule applied — at least 3 layers of CBR questioning completed",
+        "Core Buying Reason #1 (surface) documented in client's words",
+        "Core Buying Reason #2 (deeper) documented",
+        "Core Buying Reason #3 (emotional/real) documented",
+        "Pain and consequences fully explored before shifting to pleasure/solutions",
+        "Effective listening discipline applied — silences, no premature fix-it mode",
+        "All decision-makers identified",
+        "Timing is understood and documented",
+        "Budget comfort explored where appropriate",
+        "Mutual agreement for next step is set"
+      ]
+    },
+    {
+      "id": "site_walk",
+      "title": "Site Walk Checklist",
+      "stage": 3,
+      "items": [
+        "CBRs revisited at the start of the walk — confirmed with client",
+        "Client's communication style matched during the walk",
+        "Material sample handed to kinesthetic client",
+        "Photos taken of all relevant areas",
+        "Measurements captured for all critical dimensions",
+        "Access and staging areas reviewed",
+        "Drainage and grade issues noted",
+        "Utilities, property lines, and HOA concerns asked about",
+        "Must-haves separated from nice-to-haves — confirmed with client",
+        "Opportunity path selected (Quote / Scoped Proposal / Roadmap)",
+        "Fit decision made before leaving the site",
+        "Next step confirmed with client before leaving"
+      ]
+    },
+    {
+      "id": "internal_scope",
+      "title": "Internal Scope Checklist",
+      "stage": 4,
+      "items": [
+        "Scope divided into clear sections (plants, landscaping, hardscape, misc, coordination)",
+        "Quantities defined — nothing estimated from memory",
+        "Materials listed with specifications",
+        "Labor activities broken down by task",
+        "Assumptions written in plain language",
+        "Exclusions written in plain language — every unknown called out",
+        "Risks flagged explicitly",
+        "Subcontractors, permits, and utilities identified if needed",
+        "Phases or options confirmed if required",
+        "Contingency applied where risk is high"
+      ]
+    },
+    {
+      "id": "estimate_review",
+      "title": "Estimate Review Checklist",
+      "stage": 5,
+      "items": [
+        "Materials priced — all items included",
+        "Labor hours reviewed against actual production capacity (not guessed)",
+        "Equipment, subs, and disposal included",
+        "Overhead accounted for",
+        "Contingency applied where needed",
+        "Target gross margin checked and confirmed",
+        "Final sales number approved at the correct authority level",
+        "Ryan: under $2,500 with approved templates",
+        "Manager review: $2,500–$10,000",
+        "Tyler approval: $10,001+ and all hardscape/drainage/design-build"
+      ]
+    },
+    {
+      "id": "proposal_review",
+      "title": "Proposal Review Checklist",
+      "stage": 6,
+      "items": [
+        "Client outcome framing included — CBRs referenced first",
+        "Scope is clear and written for the client (not internal jargon)",
+        "Investment is presented clearly — stated as an investment, not a cost",
+        "Timeline or sequencing included",
+        "Assumptions written in plain language",
+        "Exclusions written in plain language",
+        "Deposit and authorization language included",
+        "Next step is obvious — what happens after they sign",
+        "Internal reviewer approved if required by authority matrix",
+        "Delivery method confirmed (live / Zoom / email + review call)"
+      ]
+    },
+    {
+      "id": "sold_activation",
+      "title": "Sold Job Activation Checklist",
+      "stage": 9,
+      "items": [
+        "Signed proposal or SOW received",
+        "Deposit confirmed — amount and receipt date logged",
+        "Approved scope matches the estimate exactly",
+        "Production notes created and organized",
+        "Materials, subs, and permits flagged for production",
+        "Production owner assigned with name and contact",
+        "Client pre-production communication planned and scheduled",
+        "Driveway Handshake scheduled (Sales Rep on-site Day 1 of mobilization)",
+        "Alignment Meeting scheduled with Ops Manager and Crew Leader"
+      ]
+    },
+    {
+      "id": "closeout",
+      "title": "Closeout Checklist",
+      "stage": 12,
+      "items": [
+        "Completion confirmed internally",
+        "Personal closeout call made by Sales — not production",
+        "Client satisfaction confirmed in the conversation",
+        "Open issues resolved or assigned with owner and date",
+        "Review request made (Google) — with direct link sent",
+        "Referral conversation completed where appropriate",
+        "Future phase or maintenance opportunity identified and discussed",
+        "Next opportunity logged with timing and assigned owner",
+        "Lessons learned captured for production feedback loop",
+        "Job file closed with notes useful for future work"
+      ]
+    },
+    {
       "id": "daily",
       "title": "Daily Sales Start-Up",
+      "stage": 0,
       "items": [
         "Review all open opportunities and follow-up dates",
         "Identify the top 3 priorities for today",
-        "Check for any overdue follow-ups",
+        "Check for any overdue follow-ups (7+ days no contact)",
         "Confirm all scheduled calls, site walks, and meetings for today",
         "Review any outstanding proposals awaiting decision",
         "Prepare for any discovery calls or site walks scheduled today",
-        "Update the pipeline after any calls or site visits"
+        "Update the pipeline after any calls or site visits",
+        "Log all activity, notes, and next steps in the system"
       ]
     },
     {
       "id": "weekly",
       "title": "Weekly Sales Review",
+      "stage": 0,
       "items": [
         "Review all opportunities by stage",
-        "Identify any stuck deals and plan a next action",
+        "Identify any stuck deals (14+ days without movement) and plan a next action",
         "Check for any leads that haven't been contacted in 7+ days",
-        "Review closed and lost jobs from the week",
+        "Review closed and lost jobs from the week — what happened?",
         "Update pipeline totals and conversion metrics",
+        "Review weekly activity scoreboard vs. targets",
         "Set priorities for next week",
-        "Submit any manager reports or pipeline updates"
-      ]
-    },
-    {
-      "id": "presite",
-      "title": "Pre-Site Walk Prep",
-      "items": [
-        "Review all notes from discovery call",
-        "Confirm scope and client expectations before arriving",
-        "Bring site walk checklist and measurement tools",
-        "Confirm address and access instructions",
-        "Plan for fit decision conversation at the end of the walk",
-        "Know what the next step will be before you arrive"
-      ]
-    },
-    {
-      "id": "preproposal",
-      "title": "Pre-Proposal Review",
-      "items": [
-        "Scope matches discovery and site walk notes",
-        "Price matches approved estimate",
-        "Exclusions are written in plain language",
-        "Assumptions are documented",
-        "Timeline and payment terms are included",
-        "Proposal has been reviewed by manager if required",
-        "Delivery method is confirmed",
-        "Follow-up date is already in calendar"
+        "Submit any manager reports or pipeline updates",
+        "Weekly sales coaching meeting completed"
       ]
     }
   ],
+  "activityTargets": {
+    "ryan": {
+      "pastClientFollowUps": { "min": 15, "max": 25, "label": "Past Client Follow-Ups" },
+      "estimateFollowUps": { "min": 10, "max": 20, "label": "Open Estimate Follow-Ups" },
+      "outboundCalls": { "min": 25, "max": 50, "label": "New Outbound Calls" },
+      "doorHangers": { "min": 100, "max": 250, "label": "Door Hangers / Neighborhood Touches" },
+      "newAppointments": { "min": 2, "max": 5, "label": "New Appointments Created" },
+      "crmNotes": { "min": 1, "max": 1, "label": "CRM Notes & Next Steps (Daily)", "frequency": "daily" },
+      "weeklyReview": { "min": 1, "max": 1, "label": "Weekly Sales Review Meeting" }
+    }
+  },
   "managerAgenda": [
-    "Review pipeline by stage — where are deals stuck?",
-    "Identify any opportunities more than 14 days without movement",
-    "Review proposals sent vs. proposals closed this week",
-    "Discuss any objections or discovery issues from the week",
-    "Check sold job activations — were handoffs clean?",
-    "Review any closed lost jobs — what happened?",
-    "Confirm training progress and skill development priorities",
-    "Set individual rep priorities and commitments for next week"
+    "Review pipeline by stage — where are deals stuck (14+ days without movement)?",
+    "Identify any opportunities without a defined next step and owner.",
+    "Review proposals sent vs. proposals closed this week — what's the conversion rate?",
+    "Discuss any objections or discovery issues from the week.",
+    "Check sold job activations — were handoffs clean? Was the Driveway Handshake completed?",
+    "Review any closed lost jobs — what happened? What should we learn?",
+    "Review weekly activity scoreboard vs. targets for each rep.",
+    "Confirm training progress and skill development priorities.",
+    "Set individual rep priorities and commitments for next week.",
+    "Review any commission approval requests for $10K+ jobs."
   ],
   "kpis": [
     "Leads created per week",
-    "Discovery calls completed",
-    "Site walks scheduled and completed",
-    "Proposals sent",
-    "Proposals closed (won and lost)",
-    "Win rate by service line",
-    "Average deal size by service line",
+    "Discovery calls completed per week",
+    "Site walks scheduled and completed per week",
+    "Proposals sent per week",
+    "Proposals closed (won and lost) per week",
+    "Win rate by service line (Landscape vs. Maintenance × Residential vs. Commercial)",
+    "Average deal size by service line and client type",
     "Days from lead to proposal",
     "Days from proposal to close",
     "Follow-up rate (proposals touched within 3 days)",
-    "Overdue follow-ups (more than 7 days no contact)"
+    "Overdue follow-ups (more than 7 days no contact)",
+    "Outbound calls per week vs. target (25–50)",
+    "Door hangers / neighborhood touches per week vs. target (100–250)",
+    "New appointments created per week vs. target (2–5)",
+    "Commission earned (collected) per rep per period",
+    "Commission pending (approved not yet collected) per rep",
+    "Maintenance recurring clients added per month"
   ],
   "nonNegotiables": [
-    "Every opportunity must have a clear next step with an owner and date.",
-    "No proposal is sent without scope and exclusions reviewed.",
-    "Every proposal gets a live follow-up within 3 business days.",
-    "No job is scheduled until contract is signed and deposit received.",
-    "Every sold job gets a formal production handoff — not just a text.",
-    "Every completed job gets a closeout call and review request.",
-    "Discovery notes must be documented before moving to site walk.",
-    "Margin targets are not negotiated without manager approval."
+    "No estimate goes out without scope clarity — every unknown must be an exclusion.",
+    "No proposal goes out without margin review and approval at the right authority level.",
+    "No sold job enters production without signed approval and formal handoff packet.",
+    "No client should go dark without a defined follow-up cadence.",
+    "No production issue that hurt margin or trust should disappear without being captured in the feedback loop.",
+    "No rep should present price without first understanding the client's decision process.",
+    "No discount should be offered without a matching scope, timing, or value adjustment.",
+    "No complex project should begin without a pre-production communication plan.",
+    "No budget qualification = no site plan or breakdown shared.",
+    "Unidentified decision-makers = no final proposal review.",
+    "Mutual Agreement broken = stop work immediately and debrief.",
+    "Commission is paid only on approved, sold, and collected work — properly documented."
   ]
 };

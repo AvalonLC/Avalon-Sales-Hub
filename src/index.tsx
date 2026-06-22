@@ -75,6 +75,7 @@ function getHtml(): string {
     </div>
     <nav class="nav" role="navigation">
       <button class="nav-item active" data-view="today" onclick="show('today')">🏠 Today</button>
+      <button class="nav-item" data-view="myDashboard" onclick="show('myDashboard')">👤 My Dashboard</button>
       <button class="nav-item" data-view="pipeline" onclick="show('pipeline')">📊 Pipeline</button>
       <button class="nav-item" data-view="lead" onclick="show('lead')">➕ Add Lead</button>
       <button class="nav-item" data-view="process" onclick="show('process')">📋 Sales Process</button>
@@ -108,6 +109,7 @@ function getHtml(): string {
 <div id="toast" class="toast" hidden role="alert" aria-live="assertive"></div>
 
 <script src="/static/data.js"></script>
+<script src="/static/reps.js"></script>
 <script src="/static/app_premium.js"></script>
 <script src="/static/integrations.js"></script>
 <script>
@@ -129,6 +131,18 @@ function getHtml(): string {
 
   // Expose state to integrations module
   window._avalonState = state;
+
+  // Auth gate — show login screen if no rep is logged in
+  (function() {
+    if (!window.getCurrentRep || !window.getCurrentRep()) {
+      // Small delay to let all scripts initialize
+      setTimeout(() => {
+        if (!window.getCurrentRep()) {
+          window.renderLoginScreen();
+        }
+      }, 100);
+    }
+  })();
 </script>
 </body>
 </html>`

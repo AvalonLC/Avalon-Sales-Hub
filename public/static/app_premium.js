@@ -32,15 +32,29 @@ function copyText(text){ navigator.clipboard?.writeText(text).then(()=>showToast
 function show(viewName='today', param){
   navItems.forEach(b=>b.classList.toggle('active', b.dataset.view===viewName));
   sidebar.classList.remove('open');
-  // integrations is loaded from integrations.js — include if available
+  // integrations is loaded from integrations.js
   const intRoute = (typeof integrations === 'function') ? {integrations} : {};
-  const routes = {today, pipeline, lead, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute};
+  // repDashboard is loaded from reps.js
+  const repRoute = (typeof repDashboard === 'function') ? {myDashboard: repDashboard} : {};
+  const routes = {today, pipeline, lead, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute, ...repRoute};
   (routes[viewName] || today)(param);
   window.scrollTo({top:0, behavior:'smooth'});
-  // Keep global state reference fresh for integrations module
   if (typeof window._avalonState !== 'undefined') window._avalonState = state;
 }
 window.show = show;
+
+// Inject current rep name into sidebar
+(function updateSidebarRep() {
+  try {
+    const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+    if (rep) {
+      const footer = document.querySelector('.sidebar-footer');
+      if (footer) {
+        footer.innerHTML = `<span style="color:${rep.color};font-weight:700">${rep.avatar} ${rep.name}</span><br>${rep.title}<br><button onclick="logoutRep();renderLoginScreen()" style="margin-top:6px;background:none;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;padding:4px 10px;cursor:pointer;width:100%">Switch Account</button>`;
+      }
+    }
+  } catch(e) {}
+})();
 
 function statCards(){
   const open = state.opportunities.filter(o=>!['Sold / Activation','Closed Lost'].includes(o.status)).length;
@@ -112,8 +126,41 @@ function today(){
       <section class="card"><h2>Coming Up</h2>${next.length ? next.map(oppMini).join('') : empty('No future follow-ups scheduled.')}</section>
       <section class="card"><h2>Recently Updated</h2>${recent.length ? recent.map(oppMini).join('') : empty('No opportunities yet. Add your first lead.')}</section>
     </div>
+    ${renderTodayActivityWidget()}
   `;
   wireChecks();
+}
+
+function renderTodayActivityWidget(){
+  const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const targets = window.AVALON_DATA.activityTargets;
+  if(!currentRep || !targets[currentRep.id]) {
+    // Show generic KPI strip for admin
+    return `<div class="card mt">
+      <h3>Weekly KPI Targets (Ryan)</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px">
+        ${Object.entries(targets.ryan||{}).map(([k,v])=>`<div style="background:var(--bg2);border-radius:8px;padding:12px">
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">${escapeHtml(v.label)}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--accent)">${v.min === v.max ? v.min : v.min + '–' + v.max}/wk</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+  const repTargets = targets[currentRep.id];
+  if(!repTargets) return '';
+  return `<div class="card mt" style="border-left:3px solid ${currentRep.color||'#00d4ff'}">
+    <h3>${currentRep.avatar} ${escapeHtml(currentRep.name)}'s Weekly Activity Targets</h3>
+    <p class="muted small-text">Track these weekly — activity creates opportunity. Log in daily.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:12px">
+      ${Object.entries(repTargets).map(([k,v])=>`<div style="background:var(--bg2);border-radius:8px;padding:12px">
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">${escapeHtml(v.label)}</div>
+        <div style="font-size:1.2rem;font-weight:700;color:${currentRep.color||'#00d4ff'}">${v.min === v.max ? v.min : v.min + '–' + v.max}${v.frequency==='daily'?'/day':'/wk'}</div>
+      </div>`).join('')}
+    </div>
+    <div class="footer-actions mt">
+      <button class="secondary-btn small" onclick="show('myDashboard')">View Full Dashboard</button>
+    </div>
+  </div>`;
 }
 
 function empty(text){ return `<div class="empty">${escapeHtml(text)}</div>`; }
@@ -128,14 +175,57 @@ function oppCard(o){
 
 function pipeline(selectedId){
   if(selectedId){ return opportunityDetail(selectedId); }
+
+  const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const adminView = currentRep?.role === 'admin';
+  const activeRepFilter = window._pipelineRepFilter || (adminView ? 'all' : (currentRep?.id || 'all'));
+  const activeTypeFilter = window._pipelineTypeFilter || 'all';
+  const activeCatFilter = window._pipelineCatFilter || 'all';
+
+  let opps = state.opportunities;
+  if (activeRepFilter !== 'all') opps = opps.filter(o => o.repId === activeRepFilter);
+  if (activeTypeFilter !== 'all') opps = opps.filter(o => o.clientType === activeTypeFilter);
+  if (activeCatFilter === 'landscape') opps = opps.filter(o => {
+    const cat = (o.projectCategory||'').toLowerCase();
+    return cat.includes('landscape') || cat.includes('hardscape') || cat.includes('drainage') || cat.includes('design') || cat.includes('irrigation') || cat.includes('lighting') || cat.includes('enhancement');
+  });
+  if (activeCatFilter === 'maintenance') opps = opps.filter(o => {
+    const cat = (o.projectCategory||'').toLowerCase();
+    return cat.includes('maintenance');
+  });
+
   const filters = data.statuses;
-  const grouped = filters.map(status => ({status, items: state.opportunities.filter(o=>o.status===status)})).filter(g=>g.items.length || ['New Lead','Discovery Scheduled','Proposal Sent','Follow-Up','Sold / Activation'].includes(g.status));
+  const grouped = filters.map(status => ({status, items: opps.filter(o=>o.status===status)})).filter(g=>g.items.length || ['New Lead','Contacted','Discovery Scheduled','Proposal / Estimate Sent','Follow-Up','Sold / Activation'].includes(g.status));
+
   view.innerHTML = `
     <div class="hero pipeline-hero">
       <div class="eyebrow">Day-to-Day Sales Tracker</div>
       <h1>Pipeline</h1>
-      <p class="lede">Track leads from first inquiry through proposal, follow-up, and sold-job activation. This local prototype can be exported anytime from Settings.</p>
-      <div class="quick-actions"><button class="primary-btn" onclick="show('lead')">+ Add Lead</button><button class="secondary-btn" onclick="exportCsv()">Export CSV</button><button class="secondary-btn" onclick="show('forms','follow-up')">Follow-Up Cadence</button></div>
+      <p class="lede">Track leads from first inquiry through proposal, follow-up, and sold-job activation.</p>
+      <div class="quick-actions">
+        <button class="primary-btn" onclick="show('lead')">+ Add Lead</button>
+        <button class="secondary-btn" onclick="exportCsv()">Export CSV</button>
+        <button class="secondary-btn" onclick="show('forms','follow-up')">Follow-Up Cadence</button>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;align-items:center">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--muted);align-self:center">Rep:</span>
+        <button class="tab ${activeRepFilter==='all'?'active':''}" onclick="window._pipelineRepFilter='all';show('pipeline')">All</button>
+        ${(window.REPS||[]).map(r=>`<button class="tab ${activeRepFilter===r.id?'active':''}" onclick="window._pipelineRepFilter='${r.id}';show('pipeline')">${r.avatar} ${r.name}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--muted);align-self:center">Client:</span>
+        <button class="tab ${activeTypeFilter==='all'?'active':''}" onclick="window._pipelineTypeFilter='all';show('pipeline')">All</button>
+        <button class="tab ${activeTypeFilter==='Residential'?'active':''}" onclick="window._pipelineTypeFilter='Residential';show('pipeline')">🏡 Residential</button>
+        <button class="tab ${activeTypeFilter==='Commercial'?'active':''}" onclick="window._pipelineTypeFilter='Commercial';show('pipeline')">🏢 Commercial</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--muted);align-self:center">Work:</span>
+        <button class="tab ${activeCatFilter==='all'?'active':''}" onclick="window._pipelineCatFilter='all';show('pipeline')">All Work</button>
+        <button class="tab ${activeCatFilter==='landscape'?'active':''}" onclick="window._pipelineCatFilter='landscape';show('pipeline')">🌿 Landscape</button>
+        <button class="tab ${activeCatFilter==='maintenance'?'active':''}" onclick="window._pipelineCatFilter='maintenance';show('pipeline')">✂️ Maintenance</button>
+      </div>
     </div>
     ${statCards()}
     <div class="kanban mt">
@@ -144,7 +234,13 @@ function pipeline(selectedId){
   `;
 }
 
+window.filterPipelineByRep = function(repId) {
+  window._pipelineRepFilter = repId;
+  show('pipeline');
+};
+
 function lead(){
+  const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
   view.innerHTML = `
     <div class="eyebrow">Stage 1</div>
     <h1>Lead Intake</h1>
@@ -155,8 +251,17 @@ function lead(){
         ${input('phone','Phone')}
         ${input('email','Email','email')}
         ${input('address','Property Address')}
+        ${select('clientType','Client Type',['Residential','Commercial'])}
+        ${select('projectCategory','Project Category',['Landscape / Enhancement','Maintenance - One Time','Maintenance - Recurring','Hardscape','Drainage','Design / Build','Irrigation','Outdoor Lighting','Other'])}
         ${select('serviceLine','Service Line',data.serviceLines)}
         ${select('source','Lead Source',data.leadSources)}
+        ${select('leadSource','Commission Lead Source',['company_lead','self_generated','assisted'],'company_lead')}
+        ${select('workType','Work Type (commission)',['landscape','maintenance_onetime','maintenance_recurring','maintenance_upsell','hardscape','drainage','design_build'],'landscape')}
+        ${input('jobValue','Estimated Job Value ($)','number')}
+        <label><span>Assigned Rep</span><select name="repId">
+          <option value="${currentRep ? currentRep.id : ''}">— ${currentRep ? currentRep.name + ' (you)' : 'Select rep'} —</option>
+          ${(window.REPS || []).filter(r=>r.role==='rep' && (!currentRep || r.id !== currentRep.id)).map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+        </select></label>
         ${input('project','Project / Opportunity Name')}
         ${input('urgency','Urgency / Timing')}
         ${input('decisionMaker','Decision-Maker(s)')}
@@ -176,6 +281,7 @@ function lead(){
     const opp = Object.fromEntries(fd.entries());
     opp.id = uid('opp'); opp.createdAt = new Date().toISOString(); opp.updatedAt = opp.createdAt;
     if(!opp.status) opp.status = 'New Lead';
+    if(!opp.repId && currentRep) opp.repId = currentRep.id;
     state.opportunities.unshift(opp); saveState(); showToast('Lead saved'); show('pipeline', opp.id);
   });
 }
@@ -240,28 +346,84 @@ function renderNotes(oppId){ const notes = state.notes.filter(n=>n.oppId===oppId
 
 function process(stageId){
   if(stageId){ return renderStage(data.stages.find(s=>s.id===Number(stageId))); }
+  const sp = data.salesProcess;
+  const stepColors = ['#00d4ff','#4ade80','#f59e0b','#ef4444','#a855f7','#ec4899'];
   view.innerHTML = `
-    <div class="eyebrow">Operating System</div><h1>12-Stage Sales Process</h1><p class="lede">Each stage has a purpose, owner, required artifact, gate, and red flags. Use this to know when an opportunity is truly ready to move forward.</p>
-    <div class="grid grid-3 mt">${data.stages.map(s=>`<article class="card clickable" onclick="show('process',${s.id})"><div class="stage-number">${s.id}</div><h3>${escapeHtml(s.title)}</h3><p>${escapeHtml(s.purpose)}</p><p class="meta"><strong>Owner:</strong> ${escapeHtml(s.owner)}</p></article>`).join('')}</div>
+    <div class="eyebrow">Operating System</div>
+    <h1>Avalon Sales Process</h1>
+    <p class="lede">${escapeHtml(sp.subtitle)}</p>
+    <div class="card warn mt" style="text-align:center"><strong style="font-size:1.1rem">${escapeHtml(sp.stat)}</strong></div>
+    <h2 class="mt" style="font-size:1rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">6-Step Avalon Method</h2>
+    <div class="grid grid-3 mt" style="gap:12px">
+      ${sp.steps.map((s,i)=>`<article class="card" style="border-top:3px solid ${stepColors[i]};padding:16px">
+        <div style="font-size:2rem;font-weight:900;color:${stepColors[i]};line-height:1">Step ${s.num}</div>
+        <h3 style="margin:6px 0 4px">${escapeHtml(s.title)}</h3>
+        <p class="muted small-text">${escapeHtml(s.tagline)}</p>
+        <p style="font-size:.85rem;margin-top:8px">${escapeHtml(s.description.slice(0,120))}…</p>
+      </article>`).join('')}
+    </div>
+    <h2 class="mt" style="font-size:1rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">12-Stage Operating Procedures</h2>
+    <p class="lede" style="font-size:.9rem">Each stage has a purpose, owner, required artifact, stage gate, questions, and red flags. Tap any stage to open the full procedure.</p>
+    <div class="grid grid-3 mt">${data.stages.map(s=>`<article class="card clickable" onclick="show('process',${s.id})">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="stage-number">${s.id}</div>
+        ${s.processStep ? `<span class="badge" style="font-size:.7rem;background:rgba(0,212,255,.12);color:#00d4ff">${escapeHtml(s.processStep)}</span>` : ''}
+      </div>
+      <h3>${escapeHtml(s.title)}</h3>
+      <p style="font-size:.85rem">${escapeHtml(s.purpose)}</p>
+      <p class="meta"><strong>Owner:</strong> ${escapeHtml(s.owner)}</p>
+    </article>`).join('')}</div>
   `;
 }
 function renderStage(s){
+  const stageChecklist = (window.AVALON_DATA.checklists||[]).find(c=>c.stage===s.id);
   view.innerHTML = `
     <button class="secondary-btn" onclick="show('process')">← Back to all stages</button>
-    <h1><span class="stage-number">${s.id}</span> ${escapeHtml(s.title)}</h1><p class="lede">${escapeHtml(s.purpose)}</p>
-    <div class="grid grid-2 mt"><div class="card"><h3>Owner</h3><p>${escapeHtml(s.owner)}</p></div><div class="card"><h3>Gate to Next Stage</h3><p>${escapeHtml(s.gate)}</p></div></div>
-    <div class="grid grid-2 mt"><div class="card"><h3>What to Do</h3>${list(s.actions)}</div><div class="card"><h3>Required Artifact</h3><p>${escapeHtml(s.artifact)}</p><h3>Day-to-Day Use</h3><p>${escapeHtml(s.dayUse)}</p></div></div>
-    <div class="card danger mt"><h3>Red Flags</h3>${list(s.redFlags)}</div>
-    <div class="footer-actions">${s.id>1?`<button class="secondary-btn" onclick="show('process',${s.id-1})">Previous Stage</button>`:''}${s.id<12?`<button class="primary-btn" onclick="show('process',${s.id+1})">Next Stage</button>`:''}</div>`;
+    <h1><span class="stage-number">${s.id}</span> ${escapeHtml(s.title)}</h1>
+    ${s.processStep ? `<div class="eyebrow">${escapeHtml(s.processStep)}</div>` : ''}
+    <p class="lede">${escapeHtml(s.purpose)}</p>
+    <div class="grid grid-2 mt">
+      <div class="card"><h3>Owner</h3><p>${escapeHtml(s.owner)}</p></div>
+      <div class="card"><h3>Gate to Next Stage</h3><p>${escapeHtml(s.gate)}</p></div>
+    </div>
+    <div class="grid grid-2 mt">
+      <div class="card"><h3>Required Actions</h3>${list(s.actions)}${s.approvalMatrix ? `<h4 style="margin-top:12px">Approval Authority</h4><table style="width:100%;font-size:.83rem;border-collapse:collapse">${s.approvalMatrix.map(a=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 8px 4px 0;color:var(--muted)">${escapeHtml(a.range)}</td><td style="padding:4px 0">${escapeHtml(a.approval)}</td></tr>`).join('')}</table>` : ''}</div>
+      <div class="card">
+        <h3>Required Artifact</h3><p>${escapeHtml(s.artifact)}</p>
+        ${s.questions && s.questions.length ? `<h3 style="margin-top:12px">Questions to Use</h3>${list(s.questions)}` : ''}
+        ${s.followUpCadence ? `<h3 style="margin-top:12px">Follow-Up Cadence</h3>${s.followUpCadence.map(f=>`<div style="display:flex;gap:8px;margin:4px 0;font-size:.83rem"><strong style="color:var(--accent);min-width:50px">${escapeHtml(f.day)}</strong><span>${escapeHtml(f.action)}</span></div>`).join('')}` : ''}
+        ${s.objectionFramework ? `<h3 style="margin-top:12px">Objection Framework</h3>${list(s.objectionFramework)}` : ''}
+        ${s.proposalStructure ? `<h3 style="margin-top:12px">Proposal Structure</h3>${list(s.proposalStructure)}` : ''}
+      </div>
+    </div>
+    <div class="card danger mt"><h3>🚩 Red Flags — Do Not Advance Until Resolved</h3>${list(s.redFlags)}</div>
+    ${stageChecklist ? `<div class="card mt"><h3>✅ ${escapeHtml(stageChecklist.title)}</h3>${renderChecklist(stageChecklist, true)}</div>` : ''}
+    <div class="footer-actions mt">
+      ${s.id>1?`<button class="secondary-btn" onclick="show('process',${s.id-1})">← Previous Stage</button>`:''}
+      ${s.id<12?`<button class="primary-btn" onclick="show('process',${s.id+1})">Next Stage →</button>`:''}
+    </div>`;
+  wireChecks();
 }
 
 function forms(formId){
   if(formId){ const f = data.forms.find(x=>x.id===formId); if(f) return renderFormTool(f); }
-  view.innerHTML = `<div class="eyebrow">Field Tools</div><h1>Forms & Checklists</h1><p class="lede">These are the reusable day-to-day tools your team should open before calls, site visits, proposal reviews, follow-up, sold-job activation, and closeout.</p><div class="grid grid-3 mt">${data.forms.map(f=>`<article class="card clickable" onclick="show('forms','${f.id}')"><span class="badge">Tool</span><h3>${escapeHtml(f.title)}</h3><p>${escapeHtml(f.when)}</p></article>`).join('')}</div><h2>Recurring Team Checklists</h2><div class="grid grid-2">${data.checklists.map(c=>`<article class="card"><h3>${escapeHtml(c.title)}</h3>${renderChecklist(c,true)}</article>`).join('')}</div>`;
+  const stageChecklists = (data.checklists||[]).filter(c=>c.stage>0);
+  const utilChecklists = (data.checklists||[]).filter(c=>c.stage===0);
+  view.innerHTML = `<div class="eyebrow">Field Tools</div><h1>Forms & Checklists</h1><p class="lede">These are the reusable day-to-day tools your team should open before calls, site visits, proposal reviews, follow-up, sold-job activation, and closeout.</p>
+  <div class="grid grid-3 mt">${data.forms.map(f=>{
+    const stageNum = f.stage ? ` · Stage ${f.stage}` : '';
+    return `<article class="card clickable" onclick="show('forms','${f.id}')"><span class="badge">Tool${stageNum}</span><h3>${escapeHtml(f.title)}</h3><p style="font-size:.85rem">${f.fields.slice(0,3).map(x=>x.label).join(', ')}…</p></article>`;
+  }).join('')}</div>
+  <h2 class="mt">Stage Checklists</h2>
+  <div class="grid grid-2">${stageChecklists.map(c=>`<article class="card"><h3>${escapeHtml(c.title)}</h3><p class="muted small-text">Stage ${c.stage}</p>${renderChecklist(c,true)}</article>`).join('')}</div>
+  <h2 class="mt">Daily & Weekly Tools</h2>
+  <div class="grid grid-2">${utilChecklists.map(c=>`<article class="card"><h3>${escapeHtml(c.title)}</h3>${renderChecklist(c,true)}</article>`).join('')}</div>`;
   wireChecks();
 }
 function renderFormTool(f){
-  view.innerHTML = `<button class="secondary-btn" onclick="show('forms')">← Back to Forms</button><div class="eyebrow">Daily Tool</div><h1>${escapeHtml(f.title)}</h1><p class="lede"><strong>When to use:</strong> ${escapeHtml(f.when)}</p><div class="grid grid-2 mt"><section class="card"><h2>Fields to Capture</h2>${list(f.fields)}<button class="secondary-btn" onclick="copyText('${escapeForJs(f.fields.map(x=>'- '+x+':').join('\n'))}')">Copy Field Template</button></section><section class="card"><h2>Completion Checklist</h2>${renderChecklist({id:f.id,items:f.checklist},true)}</section></div><section class="card mt"><h2>Copy-Ready Working Note</h2><div class="script-box">${nl2br(f.fields.map(x=>`${x}:`).join('\n\n'))}</div><button class="primary-btn mt8" onclick="copyText('${escapeForJs(f.fields.map(x=>x+':').join('\n\n'))}')">Copy Note Template</button></section>`;
+  const stageChecklist = (data.checklists||[]).find(c=>c.stage===f.stage);
+  const fieldLabels = f.fields.map(x=>x.label);
+  view.innerHTML = `<button class="secondary-btn" onclick="show('forms')">← Back to Forms</button><div class="eyebrow">Daily Tool · Stage ${f.stage||'—'}</div><h1>${escapeHtml(f.title)}</h1><div class="grid grid-2 mt"><section class="card"><h2>Fields to Capture</h2>${list(fieldLabels)}<button class="secondary-btn mt8" onclick="copyText('${escapeForJs(fieldLabels.map(x=>'- '+x+':').join('\n'))}')">Copy Field Template</button></section><section class="card"><h2>${stageChecklist ? escapeHtml(stageChecklist.title) : 'Stage Checklist'}</h2>${stageChecklist ? renderChecklist(stageChecklist, true) : '<p class="muted">No checklist for this stage.</p>'}</section></div><section class="card mt"><h2>Copy-Ready Working Note</h2><div class="script-box">${nl2br(fieldLabels.map(x=>`${x}:`).join('\n\n'))}</div><button class="primary-btn mt8" onclick="copyText('${escapeForJs(fieldLabels.map(x=>x+':').join('\n\n'))}')">Copy Note Template</button></section>`;
   wireChecks();
 }
 function escapeForJs(str){ return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n'); }
@@ -296,7 +458,56 @@ window.calcLabor = function(){ const h=Number(document.getElementById('hours').v
 function money(n){ return n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}); }
 
 function academy(){
-  view.innerHTML = `<div class="eyebrow">Training Path</div><h1>Avalon Sales Academy</h1><p class="lede">Nine modules that turn the manual into onboarding, team training, and manager sign-off.</p><div class="grid grid-3 mt">${data.modules.map(m=>`<article class="card"><span class="badge">Module ${escapeHtml(m.id.slice(1))}</span><h3>${escapeHtml(m.title)}</h3><p>${escapeHtml(m.objective)}</p><h4>Lessons</h4>${list(m.lessons)}<h4>Quick Quiz</h4>${list(m.quiz)}<label class="check-item"><input type="checkbox" data-key="module-${m.id}"><span>Mark module complete</span></label></article>`).join('')}</div>`;
+  const onboardingPath = [
+    "Read Sections 1–4 to understand the Avalon sales system.",
+    "Shadow one intake call, one discovery call, one site walk, and one proposal review.",
+    "Complete the stage checklists using a real or sample opportunity.",
+    "Role-play discovery, budget discussion, proposal delivery, and objection handling.",
+    "Build one sample scope and proposal with manager review.",
+    "Own a low-complexity opportunity under supervision.",
+    "Review first won/lost opportunities in weekly coaching."
+  ];
+  view.innerHTML = `
+    <div class="eyebrow">Training Path</div>
+    <h1>Avalon Sales Academy</h1>
+    <p class="lede">Nine modules that turn the Avalon Sales Manual and 6-Step Process into real skill — onboarding, team training, and manager sign-off certification.</p>
+    <div class="card mt" style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2)">
+      <h3>📋 New Hire Onboarding Path</h3>
+      ${list(onboardingPath)}
+    </div>
+    <div class="grid grid-3 mt">
+      ${data.modules.map(m=>{
+        const num = parseInt(m.id.slice(1));
+        return `<article class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <span class="badge">Module ${num}</span>
+            <label class="check-item" style="margin:0"><input type="checkbox" data-key="module-${m.id}"><span style="font-size:.75rem">Complete</span></label>
+          </div>
+          <h3>${escapeHtml(m.title)}</h3>
+          <p style="font-size:.85rem;color:var(--muted)">${escapeHtml(m.objective)}</p>
+          ${m.keyPoints && m.keyPoints.length ? `<h4>Key Takeaways</h4>${list(m.keyPoints)}` : ''}
+          <h4>Lessons</h4>${list(m.lessons)}
+          <details style="margin-top:10px">
+            <summary style="cursor:pointer;color:var(--accent);font-size:.85rem;font-weight:600">Quiz Questions</summary>
+            ${list(m.quiz)}
+          </details>
+        </article>`;
+      }).join('')}
+    </div>
+    <div class="card mt">
+      <h3>📚 Sales Manual — Quick Reference</h3>
+      <div class="grid grid-2" style="gap:12px;margin-top:10px">
+        <div>
+          <h4>Core Sales Beliefs</h4>
+          ${list(['A qualified no is better than a confusing maybe that burns estimating time.','Budget conversations protect the client and Avalon when handled professionally.','The best proposal is not the longest — it is the clearest decision tool.','Objections are not attacks — they are signals that something needs clarification.','A signed proposal is not a finished sale until the job is activated and ready for production.'])}
+        </div>
+        <div>
+          <h4>Objection Handling Framework</h4>
+          ${list(['1. Pause and acknowledge — do not defend immediately.','2. Clarify the real issue: price, scope, timing, trust, or decision process.','3. Reconnect to the client\'s Core Buying Reasons.','4. Offer a path: proceed, revise scope, phase, hold, or close out.','5. Confirm the next step and date.'])}
+        </div>
+      </div>
+    </div>
+  `;
   wireChecks();
 }
 function manager(){
@@ -313,13 +524,14 @@ function resetAll(){ if(!confirm('Reset all local Sales Hub data and checklist p
 
 function buildSearchIndex(){
   const items=[];
-  data.stages.forEach(s=>items.push({type:'Stage',title:`${s.id}. ${s.title}`,text:[s.purpose,s.owner,s.artifact,s.gate,s.dayUse,...s.actions,...s.redFlags].join(' '),action:()=>show('process',s.id)}));
-  data.forms.forEach(f=>items.push({type:'Form',title:f.title,text:[f.when,...f.fields,...f.checklist].join(' '),action:()=>show('forms',f.id)}));
+  data.stages.forEach(s=>items.push({type:'Stage',title:`${s.id}. ${s.title}`,text:[s.purpose,s.owner,s.artifact,s.gate,...(s.actions||[]),...(s.redFlags||[]),...(s.questions||[])].join(' '),action:()=>show('process',s.id)}));
+  data.forms.forEach(f=>items.push({type:'Form',title:f.title,text:[...(f.fields||[]).map(x=>x.label)].join(' '),action:()=>show('forms',f.id)}));
   data.scripts.forEach(s=>items.push({type:s.category,title:s.title,text:s.body,action:()=>show('scripts')}));
   data.templates.forEach(t=>items.push({type:`Template: ${t.category}`,title:t.title,text:[t.subject,t.body].join(' '),action:()=>show('templates')}));
   data.objections.forEach(o=>items.push({type:'Objection',title:o.title,text:[o.meaning,o.say,...o.response].join(' '),action:()=>show('objections')}));
-  data.modules.forEach(m=>items.push({type:'Training',title:m.title,text:[m.objective,...m.lessons,...m.quiz].join(' '),action:()=>show('academy')}));
+  data.modules.forEach(m=>items.push({type:'Training',title:m.title,text:[m.objective,...(m.lessons||[]),...(m.quiz||[]),...(m.keyPoints||[])].join(' '),action:()=>show('academy')}));
   data.checklists.forEach(c=>items.push({type:'Checklist',title:c.title,text:c.items.join(' '),action:()=>show('forms')}));
+  (data.salesProcess?.steps||[]).forEach(s=>items.push({type:'6-Step Process',title:`Step ${s.num}: ${s.title}`,text:[s.tagline,s.description,...(s.tappo||[]).map(t=>t.description||''),...(s.nlpTips||[]),...(s.cbrQuestions||[])].join(' '),action:()=>show('process')}));
   return items;
 }
 const searchIndex = buildSearchIndex();
