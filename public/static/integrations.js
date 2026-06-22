@@ -15,15 +15,33 @@
 // ── Storage keys ──────────────────────────────────────────────────────────────
 const INT_KEY = 'avalonIntegrationsV1';
 
+// Pre-configured defaults (baked in at build time)
+const INT_DEFAULTS = {
+  zapierWebhookUrl: 'https://hooks.zapier.com/hooks/catch/26716050/422r11e/'
+};
+
 function loadIntState() {
-  try { return JSON.parse(localStorage.getItem(INT_KEY)) || {}; }
-  catch(e) { return {}; }
+  try {
+    const stored = JSON.parse(localStorage.getItem(INT_KEY)) || {};
+    // Merge defaults so pre-configured values are available on first load
+    return { ...INT_DEFAULTS, ...stored };
+  }
+  catch(e) { return { ...INT_DEFAULTS }; }
 }
 function saveIntState(patch) {
   const cur = loadIntState();
   localStorage.setItem(INT_KEY, JSON.stringify({ ...cur, ...patch }));
 }
 function getIntState(key) { return loadIntState()[key]; }
+
+// Bootstrap: write defaults to localStorage on first load so everything works immediately
+(function bootstrapDefaults() {
+  const stored = JSON.parse(localStorage.getItem(INT_KEY) || '{}');
+  const needsBootstrap = Object.keys(INT_DEFAULTS).some(k => !stored[k]);
+  if (needsBootstrap) {
+    localStorage.setItem(INT_KEY, JSON.stringify({ ...INT_DEFAULTS, ...stored }));
+  }
+})();
 
 // ── Google OAuth2 ─────────────────────────────────────────────────────────────
 // Scopes: Gmail read/compose, Calendar read/write, Drive read
