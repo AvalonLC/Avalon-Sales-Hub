@@ -832,7 +832,7 @@ function renderOMDashboard(viewEl, rep) {
 function renderAdminDashboard(viewEl) {
   const allOpps  = getGlobalOpps();
   const today    = todayISO();
-  const fy       = (window.AVALON_DATA || {}).fy2026 || {};
+  const fy       = (typeof getResolvedFY === 'function') ? getResolvedFY() : ((window.AVALON_DATA || {}).fy2026 || {});
   const annual   = fy.annual || {};
   const divs     = fy.divisions || {};
 
@@ -909,6 +909,7 @@ function renderAdminDashboard(viewEl) {
   const completedMonths = months.filter(m => m.actual != null);
   const ytdBudgeted = completedMonths.reduce((a,m) => a + m.budgeted, 0);
   const ytdVariance = (annual.actualRevenue || 0) - ytdBudgeted;
+  // ytdVariance and actualRevenue are already resolved by getResolvedFY()
 
   viewEl.innerHTML = `
 <!-- ── HEADER ── -->

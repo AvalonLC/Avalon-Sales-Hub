@@ -687,7 +687,7 @@ function academy(){
   wireChecks();
 }
 function manager(){
-  const fy = data.fy2026;
+  const fy = getResolvedFY();
   const annual = fy.annual;
   const divs = fy.divisions;
   const pd = data.pricingDiscipline;
@@ -1178,16 +1178,50 @@ function saveRevenueActuals(actuals) {
   localStorage.setItem(REV_ACTUALS_KEY, JSON.stringify(actuals));
 }
 
-function revenueAdmin() {
-  const fy = window.AVALON_DATA.fy2026;
-  const savedActuals = loadRevenueActuals();
-  // Merge saved actuals with data.js actuals (saved wins)
-  const months = (fy.monthlyBudget || []).map((m, idx) => {
-    const saved = savedActuals[m.month];
-    const actual = saved !== undefined ? saved : m.actual;
+/**
+ * getResolvedFY() — returns a deep copy of AVALON_DATA.fy2026 with
+ * localStorage-saved actuals merged in. Also recalculates:
+ *   - each month's .actual and .variance
+ *   - annual.actualRevenue, annual.remaining, annual.ytdVariance
+ * Call this instead of data.fy2026 anywhere you display live revenue figures.
+ */
+function getResolvedFY() {
+  const raw = window.AVALON_DATA.fy2026;
+  // Deep-clone so we never mutate the source
+  const fy = JSON.parse(JSON.stringify(raw));
+  const saved = loadRevenueActuals();
+
+  // Patch monthly actuals
+  fy.monthlyBudget = fy.monthlyBudget.map(m => {
+    const savedVal = saved[m.month];
+    const actual = savedVal !== undefined ? savedVal : m.actual;
     const variance = actual != null ? actual - m.budgeted : null;
-    return { ...m, actual, variance, idx };
+    return { ...m, actual, variance };
   });
+
+  // Recompute annual YTD figures
+  const completedMonths = fy.monthlyBudget.filter(m => m.actual != null);
+  const ytdActual   = completedMonths.reduce((s, m) => s + m.actual, 0);
+  const ytdBudgeted = completedMonths.reduce((s, m) => s + m.budgeted, 0);
+
+  fy.annual = { ...fy.annual };
+  fy.annual.actualRevenue = ytdActual;
+  fy.annual.remaining     = fy.annual.budgetedRevenue - ytdActual;
+  fy.annual.ytdVariance   = ytdActual - ytdBudgeted;
+
+  // Recompute avgNeededPerMonth based on updated remaining
+  const monthsLeft = fy.annual.monthsLeft || 7;
+  fy.annual.avgNeededPerMonth = monthsLeft > 0 ? Math.round(fy.annual.remaining / monthsLeft) : 0;
+
+  return fy;
+}
+window.getResolvedFY = getResolvedFY;
+
+
+function revenueAdmin() {
+  const fy = getResolvedFY();
+  // months already have saved actuals merged by getResolvedFY()
+  const months = (fy.monthlyBudget || []).map((m, idx) => ({ ...m, idx }));
 
   function fmtM(n) { return n != null ? n.toLocaleString(undefined, { style:'currency', currency:'USD', maximumFractionDigits:0 }) : '—'; }
 
