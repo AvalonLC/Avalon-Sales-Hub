@@ -30,6 +30,22 @@ function badge(text, cls=''){ return `<span class="badge ${cls}">${escapeHtml(te
 function showToast(message){ toastEl.textContent = message; toastEl.hidden = false; setTimeout(()=>toastEl.hidden=true, 2200); }
 function copyText(text){ navigator.clipboard?.writeText(text).then(()=>showToast('Copied to clipboard')).catch(()=>showToast('Select and copy manually')); }
 function show(viewName='today', param){
+  // ── Permission gate ──────────────────────────────────────
+  const _rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const _isAdmin = _rep && _rep.role === 'admin';
+  const _adminOnly = ['manager','settings'];
+  if (_adminOnly.includes(viewName) && !_isAdmin) {
+    view.innerHTML = `<div class="card" style="text-align:center;padding:48px 24px;margin-top:40px">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <h2 style="color:#f87171;margin-bottom:8px">Admin Access Only</h2>
+      <p class="muted">This section is restricted to Tyler (Owner / Admin).<br>If you need access, ask Tyler to review it with you.</p>
+    </div>`;
+    navItems.forEach(b=>b.classList.toggle('active', b.dataset.view===viewName));
+    sidebar.classList.remove('open');
+    window.scrollTo({top:0, behavior:'smooth'});
+    return;
+  }
+  // ────────────────────────────────────────────────────────
   navItems.forEach(b=>b.classList.toggle('active', b.dataset.view===viewName));
   sidebar.classList.remove('open');
   // integrations is loaded from integrations.js
@@ -48,9 +64,25 @@ window.show = show;
   try {
     const rep = window.getCurrentRep ? window.getCurrentRep() : null;
     if (rep) {
+      const isAdmin = rep.role === 'admin';
+      // Footer: show rep identity + role badge
       const footer = document.querySelector('.sidebar-footer');
       if (footer) {
-        footer.innerHTML = `<span style="color:${rep.color};font-weight:700">${rep.avatar} ${rep.name}</span><br>${rep.title}<br><button onclick="logoutRep();renderLoginScreen()" style="margin-top:6px;background:none;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;padding:4px 10px;cursor:pointer;width:100%">Switch Account</button>`;
+        const adminBadge = isAdmin
+          ? `<span style="display:inline-block;background:#00d4ff;color:#0a0f1a;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;letter-spacing:.05em;vertical-align:middle;margin-left:4px">OWNER</span>`
+          : '';
+        footer.innerHTML = `<span style="color:${rep.color};font-weight:700">${rep.avatar} ${rep.name}${adminBadge}</span><br><span style="font-size:11px;color:#64748b">${rep.title}</span><br><button onclick="logoutRep();renderLoginScreen()" style="margin-top:6px;background:none;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;padding:4px 10px;cursor:pointer;width:100%">Switch Account</button>`;
+      }
+      // Nav items: dim + disable admin-only items for non-admins
+      if (!isAdmin) {
+        document.querySelectorAll('.nav-item').forEach(btn => {
+          const v = btn.dataset.view;
+          if (v === 'manager' || v === 'settings') {
+            btn.style.opacity = '0.35';
+            btn.style.pointerEvents = 'none';
+            btn.title = '🔒 Admin (Tyler) only';
+          }
+        });
       }
     }
   } catch(e) {}
@@ -215,11 +247,16 @@ function pipeline(selectedId){
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;align-items:center">
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <span style="font-size:12px;color:var(--muted);align-self:center">Rep:</span>
-        <button class="tab ${activeRepFilter==='all'?'active':''}" onclick="window._pipelineRepFilter='all';show('pipeline')">All</button>
-        ${(window.REPS||[]).map(r=>`<button class="tab ${activeRepFilter===r.id?'active':''}" onclick="window._pipelineRepFilter='${r.id}';show('pipeline')">${r.avatar} ${r.name}</button>`).join('')}
-      </div>
+      ${(()=>{
+        const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
+        const _ia = _cr && _cr.role === 'admin';
+        if (!_ia) return ''; // Ryan: no rep filter — always sees only his own
+        return `<div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--muted);align-self:center">Rep:</span>
+          <button class="tab ${activeRepFilter==='all'?'active':''}" onclick="window._pipelineRepFilter='all';show('pipeline')">All</button>
+          ${(window.REPS||[]).map(r=>`<button class="tab ${activeRepFilter===r.id?'active':''}" onclick="window._pipelineRepFilter='${r.id}';show('pipeline')">${r.avatar} ${r.name}</button>`).join('')}
+        </div>`;
+      })()}
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <span style="font-size:12px;color:var(--muted);align-self:center">Client:</span>
         <button class="tab ${activeTypeFilter==='all'?'active':''}" onclick="window._pipelineTypeFilter='all';show('pipeline')">All</button>
@@ -265,16 +302,22 @@ function lead(){
         ${select('leadSource','Commission Lead Source',['company_lead','self_generated','assisted'],'company_lead')}
         ${select('workType','Work Type (commission)',['landscape','maintenance_onetime','maintenance_recurring','maintenance_upsell','hardscape','drainage','design_build'],'landscape')}
         ${input('jobValue','Estimated Job Value ($)','number')}
-        <label><span>Assigned Rep</span><select name="repId">
-          <option value="${currentRep ? currentRep.id : ''}">— ${currentRep ? currentRep.name + ' (you)' : 'Select rep'} —</option>
-          ${(window.REPS || []).filter(r=>r.role==='rep' && (!currentRep || r.id !== currentRep.id)).map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
-        </select></label>
+
         ${input('project','Project / Opportunity Name')}
         ${input('urgency','Urgency / Timing')}
         ${input('decisionMaker','Decision-Maker(s)')}
         ${input('budget','Budget language / range')}
         ${input('nextFollowUp','Next Follow-Up Date','date')}
         ${select('status','Status',data.statuses, 'New Lead')}
+        ${(()=>{
+          const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
+          const _ia = _cr && _cr.role === 'admin';
+          if (!_ia) return `<input type="hidden" name="repId" value="${_cr ? _cr.id : ''}">`;
+          return `<label><span>Assigned Rep</span><select name="repId">
+            <option value="">— Select rep —</option>
+            ${(window.REPS||[]).map(r=>`<option value="${r.id}">${r.avatar} ${r.name}</option>`).join('')}
+          </select></label>`;
+        })()}
       </div>
       ${textarea('prompt','What prompted the inquiry?')}
       ${textarea('desiredOutcome','Desired outcome / what good looks like')}
@@ -304,7 +347,10 @@ function opportunityDetail(id){
     <button class="secondary-btn" onclick="show('pipeline')">← Back to Pipeline</button>
     <div class="detail-head">
       <div><div class="eyebrow">Opportunity</div><h1>${escapeHtml(o.client||'Unnamed Lead')}</h1><p class="lede">${escapeHtml(o.project||o.serviceLine||'Opportunity')} • ${escapeHtml(o.address||'No address')}</p></div>
-      <div class="detail-actions"><button class="primary-btn" onclick="saveOpportunity('${o.id}')">Save Changes</button><button class="secondary-btn" onclick="duplicateOpportunity('${o.id}')">Duplicate</button><button class="danger-btn" onclick="deleteOpportunity('${o.id}')">Delete</button></div>
+      <div class="detail-actions">
+        <button class="primary-btn" onclick="saveOpportunity('${o.id}')">Save Changes</button>
+        ${(()=>{ const _cr = window.getCurrentRep ? window.getCurrentRep() : null; const _ia = _cr && _cr.role === 'admin'; return _ia ? `<button class="secondary-btn" onclick="duplicateOpportunity('${o.id}')">Duplicate</button><button class="danger-btn" onclick="deleteOpportunity('${o.id}')">Delete</button>` : ''; })()}
+      </div>
     </div>
     <div class="grid grid-3 mt">
       <article class="card"><h3>Status</h3>${selectWithId('statusEdit',data.statuses,o.status)}<button class="secondary-btn small mt8" onclick="setOppField('${o.id}','status',document.getElementById('statusEdit').value)">Update Status</button></article>
@@ -321,6 +367,40 @@ function opportunityDetail(id){
     <div class="grid grid-2 mt">
       <section class="card"><h2>Opportunity Notes</h2><div id="noteList">${renderNotes(o.id)}</div><textarea id="newNote" rows="4" placeholder="Add call note, site note, objection, or next step..."></textarea><button class="primary-btn mt8" onclick="addNote('${o.id}')">Add Note</button></section>
       <section class="card"><h2>Useful Tools</h2><div class="tool-list"><button onclick="show('forms','discovery')">Discovery Planner</button><button onclick="show('forms','site-walk')">Site Walk Checklist</button><button onclick="show('forms','proposal-review')">Proposal Review</button><button onclick="show('templates')">Follow-Up Templates</button><button onclick="show('objections')">Objection Handling</button><button onclick="show('forms','handoff')">Sold Job Activation</button></div></section>
+    ${(()=>{
+      const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
+      if (!_cr || _cr.role !== 'admin') return '';
+      const _ca = state.opportunities.find(x=>x.id==='${o.id}') || {};
+      return `<section class="card" style="border:2px solid #00d4ff">
+        <h2>🔑 Admin Controls <span style="font-size:11px;font-weight:400;color:#64748b;margin-left:6px">Tyler Only</span></h2>
+        <div class="grid grid-3" style="gap:12px;margin-top:12px">
+          <div>
+            <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Commission Approved</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="commApproved" ${_ca.commissionApproved?'checked':''} onchange="setOppField('${o.id}','commissionApproved',this.checked);showToast('Commission approval updated')">
+              <span style="font-size:13px">${_ca.commissionApproved ? '✅ Approved' : '⏳ Pending approval'}</span>
+            </label>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Payment Collected</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="payCollected" ${_ca.collected?'checked':''} onchange="setOppField('${o.id}','collected',this.checked);showToast('Collection status updated')">
+              <span style="font-size:13px">${_ca.collected ? '✅ Collected' : '⏳ Outstanding'}</span>
+            </label>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Reassign Rep</label>
+            <select onchange="setOppField('${o.id}','repId',this.value)" style="width:100%;padding:6px 8px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px">
+              <option value="">— Assign —</option>
+              ${(window.REPS||[]).map(r=>`<option value="${r.id}" ${_ca.repId===r.id?'selected':''}>${r.avatar} ${r.name}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:#0f172a;border-radius:8px;font-size:12px;color:#64748b">
+          💡 Commission is paid only after both "Commission Approved" and "Payment Collected" are checked. For $10K+ landscape jobs, approval is always required before commission is calculated.
+        </div>
+      </section>`;
+    })()}
     </div>
     <div class="mt">
       <section class="card" style="border:1px solid #1e4d6b">
@@ -723,7 +803,45 @@ function manager(){
   `;
 }
 function settings(){
-  view.innerHTML = `<div class="eyebrow">Data and Setup</div><h1>Export / Settings</h1><p class="lede">This static prototype saves data locally in the browser. Export data regularly, especially before moving devices or clearing browser storage.</p><div class="grid grid-2 mt"><section class="card"><h2>Export</h2><p>Download your local pipeline, notes, and settings.</p><div class="footer-actions"><button class="primary-btn" onclick="exportJson()">Download JSON Backup</button><button class="secondary-btn" onclick="exportCsv()">Download Pipeline CSV</button></div></section><section class="card"><h2>Import</h2><p>Restore a JSON backup from this same app.</p><input id="importFile" type="file" accept="application/json"><button class="secondary-btn mt8" onclick="importJson()">Import Backup</button></section><section class="card"><h2>Reset</h2><p>This clears local opportunities, notes, and checklist progress on this browser only.</p><button class="danger-btn" onclick="resetAll()">Reset All Local Data</button></section><section class="card"><h2>App Notes</h2>${list(['Open index.html in a browser.','Use the Install button when available for app-style access.','To share with the team, host the folder on an internal site or migrate into Softr/Notion/Trainual.','For shared manager visibility, connect a future version to Airtable, Google Sheets, or a CRM.'])}</section></div>`;
+  const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
+  const _ia = _cr && _cr.role === 'admin';
+  const adminSections = _ia ? `
+    <section class="card" style="border:1px solid #334155">
+      <h2>📥 Import</h2>
+      <p>Restore a JSON backup from this same app. <strong style="color:#f87171">Admin only.</strong></p>
+      <input id="importFile" type="file" accept="application/json">
+      <button class="secondary-btn mt8" onclick="importJson()">Import Backup</button>
+    </section>
+    <section class="card" style="border:1px solid #7f1d1d">
+      <h2>⚠️ Reset All Data</h2>
+      <p>Clears all opportunities, notes, and checklist progress on this browser. <strong style="color:#f87171">Admin only — cannot be undone.</strong></p>
+      <button class="danger-btn" onclick="resetAll()">Reset All Local Data</button>
+    </section>` : `
+    <section class="card" style="background:#0a0f1a;border:1px solid #1e293b;opacity:.6">
+      <h2>🔒 Import / Reset</h2>
+      <p class="muted">Import and data reset are restricted to Tyler (Admin).</p>
+    </section>`;
+
+  view.innerHTML = `
+    <div class="eyebrow">Data and Setup</div>
+    <h1>Settings ${_ia ? '<span style="font-size:13px;color:#00d4ff;font-weight:400;margin-left:8px">· Owner / Admin View</span>' : '<span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px">· Rep View</span>'}</h1>
+    <p class="lede">Export your pipeline data for backup or reporting. Data is saved locally in the browser.</p>
+    <div class="grid grid-2 mt">
+      <section class="card">
+        <h2>📤 Export</h2>
+        <p>Download your local pipeline, notes, and settings.</p>
+        <div class="footer-actions">
+          <button class="primary-btn" onclick="exportJson()">Download JSON Backup</button>
+          <button class="secondary-btn" onclick="exportCsv()">Download Pipeline CSV</button>
+        </div>
+      </section>
+      ${adminSections}
+      <section class="card">
+        <h2>ℹ️ App Notes</h2>
+        ${list(['Access via browser — bookmark for quick daily use.','Install via the Install button for app-style access on mobile.','Data is stored locally in this browser — export regularly.','Contact Tyler to transfer data between devices or reps.'])}
+      </section>
+    </div>
+  `;
 }
 function exportJson(){ const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); downloadBlob(blob,`avalon-sales-hub-backup-${todayISO()}.json`); }
 function exportCsv(){ const headers=['client','phone','email','address','serviceLine','source','project','urgency','decisionMaker','budget','status','nextFollowUp','createdAt','updatedAt']; const rows=state.opportunities.map(o=>headers.map(h=>`"${String(o[h]||'').replace(/"/g,'""')}"`).join(',')); downloadBlob(new Blob([[headers.join(','),...rows].join('\n')],{type:'text/csv'}),`avalon-pipeline-${todayISO()}.csv`); }
