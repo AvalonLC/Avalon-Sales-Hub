@@ -1220,42 +1220,34 @@ window.getResolvedFY = getResolvedFY;
 
 function revenueAdmin() {
   const fy = getResolvedFY();
-  // months already have saved actuals merged by getResolvedFY()
+  const savedActuals = loadRevenueActuals(); // needed for note fields
   const months = (fy.monthlyBudget || []).map((m, idx) => ({ ...m, idx }));
 
   function fmtM(n) { return n != null ? n.toLocaleString(undefined, { style:'currency', currency:'USD', maximumFractionDigits:0 }) : '—'; }
 
-  // Compute YTD from months with actual
   const ytdBudget  = months.filter(m => m.actual != null).reduce((a,m) => a + m.budgeted, 0);
   const ytdActual  = months.filter(m => m.actual != null).reduce((a,m) => a + m.actual, 0);
   const ytdVar     = ytdActual - ytdBudget;
   const ytdVarColor= ytdVar >= 0 ? '#4ade80' : '#f87171';
 
-  const currentMonthIdx = new Date().getMonth(); // 0-based
-
   const tableRows = months.map(m => {
-    const isPast     = m.idx < currentMonthIdx;
-    const isCurrent  = m.idx === currentMonthIdx;
-    const hasActual  = m.actual != null;
-    const varColor   = m.variance == null ? '#334155' : m.variance >= 0 ? '#4ade80' : '#f87171';
-    const varSign    = m.variance != null && m.variance > 0 ? '+' : '';
-    const lockBadge  = isPast && hasActual ? '<span class="rev-locked-badge">saved</span>' : '';
+    const hasActual = m.actual != null;
+    const varColor  = m.variance == null ? '#334155' : m.variance >= 0 ? '#4ade80' : '#f87171';
+    const varSign   = m.variance != null && m.variance > 0 ? '+' : '';
     return `<tr>
-      <td><span class="rev-month-tag">${escapeHtml(m.month)}</span>${lockBadge}</td>
+      <td><span class="rev-month-tag">${escapeHtml(m.month)}</span>${hasActual ? '<span class="rev-locked-badge">saved</span>' : ''}</td>
       <td class="right" style="color:#64748b">${fmtM(m.budgeted)}</td>
       <td class="right">
         <input class="rev-editor-input" type="number" min="0" step="1000"
           id="rev_actual_${m.idx}"
           value="${hasActual ? m.actual : ''}"
           placeholder="enter actual"
-          onchange="revUpdateRow(${m.idx})"
-          ${isCurrent || isPast ? '' : 'style="opacity:.5"'}
-        >
+          oninput="revUpdateRow(${m.idx})">
       </td>
       <td class="right" id="rev_var_${m.idx}" style="color:${varColor};font-weight:700">${m.variance != null ? varSign + fmtM(m.variance) : '—'}</td>
-      <td style="color:#64748b;font-size:12px" id="rev_notes_${m.idx}">
-        <input style="background:transparent;border:none;border-bottom:1px solid #1e293b;width:100%;color:#94a3b8;font-size:12px;padding:4px 0" 
-          placeholder="notes…" 
+      <td>
+        <input style="background:transparent;border:none;border-bottom:1px solid #1e293b;width:100%;color:#94a3b8;font-size:12px;padding:4px 0"
+          placeholder="notes…"
           id="rev_note_text_${m.idx}"
           value="${escapeHtml(savedActuals['note_'+m.month]||'')}">
       </td>
@@ -1327,7 +1319,7 @@ function revenueAdmin() {
       <ul style="color:#94a3b8;font-size:13px;line-height:1.7;margin:0;padding-left:18px">
         <li>Enter actual monthly revenue in the <strong style="color:#e2e8f0">Actual Revenue</strong> column</li>
         <li>Variance calculates automatically (Actual − Budget)</li>
-        <li>Click <strong style="color:#e2e8f0">Save All</strong> to persist. Owner Dashboard and YTD cards update on next load</li>
+        <li>Click <strong style="color:#e2e8f0">Save All</strong> to persist. Owner Dashboard + Manager Tools update immediately on next navigation</li>
         <li>Add notes in the Notes column to explain variances</li>
         <li>Future months remain editable so you can enter projections</li>
       </ul>
