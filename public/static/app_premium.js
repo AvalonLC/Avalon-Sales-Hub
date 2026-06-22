@@ -18,6 +18,33 @@ function loadState(){
   catch(e){ return structuredClone(DEFAULT_STATE); }
 }
 function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+// ── Nav Permission System ──────────────────────────────────────────────────
+// All views always visible in sidebar. Tyler controls access per role here.
+const NAV_PERMS_KEY = 'avalonNavPermissions';
+
+// Default permissions by role. Tyler can override from Settings.
+const DEFAULT_NAV_PERMS = {
+  admin: ['today','myDashboard','pipeline','lead','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings'],
+  office_manager: ['today','myDashboard','pipeline','lead','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings'],
+  rep: ['today','myDashboard','pipeline','lead','process','forms','scripts','templates','objections','calculator','academy']
+};
+
+function loadNavPerms() {
+  try { return JSON.parse(localStorage.getItem(NAV_PERMS_KEY)) || structuredClone(DEFAULT_NAV_PERMS); }
+  catch(e) { return structuredClone(DEFAULT_NAV_PERMS); }
+}
+function saveNavPerms(perms) { localStorage.setItem(NAV_PERMS_KEY, JSON.stringify(perms)); }
+function canViewTab(viewName) {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) return false;
+  const perms = loadNavPerms();
+  const allowed = perms[rep.role] || DEFAULT_NAV_PERMS[rep.role] || [];
+  return allowed.includes(viewName);
+}
+window.loadNavPerms = loadNavPerms;
+window.saveNavPerms = saveNavPerms;
+window.DEFAULT_NAV_PERMS = DEFAULT_NAV_PERMS;
+
 function escapeHtml(str=''){
   return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
@@ -30,18 +57,15 @@ function badge(text, cls=''){ return `<span class="badge ${cls}">${escapeHtml(te
 function showToast(message){ toastEl.textContent = message; toastEl.hidden = false; setTimeout(()=>toastEl.hidden=true, 2200); }
 function copyText(text){ navigator.clipboard?.writeText(text).then(()=>showToast('Copied to clipboard')).catch(()=>showToast('Select and copy manually')); }
 function show(viewName='today', param){
-  // ── Permission gate ──────────────────────────────────────
-  const _rep = window.getCurrentRep ? window.getCurrentRep() : null;
-  const _isAdmin = _rep && _rep.role === 'admin';
-  const _isOM = _rep && _rep.role === 'office_manager';
-  // Only pure reps (Ryan) are blocked from manager/settings — office_manager (Jen) gets read-only access
-  const _blockedViews = ['manager','settings'];
-  const _repBlocked = _blockedViews.includes(viewName) && _rep && _rep.role === 'rep';
-  if (_repBlocked) {
-    view.innerHTML = `<div class="card" style="text-align:center;padding:48px 24px;margin-top:40px">
-      <div style="font-size:48px;margin-bottom:16px">🔒</div>
-      <h2 style="color:#f87171;margin-bottom:8px">Admin Access Only</h2>
-      <p class="muted">This section is restricted to Tyler (Owner / Admin).<br>If you need access, ask Tyler to review it with you.</p>
+  // ── Permission gate (admin-configurable) ─────────────────
+  if (viewName !== 'settings' && !canViewTab(viewName)) {
+    const _rep = window.getCurrentRep ? window.getCurrentRep() : null;
+    const _viewLabels = {today:'Today',myDashboard:'My Dashboard',pipeline:'Pipeline',lead:'Add Lead',process:'Sales Process',forms:'Forms & Checklists',scripts:'Scripts',templates:'Email Templates',objections:'Objection Handling',calculator:'Pricing Tools',academy:'Sales Academy',manager:'Manager Tools',integrations:'Integrations',settings:'Settings'};
+    view.innerHTML = `<div style="text-align:center;padding:64px 24px;margin-top:40px">
+      <div style="font-size:52px;margin-bottom:18px">🔒</div>
+      <h2 style="color:#f87171;margin-bottom:10px">${_viewLabels[viewName] || viewName} — Access Restricted</h2>
+      <p style="color:#64748b;max-width:420px;margin:0 auto 24px">Tyler (Owner) has restricted access to this section for your role.<br>Ask Tyler to enable it in <strong style="color:#e2e8f0">Settings → Permission Controls</strong>.</p>
+      <button class="secondary-btn" onclick="show('today')">← Back to Today</button>
     </div>`;
     navItems.forEach(b=>b.classList.toggle('active', b.dataset.view===viewName));
     sidebar.classList.remove('open');
@@ -79,17 +103,7 @@ window.show = show;
           : '';
         footer.innerHTML = `<span style="color:${rep.color};font-weight:700">${rep.avatar} ${rep.name}${roleBadge}</span><br><span style="font-size:11px;color:#64748b">${rep.title}</span><br><button onclick="logoutRep();renderLoginScreen()" style="margin-top:6px;background:none;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;padding:4px 10px;cursor:pointer;width:100%">Switch Account</button>`;
       }
-      // Nav items: dim + disable admin-only items for plain reps only (not office_manager)
-      if (!isAdmin && !isOM) {
-        document.querySelectorAll('.nav-item').forEach(btn => {
-          const v = btn.dataset.view;
-          if (v === 'manager' || v === 'settings') {
-            btn.style.opacity = '0.35';
-            btn.style.pointerEvents = 'none';
-            btn.title = '🔒 Admin (Tyler) only';
-          }
-        });
-      }
+      // Nav items: always fully visible — access controlled by Permission Matrix in Settings
     }
   } catch(e) {}
 })();
@@ -906,8 +920,95 @@ function settings(){
         ${list(['Access via browser — bookmark for quick daily use.','Install via the Install button for app-style access on mobile.','Data is stored locally in this browser — export regularly.','Contact Tyler to transfer data between devices or reps.'])}
       </section>
     </div>
+    ${_ia ? renderPermMatrix() : ''}
   `;
 }
+
+function renderPermMatrix() {
+  const perms = loadNavPerms();
+  const roles = [
+    { key: 'office_manager', label: 'Jen — Office Manager', color: '#f59e0b' },
+    { key: 'rep',            label: 'Ryan — Sales Rep',     color: '#4ade80' }
+  ];
+  const views = [
+    { key: 'today',       label: '🏠 Today',              group: 'Home' },
+    { key: 'myDashboard', label: '👤 My Dashboard',       group: 'Home' },
+    { key: 'pipeline',    label: '📊 Pipeline',           group: 'Pipeline' },
+    { key: 'lead',        label: '➕ Add Lead',           group: 'Pipeline' },
+    { key: 'process',     label: '📋 Sales Process',      group: 'Sales Toolkit' },
+    { key: 'forms',       label: '📝 Forms & Checklists', group: 'Sales Toolkit' },
+    { key: 'scripts',     label: '💬 Scripts',            group: 'Sales Toolkit' },
+    { key: 'templates',   label: '📧 Email Templates',    group: 'Sales Toolkit' },
+    { key: 'objections',  label: '🛡️ Objection Handling', group: 'Sales Toolkit' },
+    { key: 'calculator',  label: '🧮 Pricing Tools',      group: 'Sales Toolkit' },
+    { key: 'academy',     label: '🎓 Sales Academy',      group: 'Learning' },
+    { key: 'manager',     label: '👔 Manager Tools',      group: 'Admin' },
+    { key: 'integrations',label: '🔗 Integrations',       group: 'Admin' },
+    { key: 'settings',    label: '⚙️ Settings',           group: 'Admin' }
+  ];
+
+  const groups = [...new Set(views.map(v => v.group))];
+
+  const tableRows = groups.map(group => {
+    const groupViews = views.filter(v => v.group === group);
+    return `
+      <tr><td colspan="${roles.length + 1}" style="padding:14px 12px 4px;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#475569;border-bottom:1px solid #1e293b">${group}</td></tr>
+      ${groupViews.map(v => `
+      <tr style="border-bottom:1px solid #0f172a">
+        <td style="padding:10px 12px;font-size:13px;color:#e2e8f0;white-space:nowrap">${v.label}</td>
+        ${roles.map(r => {
+          const checked = (perms[r.key] || DEFAULT_NAV_PERMS[r.key] || []).includes(v.key);
+          const isAdminView = v.key === 'settings';
+          return `<td style="text-align:center;padding:10px">
+            <input type="checkbox" ${checked ? 'checked' : ''} ${isAdminView ? 'disabled title="Settings always visible"' : ''}
+              onchange="window._toggleNavPerm('${r.key}','${v.key}',this.checked)"
+              style="width:16px;height:16px;accent-color:${r.color};cursor:${isAdminView ? 'not-allowed' : 'pointer'}">
+          </td>`;
+        }).join('')}
+      </tr>`).join('')}
+    `;
+  }).join('');
+
+  return `
+  <section class="card" style="margin-top:20px;border:1px solid #334155">
+    <h2>🔐 Permission Controls <span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px">— Tyler (Owner) only</span></h2>
+    <p style="color:#64748b;font-size:13px;margin-bottom:16px">Control which sections each role can access. Changes take effect immediately. Tyler (Owner) always has full access.</p>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:480px">
+        <thead>
+          <tr style="border-bottom:2px solid #1e293b">
+            <th style="text-align:left;padding:10px 12px;font-size:12px;color:#64748b;font-weight:700">Section</th>
+            ${roles.map(r => `<th style="text-align:center;padding:10px 12px;font-size:12px;font-weight:700;color:${r.color}">${r.label}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="secondary-btn" style="font-size:12px" onclick="window._resetNavPerms()">↺ Reset to Defaults</button>
+      <span style="font-size:11px;color:#475569;align-self:center">Changes save instantly. Reps see the lock screen when they try to access a restricted tab.</span>
+    </div>
+  </section>`;
+}
+
+window._toggleNavPerm = function(role, viewKey, enabled) {
+  const perms = loadNavPerms();
+  if (!perms[role]) perms[role] = [...(DEFAULT_NAV_PERMS[role] || [])];
+  if (enabled) {
+    if (!perms[role].includes(viewKey)) perms[role].push(viewKey);
+  } else {
+    perms[role] = perms[role].filter(v => v !== viewKey);
+  }
+  saveNavPerms(perms);
+  showToast('Permission updated');
+};
+
+window._resetNavPerms = function() {
+  if (!confirm('Reset all permissions to defaults?')) return;
+  localStorage.removeItem(NAV_PERMS_KEY);
+  showToast('Permissions reset to defaults');
+  show('settings');
+};
 function exportJson(){ const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); downloadBlob(blob,`avalon-sales-hub-backup-${todayISO()}.json`); }
 function exportCsv(){ const headers=['client','phone','email','address','serviceLine','source','project','urgency','decisionMaker','budget','status','nextFollowUp','createdAt','updatedAt']; const rows=state.opportunities.map(o=>headers.map(h=>`"${String(o[h]||'').replace(/"/g,'""')}"`).join(',')); downloadBlob(new Blob([[headers.join(','),...rows].join('\n')],{type:'text/csv'}),`avalon-pipeline-${todayISO()}.csv`); }
 function downloadBlob(blob,filename){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
