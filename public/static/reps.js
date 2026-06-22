@@ -835,10 +835,7 @@ function renderAdminDashboard(viewEl) {
   const fy       = (window.AVALON_DATA || {}).fy2026 || {};
   const annual   = fy.annual || {};
   const divs     = fy.divisions || {};
-  const tylerData = ((window.AVALON_DATA || {}).repData || {}).tyler || {};
-  const scorecard = tylerData.leadershipScorecard || [];
-  const pd       = (window.AVALON_DATA || {}).pricingDiscipline || {};
-  const rc       = (window.AVALON_DATA || {}).reviewCadence || [];
+
 
   // ── Pipeline stats ──
   const openOpps   = allOpps.filter(o => !['Sold / Activation','Closed Lost'].includes(o.status));
@@ -1174,57 +1171,6 @@ function renderAdminDashboard(viewEl) {
   </div>
 </div>
 
-<!-- ── SECTION 6: TYLER'S LEADERSHIP SCORECARD + REVIEW CADENCE ── -->
-<div class="grid grid-2" style="gap:20px;margin-bottom:24px">
-
-  <!-- Leadership Scorecard -->
-  <section class="card">
-    <h2 style="margin:0 0 14px;font-size:16px">🎯 Owner Scorecard</h2>
-    ${scorecard.length === 0 ? '<p class="muted">No scorecard data.</p>' : scorecard.map(s => `
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1e293b">
-      <div>
-        <div style="font-weight:600;font-size:13px">${escapeHtml(s.metric)}</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px">${escapeHtml(s.cadence)}</div>
-      </div>
-      <div style="font-size:12px;font-weight:700;color:#00d4ff;text-align:right;flex-shrink:0;margin-left:12px">${escapeHtml(s.target)}</div>
-    </div>`).join('')}
-    <div style="margin-top:14px">
-      <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">GM Floors by Division</div>
-      ${(pd.grossMarginFloors || []).map(g => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #0f172a">
-        <span style="font-size:12px">${escapeHtml(g.division)}</span>
-        <div style="text-align:right">
-          <span style="font-size:12px;font-weight:700;color:#f59e0b">${escapeHtml(g.floor)}</span>
-          <span style="font-size:10px;color:#64748b;margin-left:8px">${escapeHtml(g.current)}</span>
-        </div>
-      </div>`).join('')}
-    </div>
-  </section>
-
-  <!-- Review Cadence + Quick Actions -->
-  <section class="card">
-    <h2 style="margin:0 0 14px;font-size:16px">📆 Review Cadence</h2>
-    ${rc.slice(0, 5).map(r => `
-    <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #1e293b">
-      <span style="font-size:10px;font-weight:700;color:#00d4ff;background:#00d4ff18;border-radius:6px;padding:2px 7px;white-space:nowrap;margin-top:1px">${escapeHtml(r.cadence)}</span>
-      <div>
-        <div style="font-weight:600;font-size:12px">${escapeHtml(r.meeting)}</div>
-        <div style="font-size:10px;color:#64748b">${escapeHtml(r.attendees)}</div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:1px">→ ${escapeHtml(r.output)}</div>
-      </div>
-    </div>`).join('')}
-    <div style="margin-top:16px">
-      <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Quick Actions</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="primary-btn" onclick="show('lead')" style="font-size:12px">+ Add New Lead</button>
-        <button class="secondary-btn" onclick="show('pipeline')" style="font-size:12px">🔍 Full Pipeline</button>
-        <button class="secondary-btn" onclick="show('manager')" style="font-size:12px">📊 Manager Tools / P&L</button>
-        <button class="secondary-btn" onclick="show('settings')" style="font-size:12px">⚙️ Settings / Export / Import</button>
-      </div>
-    </div>
-  </section>
-
-</div>
 `;
 
   window.viewRepPipeline = function(repId) {
