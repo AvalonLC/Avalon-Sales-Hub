@@ -108,6 +108,8 @@ function statCards(){
 }
 
 function today(){
+  const _todayRep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const _isOM = _todayRep && _todayRep.role === 'office_manager';
   const due = state.opportunities
     .filter(o=>o.nextFollowUp && o.nextFollowUp <= todayISO() && !['Sold / Activation','Closed Lost'].includes(o.status))
     .sort((a,b)=>a.nextFollowUp.localeCompare(b.nextFollowUp));
@@ -115,7 +117,39 @@ function today(){
     .filter(o=>o.nextFollowUp && o.nextFollowUp > todayISO() && !['Sold / Activation','Closed Lost'].includes(o.status))
     .sort((a,b)=>a.nextFollowUp.localeCompare(b.nextFollowUp)).slice(0,5);
   const recent = [...state.opportunities].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')).slice(0,5);
-  view.innerHTML = `
+  const _heroBlock = _isOM ? `
+    <div class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-title-line"><div class="eyebrow">Avalon Sales OS · Office</div><span class="pill">Sales Operations</span></div>
+          <h1>Keep the pipeline moving.</h1>
+          <p class="lede">Route leads, chase proposals, confirm deposits, and hand sold jobs to production — all from here.</p>
+          <div class="quick-actions">
+            <button class="primary-btn" onclick="show('lead')">+ New Lead</button>
+            <button class="secondary-btn" onclick="show('pipeline')">Full Pipeline</button>
+            <button class="secondary-btn" onclick="show('templates')">Email Templates</button>
+            <button class="secondary-btn" onclick="show('myDashboard')">My Ops Dashboard</button>
+          </div>
+          <div class="dashboard-strip">
+            <div class="dash-tile"><strong>1. Receive</strong><span>Log inbound leads, route to right rep</span></div>
+            <div class="dash-tile"><strong>2. Support</strong><span>Gather scope, pricing, proposal info</span></div>
+            <div class="dash-tile"><strong>3. Chase</strong><span>Follow up on open estimates &amp; signatures</span></div>
+            <div class="dash-tile"><strong>4. Convert</strong><span>Confirm deposit, hand off to schedule</span></div>
+          </div>
+        </div>
+        <aside class="hero-panel">
+          <div>
+            <div class="hero-logo"><img src="/static/avalon-logo.png" alt="Avalon logo"></div>
+            <h3 class="mt">Office standard</h3>
+            <p class="muted">Every lead gets a response. Every proposal gets a follow-up. Every deposit gets a handoff.</p>
+          </div>
+          <div class="footer-actions">
+            <button class="secondary-btn small" onclick="show('myDashboard')">Ops Dashboard</button>
+            <button class="secondary-btn small" onclick="show('manager')">Pipeline Review</button>
+          </div>
+        </aside>
+      </div>
+    </div>` : `
     <div class="hero">
       <div class="hero-grid">
         <div>
@@ -148,7 +182,8 @@ function today(){
           </div>
         </aside>
       </div>
-    </div>
+    </div>`;
+  view.innerHTML = `${_heroBlock}
     ${statCards()}
     <div class="grid grid-2 mt">
       <section class="card app-card">
@@ -172,6 +207,8 @@ function today(){
 function renderTodayActivityWidget(){
   const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
   const targets = window.AVALON_DATA.activityTargets;
+  // Office manager (Jen) has no personal activity targets — suppress widget entirely
+  if(currentRep && currentRep.role === 'office_manager') return '';
   if(!currentRep || !targets[currentRep.id]) {
     // Show generic KPI strip for admin
     return `<div class="card mt">

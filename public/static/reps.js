@@ -409,9 +409,12 @@ function repDashboard() {
   if (!viewEl) return;
 
   const isAdminUser = currentRep.role === 'admin';
+  const isOMUser    = currentRep.role === 'office_manager';
 
   if (isAdminUser) {
     renderAdminDashboard(viewEl);
+  } else if (isOMUser) {
+    renderOMDashboard(viewEl, currentRep);
   } else {
     renderRepDashboard(viewEl, currentRep);
   }
@@ -682,6 +685,147 @@ function renderCommissionPlanRef(planId) {
     </table>
     <p style="font-size:11px;color:#64748b;margin-top:12px">⚠️ Commission paid only on approved, sold, and collected work. Pricing must be management-approved. Base: $20/hr training → $21/hr post-training. 90-day review checkpoint.</p>
   </div>`;
+}
+
+// ── OFFICE MANAGER DASHBOARD ─────────────────────────────────────────────────
+function renderOMDashboard(viewEl, rep) {
+  const allOpps = getGlobalOpps();
+
+  // Pipeline health counts — all reps (Jen sees the whole pipeline)
+  const open   = allOpps.filter(o => !['Sold / Activation','Closed Lost'].includes(o.status));
+  const sold   = allOpps.filter(o => o.status === 'Sold / Activation');
+  const lost   = allOpps.filter(o => o.status === 'Closed Lost');
+  const overdue = open.filter(o => o.nextFollowUp && o.nextFollowUp < todayISO());
+  const needsFollowUp = open.filter(o => !o.nextFollowUp);
+  const proposals = open.filter(o => ['Proposal / Estimate Sent','Follow-Up'].includes(o.status));
+  const newLeads  = open.filter(o => o.status === 'New Lead' || o.status === 'Contacted');
+
+  // Sort overdue by most overdue first
+  const overdueList = [...overdue].sort((a,b) => a.nextFollowUp.localeCompare(b.nextFollowUp));
+  // Proposals needing chase (sent > 3 days ago with no future follow-up set)
+  const today = todayISO();
+  const chaseList = proposals.filter(o => !o.nextFollowUp || o.nextFollowUp <= today).slice(0, 8);
+
+  // Unassigned leads — no repId set
+  const unassigned = open.filter(o => !o.repId);
+
+  viewEl.innerHTML = `
+<div class="eyebrow" style="color:${rep.color}">${rep.avatar} ${rep.name} · Office Manager</div>
+<h1 style="margin-bottom:4px">Sales Operations Dashboard</h1>
+<p class="lede" style="margin-bottom:24px">Pipeline health, follow-up queue, lead routing, and proposal status — for the whole team. <button onclick="logoutRep();renderLoginScreen()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;text-decoration:underline">Switch Account</button></p>
+
+<!-- Pipeline Health Tiles -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-bottom:28px">
+  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;text-align:center">
+    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Open Opps</div>
+    <div style="font-size:26px;font-weight:800;color:#e2e8f0;margin-top:6px">${open.length}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">Active pipeline</div>
+  </div>
+  <div style="background:${overdue.length > 0 ? 'linear-gradient(135deg,#2a0a0a,#0f172a)' : '#0f172a'};border:1px solid ${overdue.length > 0 ? '#7f1d1d' : '#1e293b'};border-radius:12px;padding:16px;text-align:center">
+    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Overdue</div>
+    <div style="font-size:26px;font-weight:800;color:${overdue.length > 0 ? '#f87171' : '#4ade80'};margin-top:6px">${overdue.length}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">Past follow-up date</div>
+  </div>
+  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;text-align:center">
+    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Proposals Out</div>
+    <div style="font-size:26px;font-weight:800;color:#fbbf24;margin-top:6px">${proposals.length}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">Awaiting response</div>
+  </div>
+  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;text-align:center">
+    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">New Leads</div>
+    <div style="font-size:26px;font-weight:800;color:#60a5fa;margin-top:6px">${newLeads.length}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">Not yet contacted</div>
+  </div>
+  <div style="background:#0f172a;border:1px solid ${unassigned.length > 0 ? '#f59e0b60' : '#1e293b'};border-radius:12px;padding:16px;text-align:center">
+    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Unassigned</div>
+    <div style="font-size:26px;font-weight:800;color:${unassigned.length > 0 ? '#f59e0b' : '#4ade80'};margin-top:6px">${unassigned.length}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">No rep assigned</div>
+  </div>
+  <div style="background:linear-gradient(135deg,#0c2a1a,#0f172a);border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center">
+    <div style="font-size:10px;font-weight:700;color:#86efac;letter-spacing:.06em;text-transform:uppercase">Sold</div>
+    <div style="font-size:26px;font-weight:800;color:#4ade80;margin-top:6px">${sold.length}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">${fmtCurrency(sold.reduce((a,o)=>a+parseFloat(o.jobValue||0),0))}</div>
+  </div>
+</div>
+
+<!-- Two-column: Overdue + Chase List -->
+<div class="grid grid-2" style="gap:20px;margin-bottom:24px">
+
+  <!-- Overdue Follow-Ups -->
+  <section class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 style="margin:0;font-size:15px">🚨 Overdue Follow-Ups</h2>
+      <span style="font-size:11px;color:#f87171;font-weight:700">${overdueList.length} item${overdueList.length===1?'':'s'}</span>
+    </div>
+    ${overdueList.length === 0
+      ? '<p style="color:#4ade80;font-size:13px">✅ No overdue follow-ups — pipeline is current.</p>'
+      : overdueList.slice(0, 8).map(o => `
+        <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:#0f172a;border:1px solid #7f1d1d;border-radius:9px;margin-bottom:7px;cursor:pointer"
+          onmouseover="this.style.background='#1a0a0a'" onmouseout="this.style.background='#0f172a'">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:1px">${escapeHtml(o.status)} · Due ${o.nextFollowUp}${o.repId ? ' · ' + (window.REPS||[]).find(r=>r.id===o.repId)?.avatar || '' : ' · ⚠️ unassigned'}</div>
+          </div>
+          <span style="font-size:10px;color:#f87171;font-weight:700;white-space:nowrap">OVERDUE</span>
+        </div>`).join('')}
+    ${overdueList.length > 8 ? `<p style="font-size:12px;color:#64748b;text-align:center;margin-top:8px">+ ${overdueList.length - 8} more — <button class="link-btn" onclick="show('pipeline')" style="color:var(--accent);background:none;border:none;cursor:pointer;font-size:12px;padding:0">Open pipeline</button></p>` : ''}
+  </section>
+
+  <!-- Proposals to Chase -->
+  <section class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 style="margin:0;font-size:15px">📬 Proposals to Chase</h2>
+      <span style="font-size:11px;color:#fbbf24;font-weight:700">${chaseList.length} pending</span>
+    </div>
+    ${chaseList.length === 0
+      ? '<p style="color:#4ade80;font-size:13px">✅ All proposals have a follow-up scheduled.</p>'
+      : chaseList.map(o => `
+        <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:#0f172a;border:1px solid #1e293b;border-radius:9px;margin-bottom:7px;cursor:pointer"
+          onmouseover="this.style.background='#131d2e'" onmouseout="this.style.background='#0f172a'">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:1px">${escapeHtml(o.serviceLine||o.status)}${o.repId ? ' · ' + ((window.REPS||[]).find(r=>r.id===o.repId)?.avatar||'') + ' ' + ((window.REPS||[]).find(r=>r.id===o.repId)?.name||'') : ' · ⚠️ unassigned'}</div>
+          </div>
+          ${o.jobValue ? `<span style="font-size:12px;color:#94a3b8;white-space:nowrap">${fmtCurrency(o.jobValue)}</span>` : ''}
+        </div>`).join('')}
+  </section>
+
+</div>
+
+<!-- Unassigned Leads + Quick Actions -->
+<div class="grid grid-2" style="gap:20px;margin-bottom:24px">
+  <section class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 style="margin:0;font-size:15px">📥 Unassigned Leads</h2>
+      <button class="primary-btn" onclick="show('lead')" style="font-size:12px;padding:6px 14px">+ New Lead</button>
+    </div>
+    ${unassigned.length === 0
+      ? '<p style="color:#4ade80;font-size:13px">✅ All open leads have a rep assigned.</p>'
+      : unassigned.map(o => `
+        <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:#0f172a;border:1px solid #f59e0b40;border-radius:9px;margin-bottom:7px;cursor:pointer"
+          onmouseover="this.style.background='#131d2e'" onmouseout="this.style.background='#0f172a'">
+          <span style="font-size:16px">⚠️</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:1px">${escapeHtml(o.status)} · ${escapeHtml(o.serviceLine||'No service line')}</div>
+          </div>
+          <span style="font-size:10px;color:#f59e0b;font-weight:700">ASSIGN</span>
+        </div>`).join('')}
+  </section>
+
+  <section class="card">
+    <h2 style="margin:0 0 14px;font-size:15px">⚡ Quick Actions</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="primary-btn" onclick="show('lead')" style="text-align:left;justify-content:flex-start">📋 Add New Lead</button>
+      <button class="secondary-btn" onclick="show('pipeline')" style="text-align:left;justify-content:flex-start">🔍 Open Full Pipeline</button>
+      <button class="secondary-btn" onclick="show('templates')" style="text-align:left;justify-content:flex-start">📧 Email Templates</button>
+      <button class="secondary-btn" onclick="show('forms','follow-up')" style="text-align:left;justify-content:flex-start">📅 Follow-Up Cadence</button>
+      <button class="secondary-btn" onclick="show('manager')" style="text-align:left;justify-content:flex-start">📊 Manager Tools (View)</button>
+      <button class="secondary-btn" onclick="show('settings')" style="text-align:left;justify-content:flex-start">⚙️ Settings / Export</button>
+    </div>
+  </section>
+</div>
+`;
 }
 
 // ── ADMIN MANAGER DASHBOARD ───────────────────────────────────────────────────
