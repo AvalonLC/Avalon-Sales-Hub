@@ -17,7 +17,8 @@ const INT_KEY = 'avalonIntegrationsV1';
 
 // Pre-configured defaults (baked in at build time)
 const INT_DEFAULTS = {
-  zapierWebhookUrl: 'https://hooks.zapier.com/hooks/catch/26716050/422r11e/'
+  zapierWebhookUrl: 'https://hooks.zapier.com/hooks/catch/26716050/422r11e/',
+  googleClientId: '523041652927-q3aq6i98knrr10kf956rposcvacvmdlf.apps.googleusercontent.com'
 };
 
 function loadIntState() {
