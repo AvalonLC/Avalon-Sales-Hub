@@ -1292,25 +1292,32 @@ function lead(){
           + '<span class="lf-section-num">1</span>'
           + '<div>'
             + '<div class="lf-section-title">Who is it?</div>'
-            + '<div class="lf-section-sub">Contact details for the prospect</div>'
+            + '<div class="lf-section-sub">Search existing clients or enter a new contact</div>'
           + '</div>'
         + '</div>'
         + '<div class="lf-fields">'
-          + '<label class="lf-field lf-field--full">'
+          + '<div class="lf-field lf-field--full" style="position:relative">'
             + '<span class="lf-label">Client Name <span class="lf-required">*</span></span>'
-            + '<input name="client" type="text" required class="lf-input lf-input--lg" placeholder="e.g. Sarah Johnson">'
-          + '</label>'
+            + '<div class="lf-client-search-wrap">'
+              + '<input name="client" id="lf-client-input" type="text" required autocomplete="off"'
+              + ' class="lf-input lf-input--lg" placeholder="Search existing clients or type a new name…">'
+              + '<div class="lf-client-status" id="lf-client-status"></div>'
+            + '</div>'
+            + '<div class="lf-client-dropdown" id="lf-client-dropdown" style="display:none"></div>'
+            + '<input type="hidden" name="clientId" id="lf-client-id">'
+            + '<input type="hidden" name="clientIsNew" id="lf-client-is-new" value="1">'
+          + '</div>'
           + '<label class="lf-field">'
             + '<span class="lf-label">Phone</span>'
-            + '<input name="phone" type="tel" class="lf-input" placeholder="(555) 000-0000">'
+            + '<input name="phone" id="lf-phone" type="tel" class="lf-input" placeholder="(555) 000-0000">'
           + '</label>'
           + '<label class="lf-field">'
             + '<span class="lf-label">Email</span>'
-            + '<input name="email" type="email" class="lf-input" placeholder="name@example.com">'
+            + '<input name="email" id="lf-email" type="email" class="lf-input" placeholder="name@example.com">'
           + '</label>'
           + '<label class="lf-field lf-field--full">'
             + '<span class="lf-label">Property Address</span>'
-            + '<input name="address" type="text" class="lf-input" placeholder="Street, City, State">'
+            + '<input name="address" id="lf-address" type="text" class="lf-input" placeholder="Street, City, State">'
           + '</label>'
           + '<div class="lf-field lf-field--full">'
             + '<span class="lf-label">Client Type</span>'
@@ -1539,15 +1546,196 @@ function lead(){
     opp.id = uid('opp'); opp.createdAt = new Date().toISOString(); opp.updatedAt = opp.createdAt;
     if(!opp.status) opp.status = 'New Lead';
     if(!opp.repId && currentRep) opp.repId = currentRep.id;
+
+    // ── Client record: link existing or create new ─────────────────────────
+    const isNew = opp.clientIsNew === '1';
+    delete opp.clientIsNew;
+    if (isNew && opp.client) {
+      // Auto-create a client record from the entered data
+      const newClient = {
+        id: clientId(),
+        name: opp.client,
+        firstName: '', lastName: '', company: '',
+        type: opp.clientType || 'Residential',
+        status: 'Active',
+        email: opp.email || '',
+        phone: opp.phone || '',
+        mobile: '',
+        street: opp.address || '',
+        street2: '', city: '', state: 'VA', zip: '',
+        since: new Date().toLocaleDateString('en-US',{month:'short',year:'numeric'}),
+        tags: [], notes: '', homeworksId: '',
+        properties: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      const clientList = loadClients();
+      // Only create if truly no match exists
+      const alreadyExists = clientList.find(c => c.name.toLowerCase() === newClient.name.toLowerCase());
+      if (!alreadyExists) {
+        clientList.push(newClient);
+        saveClients(clientList);
+        opp.clientId = newClient.id;
+      } else {
+        opp.clientId = alreadyExists.id;
+      }
+    }
+    // clientId already set by autocomplete selection if existing client was picked
+
     state.opportunities.unshift(opp); saveState(); showToast('Lead saved'); show('pipeline', opp.id);
   });
 
-  // T36: Duplicate detection — blur event on client name + address inputs
+  // ── Client name autocomplete + prefill ─────────────────────────────────────
   setTimeout(() => {
+    const input   = document.getElementById('lf-client-input');
+    const dropdown= document.getElementById('lf-client-dropdown');
+    const idField = document.getElementById('lf-client-id');
+    const isNewField = document.getElementById('lf-client-is-new');
+    const statusEl = document.getElementById('lf-client-status');
+    if (!input || !dropdown) return;
+
+    let _selectedClientId = null;
+
+    function setClientStatus(c) {
+      if (!statusEl) return;
+      if (!c) {
+        statusEl.innerHTML = '';
+        return;
+      }
+      const addr = [c.street, c.city, c.state].filter(Boolean).join(', ');
+      statusEl.innerHTML =
+        '<span class="lf-client-chip">'
+        + clientTypeBadge(c.type)
+        + ' <strong>' + escapeHtml(c.name) + '</strong>'
+        + (addr ? ' · ' + escapeHtml(addr) : '')
+        + ' <button type="button" class="lf-client-chip-clear" title="Clear selection" onclick="window._lfClearClient()">✕</button>'
+        + '</span>';
+    }
+
+    window._lfClearClient = function() {
+      _selectedClientId = null;
+      if (idField) { idField.value = ''; }
+      if (isNewField) { isNewField.value = '1'; }
+      if (input) { input.value = ''; input.readOnly = false; input.focus(); }
+      if (statusEl) { statusEl.innerHTML = ''; }
+    };
+
+    function prefillFromClient(c) {
+      _selectedClientId = c.id;
+      if (idField) idField.value = c.id;
+      if (isNewField) isNewField.value = '0';
+      input.value = c.name;
+      input.readOnly = true;
+      setClientStatus(c);
+      // Prefill contact fields only if currently empty
+      const phone = document.getElementById('lf-phone');
+      const email = document.getElementById('lf-email');
+      const addr  = document.getElementById('lf-address');
+      if (phone && !phone.value) phone.value = c.phone || c.mobile || '';
+      if (email && !email.value) email.value = c.email || '';
+      if (addr  && !addr.value) {
+        const parts = [c.street, c.city, c.state].filter(Boolean);
+        addr.value = parts.join(', ');
+      }
+      // Set client type radio
+      const typeVal = c.type === 'Commercial' || c.type === 'HOA' ? 'Commercial' : 'Residential';
+      const radio = document.querySelector('[name="clientType"][value="' + typeVal + '"]');
+      if (radio) radio.checked = true;
+      // Hide dropdown
+      dropdown.style.display = 'none';
+    }
+
+    function renderDropdown(q) {
+      const all = loadClients();
+      const results = q.length < 1 ? [] : all.filter(c =>
+        [c.name, c.email, c.phone, c.mobile, c.street, c.city]
+          .some(f => (f||'').toLowerCase().includes(q.toLowerCase()))
+      ).slice(0, 8);
+
+      if (!q) { dropdown.style.display = 'none'; return; }
+
+      let html = '';
+      if (results.length) {
+        html += results.map(c => {
+          const addr = [c.street, c.city, c.state].filter(Boolean).join(', ');
+          const contact = c.email || c.phone || c.mobile || '';
+          return '<button type="button" class="lf-cd-item" data-id="' + c.id + '">'
+            + '<span class="lf-cd-avatar">' + escapeHtml((c.name||'?')[0].toUpperCase()) + '</span>'
+            + '<span class="lf-cd-info">'
+              + '<span class="lf-cd-name">' + escapeHtml(c.name) + '</span>'
+              + (addr || contact
+                  ? '<span class="lf-cd-sub">' + escapeHtml(addr || contact) + '</span>'
+                  : '')
+            + '</span>'
+            + '<span class="lf-cd-badge">' + clientTypeBadge(c.type) + '</span>'
+            + '</button>';
+        }).join('');
+        html += '<div class="lf-cd-divider"></div>';
+      }
+      // Always show "create new" option at bottom
+      html += '<button type="button" class="lf-cd-new" id="lf-cd-create">'
+        + '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>'
+        + ' Create new client &ldquo;' + escapeHtml(q) + '&rdquo;'
+        + '</button>';
+
+      dropdown.innerHTML = html;
+      dropdown.style.display = 'block';
+
+      // Wire existing client clicks
+      dropdown.querySelectorAll('.lf-cd-item').forEach(btn => {
+        btn.addEventListener('mousedown', ev => {
+          ev.preventDefault();
+          const c = loadClients().find(x => x.id === btn.dataset.id);
+          if (c) prefillFromClient(c);
+        });
+      });
+      // Wire "create new" click — just keeps typed name as new client
+      const createBtn = document.getElementById('lf-cd-create');
+      if (createBtn) {
+        createBtn.addEventListener('mousedown', ev => {
+          ev.preventDefault();
+          if (idField) idField.value = '';
+          if (isNewField) isNewField.value = '1';
+          dropdown.style.display = 'none';
+          // Show inline badge indicating "new client will be created"
+          if (statusEl) {
+            statusEl.innerHTML = '<span class="lf-client-chip lf-client-chip--new">'
+              + '<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>'
+              + ' New client record will be created'
+              + '</span>';
+          }
+        });
+      }
+    }
+
+    input.addEventListener('input', () => {
+      _selectedClientId = null;
+      if (idField) idField.value = '';
+      if (isNewField) isNewField.value = '1';
+      if (statusEl) statusEl.innerHTML = '';
+      renderDropdown(input.value.trim());
+    });
+
+    input.addEventListener('focus', () => {
+      if (!_selectedClientId && input.value.trim()) renderDropdown(input.value.trim());
+    });
+
+    input.addEventListener('blur', () => {
+      // Slight delay so mousedown fires first
+      setTimeout(() => { dropdown.style.display = 'none'; }, 180);
+    });
+
+    // Close on outside click
+    document.addEventListener('click', ev => {
+      if (!dropdown.contains(ev.target) && ev.target !== input) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    // T36: Duplicate detection (pipeline opps only) — keep existing logic
     function checkDuplicates() {
-      const nameEl = document.querySelector('[name="client"]');
-      const addrEl = document.querySelector('[name="address"]');
-      const name = (nameEl?.value || '').toLowerCase().trim();
+      const name = (input?.value || '').toLowerCase().trim();
+      const addrEl = document.getElementById('lf-address');
       const addr = (addrEl?.value || '').toLowerCase().trim();
       const existing = document.getElementById('dup-warn');
       if (existing) existing.remove();
@@ -1561,17 +1749,15 @@ function lead(){
       }).slice(0, 3);
       if (!dupes.length) return;
       const warn = document.createElement('div');
-      warn.id = 'dup-warn';
-      warn.className = 'dup-warn';
-      warn.innerHTML = '<strong>Possible duplicate' + (dupes.length > 1 ? 's' : '') + '</strong> — similar lead' + (dupes.length > 1 ? 's' : '') + ' already in pipeline:<br>' +
-        dupes.map(o => '<span onclick="show(\'pipeline\',\'' + o.id + '\')" style="cursor:pointer;color:#00d4ff;text-decoration:underline">' + escapeHtml(o.client||'—') + ' · ' + escapeHtml(o.status||'') + '</span>').join('<br>');
+      warn.id = 'dup-warn'; warn.className = 'dup-warn';
+      warn.innerHTML = '<strong>Possible duplicate' + (dupes.length > 1 ? 's' : '') + '</strong> — similar lead already in pipeline:<br>'
+        + dupes.map(o => '<span onclick="show(\'pipeline\',\'' + o.id + '\')" style="cursor:pointer;color:#00d4ff;text-decoration:underline">' + escapeHtml(o.client||'—') + ' · ' + escapeHtml(o.status||'') + '</span>').join('<br>');
       const form = document.getElementById('leadForm');
       if (form) form.prepend(warn);
     }
-    const nameEl = document.querySelector('[name="client"]');
-    const addrEl = document.querySelector('[name="address"]');
-    if (nameEl) nameEl.addEventListener('blur', checkDuplicates);
-    if (addrEl) addrEl.addEventListener('blur', checkDuplicates);
+    input.addEventListener('blur', checkDuplicates);
+    const addrEl2 = document.getElementById('lf-address');
+    if (addrEl2) addrEl2.addEventListener('blur', checkDuplicates);
   }, 200);
 }
 function input(name,label,type='text'){ const required = type===true; const actualType = required ? 'text' : type; return `<label><span>${label}${required?' *':''}</span><input name="${name}" type="${actualType}" ${required?'required':''}></label>`; }
