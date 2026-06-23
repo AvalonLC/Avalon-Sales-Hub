@@ -2871,18 +2871,22 @@ function settings(){
         ${list(['Access via browser — bookmark for quick daily use.','Install via the Install button for app-style access on mobile.','Data is stored locally in this browser — export regularly.','Contact Tyler to transfer data between devices or reps.'])}
       </section>
     </div>
-    <div id="um-my-google-settings" style="margin-top:20px"></div>
-    ${_ia ? `<div style="margin-top:20px"><button class="secondary-btn" onclick="show('userManagement')" style="font-size:13px">⚙️ Open User &amp; Access Management</button></div>` : ''}
-    ${_ia ? renderPermMatrix() : ''}
+    ${_ia ? `<div style="margin-top:20px;padding:14px 18px;background:#0a0f1a;border:1px solid #1e293b;border-radius:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#e2e8f0">Admin Controls</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px">Manage users, roles, permissions, and Google Workspace connections.</div>
+      </div>
+      <button class="secondary-btn" onclick="show('userManagement')" style="font-size:13px">⚙️ User &amp; Access Management →</button>
+    </div>` : ''}
   `;
-  // Inject per-user Google connection widget
-  if (typeof window.umRenderMyGoogleConnection === 'function') {
-    const gcDiv = document.getElementById('um-my-google-settings');
-    if (gcDiv) window.umRenderMyGoogleConnection(gcDiv);
-  }
 }
 
-function renderPermMatrix() {
+// renderPermMatrix removed — permissions are now managed exclusively in
+// User Management → Roles & Permissions tab (user_management.js).
+// Keeping stubs so any stray calls don't throw.
+function renderPermMatrix() { return ''; }
+
+function _renderPermMatrixOld_deleted() {
   const perms = loadNavPerms();
   const roles = [
     { key: 'office_manager', label: 'Jen — Office Manager', color: '#f59e0b' },
@@ -2959,40 +2963,15 @@ function renderPermMatrix() {
   </section>`;
 }
 
+// _toggleNavPerm / _resetNavPerms / _applyPermPreset are now in user_management.js
+// Keeping thin stubs here in case any legacy onclick= strings reference them.
 window._toggleNavPerm = function(role, viewKey, enabled) {
   const perms = loadNavPerms();
   if (!perms[role]) perms[role] = [...(DEFAULT_NAV_PERMS[role] || [])];
-  if (enabled) {
-    if (!perms[role].includes(viewKey)) perms[role].push(viewKey);
-  } else {
-    perms[role] = perms[role].filter(v => v !== viewKey);
-  }
+  if (enabled) { if (!perms[role].includes(viewKey)) perms[role].push(viewKey); }
+  else { perms[role] = perms[role].filter(v => v !== viewKey); }
   saveNavPerms(perms);
   showToast('Permission updated');
-};
-
-window._resetNavPerms = function() {
-  if (!confirm('Reset all permissions to defaults?')) return;
-  localStorage.removeItem(NAV_PERMS_KEY);
-  showToast('Permissions reset to defaults');
-  show('settings');
-};
-
-window._applyPermPreset = function(role, preset) {
-  const ALL_VIEWS = ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','revenueAdmin','integrations','userManagement','settings'];
-  const STANDARD  = ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings'];
-  const VIEW_ONLY = ['today','pipeline','settings'];
-  let views;
-  if (preset === 'full')     views = [...ALL_VIEWS];
-  else if (preset === 'standard') views = [...STANDARD];
-  else views = [...VIEW_ONLY];
-  const perms = loadNavPerms();
-  perms[role] = views;
-  saveNavPerms(perms);
-  const roleLabel = role === 'office_manager' ? 'Jen' : 'Ryan';
-  const presetLabel = preset === 'full' ? 'Full Access' : preset === 'standard' ? 'Standard' : 'View Only';
-  showToast(roleLabel + ' set to ' + presetLabel);
-  show('settings');
 };
 // ── Mark Sold Modal ───────────────────────────────────────────────────────────
 function openMarkSoldModal(oppId) {

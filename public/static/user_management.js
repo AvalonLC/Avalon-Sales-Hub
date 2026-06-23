@@ -256,10 +256,9 @@ function userManagement(tab) {
 
   const activeTab = tab || 'users';
   const tabs = [
-    { id:'users',      label:'👤 Users' },
-    { id:'roles',      label:'🎭 Roles & Permissions' },
-    { id:'workspace',  label:'🔗 Workspace Connections' },
-    { id:'audit',      label:'🔍 Login Audit' }
+    { id:'users',  label:'👤 Users & Workspace' },
+    { id:'roles',  label:'🎭 Roles & Permissions' },
+    { id:'audit',  label:'🔍 Login Audit' }
   ];
 
   viewEl.innerHTML = `
@@ -289,30 +288,102 @@ function userManagement(tab) {
   const tc = document.getElementById('um-tab-content');
   if (!tc) return;
 
-  if (activeTab === 'users')     umRenderUsers(tc);
-  else if (activeTab === 'roles')     umRenderRoles(tc);
-  else if (activeTab === 'workspace') umRenderWorkspace(tc);
-  else if (activeTab === 'audit')     umRenderAudit(tc);
+  if (activeTab === 'users')  umRenderUsers(tc);
+  else if (activeTab === 'roles') umRenderRoles(tc);
+  else if (activeTab === 'audit') umRenderAudit(tc);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB 1 — USERS
 // ═══════════════════════════════════════════════════════════════════════════════
 function umRenderUsers(container) {
-  const users = umLoadUsers();
+  const users    = umLoadUsers();
+  const googleMap= umLoadUserGoogle();
+  const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
+
+  // ── Shared Client ID (formerly "Workspace Connections" tab) ──────────────
+  let globalIntState = {};
+  try { globalIntState = JSON.parse(localStorage.getItem('avalonIntegrationsV1') || '{}'); } catch(e) {}
+  const sharedClientId = globalIntState.googleClientId || '';
+
+  // ── My Google Connection (for whoever is logged in right now) ─────────────
+  const myGc       = currentRep ? googleMap[currentRep.id] : null;
+  const myConnected = myGc && myGc.token && Date.now() < (myGc.expiry || 0);
+  const myEmail     = myGc?.email || '';
 
   container.innerHTML = `
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-  <div>
-    <span style="font-size:13px;color:#64748b">${users.filter(u=>u.status==='active').length} active · ${users.filter(u=>u.status==='inactive').length} inactive</span>
+
+<!-- ── My Google Connection ──────────────────────────────────────────────── -->
+<div style="background:#0f172a;border:1px solid #334155;border-radius:14px;padding:20px;margin-bottom:24px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <img src="https://www.google.com/favicon.ico" style="width:20px;height:20px" alt="Google">
+    <div style="font-weight:700;font-size:15px;color:#e2e8f0">My Google Workspace</div>
+    ${myConnected
+      ? `<span style="margin-left:auto;font-size:11px;font-weight:700;color:#4ade80;background:#4ade8015;border:1px solid #4ade8040;border-radius:20px;padding:2px 10px">● Connected</span>`
+      : `<span style="margin-left:auto;font-size:11px;font-weight:700;color:#f87171;background:#f8717115;border:1px solid #f8717140;border-radius:20px;padding:2px 10px">○ Not Connected</span>`}
+  </div>
+  ${myConnected
+    ? `<div style="font-size:13px;color:#4ade80;margin-bottom:10px">Signed in as <strong>${umEscape(myEmail)}</strong></div>
+       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+         ${[{icon:'✉️',l:'Gmail'},{icon:'📅',l:'Calendar'},{icon:'📁',l:'Drive'}].map(s=>`
+         <span style="font-size:12px;background:#4ade8015;border:1px solid #4ade8040;border-radius:6px;padding:3px 10px;color:#4ade80">${s.icon} ${s.l}</span>`).join('')}
+       </div>
+       <div style="display:flex;gap:8px;flex-wrap:wrap">
+         <button class="secondary-btn" style="font-size:12px" onclick="show('integrations')">Open Workspace Hub →</button>
+         <button class="danger-btn" style="font-size:12px" onclick="window._umMyDisconnect&&window._umMyDisconnect();userManagement('users')">Disconnect</button>
+       </div>`
+    : `<p style="color:#64748b;font-size:13px;margin:0 0 12px">Connect your personal Google account to access Gmail, Calendar, and Drive inside the hub.</p>
+       ${!sharedClientId
+         ? `<div style="font-size:12px;color:#f59e0b;background:#f59e0b15;border:1px solid #f59e0b40;border-radius:8px;padding:10px">
+              ⚠ Google Client ID not configured yet. Set it below under <strong>Google OAuth Setup</strong>.
+            </div>`
+         : `<button class="primary-btn" style="font-size:13px" onclick="window._umMyConnect&&window._umMyConnect().then(()=>userManagement('users'))">Connect My Google Account</button>`
+       }`
+  }
+</div>
+
+<!-- ── Google OAuth Setup (Client ID) ────────────────────────────────────── -->
+<div style="background:#0a0f1a;border:1px solid #1e293b;border-radius:12px;padding:16px 18px;margin-bottom:24px">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:2px">🔑 Google OAuth Client ID</div>
+      <div style="font-size:11px;color:#475569">Shared across all users. Set once — everyone can then connect their own account.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1;min-width:260px;justify-content:flex-end">
+      <input id="um-ws-client-id" type="text"
+        value="${umEscape(sharedClientId)}"
+        placeholder="1234…apps.googleusercontent.com"
+        style="flex:1;min-width:220px;padding:8px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:12px;box-sizing:border-box">
+      <button class="primary-btn" style="font-size:12px;padding:8px 14px;flex-shrink:0" onclick="window._umSaveClientId()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Team Users ─────────────────────────────────────────────────────────── -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+  <div style="font-size:13px;font-weight:700;color:#e2e8f0">
+    Team Members
+    <span style="font-size:12px;color:#64748b;font-weight:400;margin-left:8px">${users.filter(u=>u.status==='active').length} active · ${users.filter(u=>u.status==='inactive').length} inactive</span>
   </div>
   <button class="primary-btn" onclick="window._umOpenUserForm(null)">+ Add User</button>
 </div>
 
 <div style="display:flex;flex-direction:column;gap:10px" id="um-user-list">
-  ${users.length ? users.map(u => umUserRow(u)).join('') : `<div style="text-align:center;padding:40px;color:#64748b">No users yet. Add your first team member.</div>`}
+  ${users.length ? users.map(u => umUserRow(u, googleMap[u.id])).join('') : `<div style="text-align:center;padding:40px;color:#64748b">No users yet. Add your first team member.</div>`}
 </div>
 `;
+
+  // ── Save Client ID ────────────────────────────────────────────────────────
+  window._umSaveClientId = function() {
+    const val = document.getElementById('um-ws-client-id')?.value?.trim();
+    if (!val) { umToast('Paste a valid Google Client ID first'); return; }
+    let st = {};
+    try { st = JSON.parse(localStorage.getItem('avalonIntegrationsV1') || '{}'); } catch(e) {}
+    st.googleClientId = val;
+    localStorage.setItem('avalonIntegrationsV1', JSON.stringify(st));
+    umToast('Google Client ID saved ✅');
+    umRenderUsers(container);
+  };
 
   // Form logic
   window._umOpenUserForm = function(userId) {
@@ -531,28 +602,44 @@ function umRenderUsers(container) {
   };
 }
 
-function umUserRow(u) {
+function umUserRow(u, gc) {
+  // gc can be passed in from caller or loaded here as fallback
+  if (gc === undefined) { const m = umLoadUserGoogle(); gc = m[u.id]; }
   const role = umRoleDef(u.role);
-  const googleMap = umLoadUserGoogle();
-  const gc = googleMap[u.id];
   const googleConnected = gc && gc.token && Date.now() < (gc.expiry || 0);
+  const googleEmail     = gc?.email || '';
 
   return `
-<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#0f172a;border:1px solid #1e293b;border-radius:12px;flex-wrap:wrap;gap:12px">
-  ${umColorTile(u.displayName || u.name, u.color, 42)}
-  <div style="flex:1;min-width:160px">
-    <div style="font-weight:700;font-size:15px;color:#e2e8f0">${umEscape(u.displayName||u.name)}</div>
-    <div style="font-size:12px;color:#64748b;margin-top:1px">${umEscape(u.position)} ${u.email ? '· ' + umEscape(u.email) : ''}</div>
+<div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;overflow:hidden">
+  <!-- Main row -->
+  <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;flex-wrap:wrap;gap:12px">
+    ${umColorTile(u.displayName || u.name, u.color, 42)}
+    <div style="flex:1;min-width:160px">
+      <div style="font-weight:700;font-size:15px;color:#e2e8f0">${umEscape(u.displayName||u.name)}</div>
+      <div style="font-size:12px;color:#64748b;margin-top:1px">${umEscape(u.position)}${u.email ? ' · '+umEscape(u.email) : ''}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;color:${role.color};background:${role.color}18;border:1px solid ${role.color}40;border-radius:20px;padding:2px 10px">${role.label}</span>
+      ${umStatusPill(u.status)}
+      ${u.mustResetPin ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:2px 8px">⚠ PIN Reset</span>` : ''}
+    </div>
+    <div style="display:flex;gap:8px;margin-left:auto">
+      <button class="secondary-btn" style="font-size:12px;padding:6px 12px" onclick="window._umResetPin('${u.id}')">Reset PIN</button>
+      <button class="secondary-btn" style="font-size:12px;padding:6px 12px" onclick="window._umOpenUserForm('${u.id}')">Edit</button>
+    </div>
   </div>
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <span style="font-size:11px;font-weight:700;color:${role.color};background:${role.color}18;border:1px solid ${role.color}40;border-radius:20px;padding:2px 10px">${role.label}</span>
-    ${umStatusPill(u.status)}
-    ${u.mustResetPin ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:2px 8px">⚠ PIN Reset Required</span>` : ''}
-    ${googleConnected ? `<span style="font-size:10px;font-weight:700;color:#4ade80;background:#4ade8018;border:1px solid #4ade8040;border-radius:20px;padding:2px 8px">G Connected</span>` : ''}
-  </div>
-  <div style="display:flex;gap:8px;margin-left:auto">
-    <button class="secondary-btn" style="font-size:12px;padding:6px 12px" onclick="window._umResetPin('${u.id}')">Reset PIN</button>
-    <button class="secondary-btn" style="font-size:12px;padding:6px 12px" onclick="window._umOpenUserForm('${u.id}')">Edit</button>
+  <!-- Google status strip -->
+  <div style="display:flex;align-items:center;gap:10px;padding:8px 18px;background:${googleConnected?'#4ade8008':'#0a0f1a'};border-top:1px solid #1e293b;flex-wrap:wrap">
+    <img src="https://www.google.com/favicon.ico" style="width:13px;height:13px;opacity:.7" alt="G">
+    ${googleConnected
+      ? `<span style="font-size:11px;color:#4ade80;font-weight:600">● Google connected as ${umEscape(googleEmail)}</span>
+         <div style="display:flex;gap:6px;margin-left:auto">
+           ${[['✉️','Gmail'],['📅','Cal'],['📁','Drive']].map(([ic,lb])=>`<span style="font-size:10px;color:#4ade80;background:#4ade8015;border:1px solid #4ade8030;border-radius:4px;padding:1px 6px">${ic} ${lb}</span>`).join('')}
+           <button onclick="window._umAdminDisconnectUser('${u.id}')" style="font-size:10px;font-weight:700;color:#f87171;background:#f8717115;border:1px solid #f8717140;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:4px">Disconnect</button>
+         </div>`
+      : `<span style="font-size:11px;color:#475569">○ Google not connected</span>
+         <span style="font-size:11px;color:#334155;margin-left:auto">User connects via Integrations → Google Workspace</span>`
+    }
   </div>
 </div>`;
 }
@@ -734,18 +821,21 @@ function umRenderWorkspace(container) {
     umRenderWorkspace(container);
   };
 
-  window._umAdminDisconnectUser = function(userId) {
-    const users = umLoadUsers();
-    const u = users.find(u => u.id === userId);
-    if (!confirm(`Disconnect Google for ${u?.name||userId}? They will need to reconnect.`)) return;
-    const map = umLoadUserGoogle();
-    delete map[userId];
-    umSaveUserGoogle(map);
-    umAddAuditEntry({ type: 'google_disconnected_by_admin', userId, userName: u?.name||userId, by: window.getCurrentRep?.()?.name || 'Admin' });
-    umToast(`Google disconnected for ${u?.name||userId}`);
-    umRenderWorkspace(container);
-  };
 }
+
+// Hoisted so it's available from umUserRow onclick regardless of which tab rendered
+window._umAdminDisconnectUser = function(userId) {
+  const users = umLoadUsers();
+  const u = users.find(u => u.id === userId);
+  if (!confirm(`Disconnect Google for ${u?.name||userId}? They will need to reconnect.`)) return;
+  const map = umLoadUserGoogle();
+  delete map[userId];
+  umSaveUserGoogle(map);
+  umAddAuditEntry({ type: 'google_disconnected_by_admin', userId, userName: u?.name||userId, by: window.getCurrentRep?.()?.name || 'Admin' });
+  umToast(`Google disconnected for ${u?.name||userId}`);
+  // Re-render users tab so Google strip updates
+  userManagement('users');
+};
 
 function umWorkspaceRow(u, gc, clientId) {
   const connected = gc && gc.token && Date.now() < (gc.expiry || 0);
