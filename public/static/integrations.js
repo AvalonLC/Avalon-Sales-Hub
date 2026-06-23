@@ -55,11 +55,38 @@ const GOOGLE_SCOPES = [
   'email', 'profile'
 ].join(' ');
 
-function getGoogleToken() { return getIntState('googleToken'); }
-function getGoogleExpiry() { return getIntState('googleExpiry') || 0; }
-function isGoogleConnected() { return !!getGoogleToken() && Date.now() < getGoogleExpiry(); }
+// ── Per-user Google token helpers ────────────────────────────────────────────
+// All Google auth now reads from avalonUserGoogleV1[userId] so each rep
+// sees only their own Gmail / Calendar / Drive. Falls back to the old shared
+// avalonIntegrationsV1 token if a per-user entry doesn't exist yet (migration).
+function _getUserGoogleRecord() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) return null;
+  try {
+    const map = JSON.parse(localStorage.getItem('avalonUserGoogleV1') || '{}');
+    return map[rep.id] || null;
+  } catch(e) { return null; }
+}
+function getGoogleToken() {
+  const rec = _getUserGoogleRecord();
+  if (rec && rec.token && Date.now() < (rec.expiry || 0)) return rec.token;
+  // Legacy fallback — shared token from old integration flow
+  const legacy = getIntState('googleToken');
+  if (legacy && Date.now() < (getIntState('googleExpiry') || 0)) return legacy;
+  return null;
+}
+function getGoogleExpiry() {
+  const rec = _getUserGoogleRecord();
+  if (rec) return rec.expiry || 0;
+  return getIntState('googleExpiry') || 0;
+}
+function isGoogleConnected() { return !!getGoogleToken(); }
 function getGoogleClientId() { return getIntState('googleClientId') || ''; }
-function getGoogleUserEmail() { return getIntState('googleEmail') || ''; }
+function getGoogleUserEmail() {
+  const rec = _getUserGoogleRecord();
+  if (rec && rec.email) return rec.email;
+  return getIntState('googleEmail') || '';
+}
 
 async function googleOAuthConnect() {
   const clientId = getGoogleClientId();
@@ -128,6 +155,15 @@ async function googleOAuthConnect() {
 }
 
 function googleDisconnect() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (rep) {
+    try {
+      const map = JSON.parse(localStorage.getItem('avalonUserGoogleV1') || '{}');
+      delete map[rep.id];
+      localStorage.setItem('avalonUserGoogleV1', JSON.stringify(map));
+    } catch(e) {}
+  }
+  // Also clear legacy shared token so old data doesn't leak
   saveIntState({ googleToken: null, googleExpiry: 0, googleEmail: '' });
   showIntToast('Google disconnected');
 }
@@ -419,11 +455,15 @@ async function integrations() {
   const googleOk = isGoogleConnected();
   const hwOk = isHomeworksConnected();
   const googleEmail = getGoogleUserEmail();
+  const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const repName = currentRep ? (currentRep.name || 'You') : 'You';
+  const repColor = currentRep ? (currentRep.color || '#00A7E1') : '#00A7E1';
+  const clientIdConfigured = !!getGoogleClientId();
 
   intView.innerHTML = `
 <div class="eyebrow">Connected Tools</div>
 <h1>Integrations</h1>
-<p class="lede">Connect the Avalon Sales Hub to Google Workspace and your Homeworks CRM. All credentials stay in this browser — nothing is sent to any server.</p>
+<p class="lede">Your personal Google Workspace connection is private — only ${escapeHtml(repName)}'s account is used here. All credentials stay in this browser.</p>
 
 <div class="grid grid-2 mt" style="gap:28px">
 
@@ -431,35 +471,43 @@ async function integrations() {
   <section class="card" id="int-google-card">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
       <img src="https://www.google.com/favicon.ico" style="width:28px;height:28px" alt="Google">
-      <h2 style="margin:0">Google Workspace</h2>
+      <div>
+        <h2 style="margin:0">Google Workspace</h2>
+        <div style="font-size:11px;color:${repColor};font-weight:600;margin-top:2px">${escapeHtml(repName)}'s connection</div>
+      </div>
       ${connBadge(googleOk, googleEmail || 'Google')}
     </div>
-    <p>Access Gmail, Google Calendar, and Google Drive directly from the Sales Hub. Uses your personal Google account — no data is shared with Avalon servers.</p>
+    <p>Access <strong>your</strong> Gmail, Google Calendar, and Google Drive. This connection belongs only to ${escapeHtml(repName)} — other users connect their own accounts separately.</p>
 
     <div id="int-google-setup" style="${googleOk ? 'display:none' : ''}">
-      <h3 style="margin:12px 0 6px">Setup (one-time)</h3>
-      <ol style="padding-left:20px;font-size:13px;line-height:1.8;color:var(--muted)">
-        <li>Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:var(--accent)">console.cloud.google.com</a></li>
-        <li>Create a project → Enable <strong>Gmail API</strong>, <strong>Calendar API</strong>, <strong>Drive API</strong></li>
-        <li>OAuth consent screen → External → add your email as test user</li>
-        <li>Credentials → Create OAuth 2.0 Client ID → Web application</li>
-        <li>Add <code style="background:#1e293b;padding:2px 6px;border-radius:4px">${location.origin}/auth/google/callback</code> as Authorised redirect URI</li>
-        <li>Copy your <strong>Client ID</strong> and paste below</li>
-      </ol>
-      <div style="margin:12px 0">
-        <label style="font-size:12px;font-weight:600;color:var(--muted)">GOOGLE CLIENT ID</label>
+      ${!clientIdConfigured ? `
+      <div style="padding:12px 14px;background:#1c1a0a;border:1px solid #f59e0b40;border-radius:8px;margin-bottom:14px;font-size:13px;color:#f59e0b">
+        ⚠ Google Client ID not configured yet. Ask Tyler to set it up in
+        <strong>Admin → User Management → Workspace Connections</strong>.
+      </div>` : ''}
+      <h3 style="margin:12px 0 6px">Connect ${escapeHtml(repName)}'s Google Account</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Click below to sign in with your personal Google account. Only your emails and calendar will be visible here.</p>
+      ${clientIdConfigured ? `
+      <button class="primary-btn" onclick="intSaveClientIdAndConnect()" style="margin-top:4px">
+        Connect My Google Account
+      </button>` : `
+      <button class="primary-btn" disabled style="margin-top:4px;opacity:.5;cursor:not-allowed">
+        Connect My Google Account
+      </button>`}
+      <div style="margin-top:14px;padding:12px 14px;background:#0f172a;border:1px solid #1e293b;border-radius:8px">
+        <div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Google Client ID (Admin)</div>
         <input id="gClientIdInput" type="text" placeholder="1234567890-abc...apps.googleusercontent.com"
           value="${escapeHtml(getGoogleClientId())}"
-          style="width:100%;margin-top:6px;padding:10px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box">
+          style="width:100%;padding:9px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:12px;box-sizing:border-box">
+        <div style="font-size:11px;color:#475569;margin-top:5px">Shared across all users. Only Tyler (Admin) needs to set this once.</div>
       </div>
-      <button class="primary-btn" onclick="intSaveClientIdAndConnect()" style="margin-top:4px">
-        Connect Google Account
-      </button>
     </div>
 
     <div id="int-google-connected" style="${googleOk ? '' : 'display:none'}">
       <div class="connected-features" style="margin:12px 0">
-        <div style="font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Connected as ${googleEmail||'your Google account'} — What you can do:</div>
+        <div style="font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">
+          ● Connected as ${googleEmail||'your Google account'} — ${escapeHtml(repName)} only
+        </div>
         <div class="cf-row"><span class="cf-icon">&#x2022;</span><div><strong>Gmail</strong> — Read recent threads, compose follow-up emails from templates</div></div>
         <div class="cf-row"><span class="cf-icon">&#x2022;</span><div><strong>Calendar</strong> — View upcoming events, schedule site walks and follow-ups</div></div>
         <div class="cf-row"><span class="cf-icon">&#x2022;</span><div><strong>Drive</strong> — Search and link proposal docs, contracts, and site photos</div></div>
@@ -1255,8 +1303,16 @@ async function intSaveClientIdAndConnect() {
   const clientId = document.getElementById('gClientIdInput')?.value?.trim();
   if (!clientId) { showIntToast('Paste your Google Client ID first', 'warn'); return; }
   saveIntState({ googleClientId: clientId });
-  const ok = await googleOAuthConnect();
-  if (ok) integrations();
+  // Delegate to per-user connect flow from user_management.js
+  if (typeof window._umMyConnect === 'function') {
+    await window._umMyConnect();
+    // _umMyConnect toasts + refreshes on its own; just re-render after a moment
+    setTimeout(() => integrations(), 1200);
+  } else {
+    // Fallback to old shared flow if user_management not loaded yet
+    const ok = await googleOAuthConnect();
+    if (ok) integrations();
+  }
 }
 
 function intGoogleDisconnect() {
