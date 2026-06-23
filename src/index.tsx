@@ -168,6 +168,7 @@ function getHtml(): string {
 <script src="/static/reps.js"></script>
 <script src="/static/app_premium.js"></script>
 <script src="/static/integrations.js"></script>
+<script src="/static/import_clients_csv.js"></script>
 <script>
   // Service Worker registration
   if ('serviceWorker' in navigator) {
