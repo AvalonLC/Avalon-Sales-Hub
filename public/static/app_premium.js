@@ -2668,7 +2668,7 @@ function academyHome() {
   const rep = window.getCurrentRep ? window.getCurrentRep() : null;
   const repId = rep ? rep.id : 'ryan';
   const hd = window.Academy.getHomeData(repId);
-  const level = hd.currentLevel;
+  const level = hd.level;
   const nextLevel = hd.nextLevel;
   const pointsToNext = nextLevel ? nextLevel.minPoints - hd.points : 0;
   const levelPct = nextLevel
