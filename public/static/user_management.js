@@ -910,14 +910,14 @@ function umRenderMyGoogleConnection(container) {
     ].join(' ');
 
     const state  = Math.random().toString(36).slice(2);
-    const nonce  = Math.random().toString(36).slice(2);
+    // NOTE: nonce is NOT used with response_type=token (implicit flow).
+    // Only id_token flows require nonce. Including it causes Error 400.
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: `${location.origin}/auth/google/callback`,
       response_type: 'token',
       scope: scopes,
       state,
-      nonce,
       prompt: 'select_account'
     });
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
