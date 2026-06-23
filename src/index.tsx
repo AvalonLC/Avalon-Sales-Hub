@@ -89,6 +89,7 @@ function getHtml(): string {
         <div class="nav-items">
           <button class="nav-item" data-view="pipeline" onclick="show('pipeline')">Pipeline</button>
           <button class="nav-item" data-view="lead" onclick="show('lead')">Add Lead</button>
+          <button class="nav-item" data-view="clients" onclick="show('clients')">Clients &amp; Properties</button>
         </div>
       </details>
 
@@ -148,6 +149,10 @@ function getHtml(): string {
           <button class="tnd-item" onclick="window._closeNewMenu();show('lead')" role="menuitem">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5"/></svg>
             Add Lead
+          </button>
+          <button class="tnd-item" onclick="window._closeNewMenu();show('clients');setTimeout(()=>window.showClientForm&&window.showClientForm(),80)" role="menuitem">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M8 5v6M5 8h6"/></svg>
+            Add Client
           </button>
         </div>
       </div>

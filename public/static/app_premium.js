@@ -35,9 +35,9 @@ const NAV_PERMS_KEY = 'avalonNavPermissions';
 
 // Default permissions by role. Tyler can override from Settings.
 const DEFAULT_NAV_PERMS = {
-  admin: ['today','myDashboard','pipeline','lead','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings','revenueAdmin'],
-  office_manager: ['today','myDashboard','pipeline','lead','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings','revenueAdmin'],
-  rep: ['today','myDashboard','pipeline','lead','process','forms','scripts','templates','objections','calculator','academy']
+  admin: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings','revenueAdmin'],
+  office_manager: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings','revenueAdmin'],
+  rep: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy']
 };
 
 function loadNavPerms() {
@@ -117,7 +117,7 @@ function show(viewName='today', param){
   // ── Permission gate (admin-configurable) ─────────────────
   if (viewName !== 'settings' && !canViewTab(viewName)) {
     const _rep = window.getCurrentRep ? window.getCurrentRep() : null;
-    const _viewLabels = {today:'Today',myDashboard:'My Dashboard',pipeline:'Pipeline',lead:'Add Lead',process:'Sales Process',forms:'Forms & Checklists',scripts:'Scripts',templates:'Email Templates',objections:'Objection Handling',calculator:'Pricing Tools',academy:'Sales Academy',manager:'Manager Tools',integrations:'Integrations',settings:'Settings'};
+    const _viewLabels = {today:'Today',myDashboard:'My Dashboard',pipeline:'Pipeline',lead:'Add Lead',clients:'Clients & Properties',process:'Sales Process',forms:'Forms & Checklists',scripts:'Scripts',templates:'Email Templates',objections:'Objection Handling',calculator:'Pricing Tools',academy:'Sales Academy',manager:'Manager Tools',integrations:'Integrations',settings:'Settings'};
     view.innerHTML = `<div style="text-align:center;padding:64px 24px;margin-top:40px">
       <div style="font-size:32px;margin-bottom:18px;color:#64748b;font-weight:300;letter-spacing:-2px">&#x2715;</div>
       <h2 style="color:#f87171;margin-bottom:10px">${_viewLabels[viewName] || viewName} — Access Restricted</h2>
@@ -137,7 +137,7 @@ function show(viewName='today', param){
   // repDashboard is loaded from reps.js
   const repRoute = (typeof repDashboard === 'function') ? {myDashboard: repDashboard} : {};
   const revenueRoute = (typeof revenueAdmin === 'function') ? {revenueAdmin} : {};
-  const routes = {today, pipeline, lead, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute, ...repRoute, ...revenueRoute};
+  const routes = {today, pipeline, lead, clients, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute, ...repRoute, ...revenueRoute};
   (routes[viewName] || today)(param);
   window.scrollTo({top:0, behavior:'smooth'});
   if (typeof window._avalonState !== 'undefined') window._avalonState = state;
@@ -645,6 +645,599 @@ function buildDivisionPipeline() {
 
   return { divisions: result, keys: divKeys };
 }
+// ────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+//  CLIENTS & PROPERTIES
+//  Storage key: 'avalonClientsV1'  (separate from opportunities)
+//  Schema per client:
+//    id, name, firstName, lastName, company, type (Residential|Commercial|HOA|Vendor),
+//    status (Active|Inactive|Lead), email, phone, mobile,
+//    street, street2, city, state, zip,
+//    since, tags[], notes, homeworksId, properties[]
+//  Schema per property (sub-object):
+//    id, label, street, street2, city, state, zip, notes
+// ══════════════════════════════════════════════════════════════════════════════
+
+const CLIENTS_KEY = 'avalonClientsV1';
+
+function loadClients() {
+  try { return JSON.parse(localStorage.getItem(CLIENTS_KEY)) || []; }
+  catch(e) { return []; }
+}
+function saveClients(list) {
+  localStorage.setItem(CLIENTS_KEY, JSON.stringify(list));
+}
+function clientId() { return 'cl_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+function propId()   { return 'pr_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+// ── Parse a Homeworks-style CSV row into our client schema ──────────────────
+function parseClientCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = parseCsvRow(lines[0]);
+  const idx = h => headers.findIndex(x => x.toLowerCase().trim() === h.toLowerCase().trim());
+  const iName=idx('Name'), iFirst=idx('First Name'), iLast=idx('Last Name'),
+        iType=idx('Type'), iStatus=idx('Status'), iEmail=idx('Email'),
+        iPhone=idx('Phone'), iMobile=idx('Mobile'), iFax=idx('Fax'),
+        iStreet=idx('Street'), iStreet2=idx('Street2'), iCity=idx('City'),
+        iState=idx('State'), iZip=idx('Postal Code'), iSince=idx('Since'),
+        iTags=idx('Tags'), iNotes=idx('Notes'), iHwId=idx('Client ID'),
+        iCompany=idx('Customer Company Name');
+  const clients = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const r = parseCsvRow(lines[i]);
+    const name = (r[iName]||r[iCompany]||'').trim();
+    if (!name) continue;
+    // Map Homeworks type → our type
+    const rawType = (r[iType]||'').trim();
+    let type = 'Residential';
+    if (/commercial/i.test(rawType))    type = 'Commercial';
+    else if (/vendor/i.test(rawType))   type = 'Vendor';
+    else if (/hoa|association/i.test(name)) type = 'HOA';
+    else if (r[iCompany] && r[iCompany].trim() !== name && /LLC|Inc\.|Corp|Assoc|HOA|Properties|Management/i.test(name)) type = 'Commercial';
+    // Map status
+    const rawStatus = (r[iStatus]||'').trim();
+    const status = rawStatus === 'Active' ? 'Active' : rawStatus === 'Inactive' ? 'Inactive' : 'Active';
+    // Parse tags — include 'Annual Maintenance Client' etc.
+    const rawTags = (r[iTags]||'').trim();
+    const tags = rawTags ? rawTags.split(',').map(t=>t.trim()).filter(Boolean) : [];
+    // Strip HTML from notes
+    const rawNotes = (r[iNotes]||'').trim().replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+    clients.push({
+      id: clientId(),
+      name,
+      firstName: (r[iFirst]||'').trim(),
+      lastName:  (r[iLast]||'').trim(),
+      company:   (r[iCompany]||'').trim(),
+      type, status,
+      email:   (r[iEmail]||'').trim(),
+      phone:   (r[iPhone]||'').trim(),
+      mobile:  (r[iMobile]||'').trim(),
+      street:  (r[iStreet]||'').trim(),
+      street2: (r[iStreet2]||'').trim(),
+      city:    (r[iCity]||'').trim(),
+      state:   (r[iState]||'').trim(),
+      zip:     (r[iZip]||'').trim(),
+      since:   (r[iSince]||'').trim(),
+      tags,
+      notes:   rawNotes,
+      homeworksId: (r[iHwId]||'').trim(),
+      properties: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+  }
+  return clients;
+}
+
+// Minimal CSV row parser (handles quoted fields with commas/newlines)
+function parseCsvRow(row) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < row.length; i++) {
+    const c = row[i];
+    if (c === '"') { if (inQ && row[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur=''; }
+    else cur += c;
+  }
+  result.push(cur);
+  return result.map(s => s.replace(/^"|"$/g,'').trim());
+}
+
+// ── Export clients to CSV ──────────────────────────────────────────────────
+function exportClientsCsv() {
+  const list = loadClients();
+  if (!list.length) { showToast('No clients to export'); return; }
+  const headers = ['Name','First Name','Last Name','Company','Type','Status','Email','Phone','Mobile','Street','Street2','City','State','Zip','Since','Tags','Notes','Homeworks ID'];
+  const esc = v => '"' + String(v||'').replace(/"/g,'""') + '"';
+  const rows = list.map(c => [
+    c.name, c.firstName, c.lastName, c.company, c.type, c.status,
+    c.email, c.phone, c.mobile, c.street, c.street2, c.city, c.state, c.zip,
+    c.since, (c.tags||[]).join(', '), c.notes, c.homeworksId
+  ].map(esc).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'avalon-clients-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('Exported ' + list.length + ' clients');
+}
+window.exportClientsCsv = exportClientsCsv;
+
+// ── Type badge color map ────────────────────────────────────────────────────
+function clientTypeBadge(type) {
+  const map = {
+    'Residential': 'cl-badge-residential',
+    'Commercial':  'cl-badge-commercial',
+    'HOA':         'cl-badge-hoa',
+    'Vendor':      'cl-badge-vendor'
+  };
+  return `<span class="cl-badge ${map[type]||'cl-badge-residential'}">${escapeHtml(type||'Residential')}</span>`;
+}
+function clientStatusDot(status) {
+  const color = status==='Active' ? '#22c55e' : status==='Inactive' ? '#94a3b8' : '#f59e0b';
+  return `<span class="cl-status-dot" style="background:${color}" title="${escapeHtml(status||'Active')}"></span>`;
+}
+
+// ── Main clients() view ─────────────────────────────────────────────────────
+function clients(selectedId) {
+  if (selectedId) return clientDetail(selectedId);
+
+  const list = loadClients();
+  const q = (window._clientSearch||'').toLowerCase();
+  const typeFilter = window._clientTypeFilter || 'all';
+  const statusFilter = window._clientStatusFilter || 'all';
+
+  let filtered = list.filter(c => {
+    if (typeFilter !== 'all' && c.type !== typeFilter) return false;
+    if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+    if (!q) return true;
+    return [c.name, c.email, c.phone, c.mobile, c.street, c.city, c.tags?.join(' '), c.company]
+      .some(f => (f||'').toLowerCase().includes(q));
+  });
+
+  // Sort: alphabetical by name
+  filtered.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+
+  const counts = { total: list.length, residential: 0, commercial: 0, hoa: 0, vendor: 0, active: 0 };
+  list.forEach(c => {
+    if (c.status==='Active') counts.active++;
+    const t = (c.type||'Residential').toLowerCase().replace(/ /g,'');
+    if (counts[t] !== undefined) counts[t]++;
+  });
+
+  // ── Toolbar filter pills ──────────────────────────────────────────────────
+  const typePills = ['all','Residential','Commercial','HOA','Vendor'].map(t =>
+    `<button class="pl-filter-btn ${typeFilter===t?'pl-active':''}"
+      onclick="window._clientTypeFilter='${t}';show('clients')">${t==='all'?'All Types':escapeHtml(t)}</button>`
+  ).join('');
+
+  const statusPills = ['all','Active','Inactive'].map(s =>
+    `<button class="pl-filter-btn ${statusFilter===s?'pl-active':''}"
+      onclick="window._clientStatusFilter='${s}';show('clients')">${s==='all'?'All Statuses':escapeHtml(s)}</button>`
+  ).join('');
+
+  const hasFilter = q || typeFilter!=='all' || statusFilter!=='all';
+  const activeFilterBar = hasFilter ? `
+    <div class="pl-active-filter-bar">
+      <span>Showing ${filtered.length} of ${list.length}</span>
+      <button class="pl-clear-filter" onclick="window._clientSearch='';window._clientTypeFilter='all';window._clientStatusFilter='all';show('clients')">✕ Clear filters</button>
+    </div>` : '';
+
+  // ── Client rows ───────────────────────────────────────────────────────────
+  const rows = filtered.length ? filtered.map(c => {
+    const addr = [c.street, c.city, c.state].filter(Boolean).join(', ');
+    const contact = c.email || c.phone || c.mobile || '—';
+    const tagHtml = (c.tags||[]).slice(0,2).map(t => `<span class="cl-tag">${escapeHtml(t)}</span>`).join('');
+    const linkedOpps = state.opportunities.filter(o =>
+      o.clientId === c.id || (o.client||'').toLowerCase() === (c.name||'').toLowerCase()
+    ).length;
+    return `<tr class="cl-row" onclick="show('clients','${c.id}')" title="Open ${escapeHtml(c.name)}">
+      <td class="cl-cell-name">
+        <div class="cl-name-wrap">
+          <span class="cl-avatar">${escapeHtml((c.name||'?')[0].toUpperCase())}</span>
+          <div>
+            <div class="cl-name">${escapeHtml(c.name)}</div>
+            ${c.company && c.company !== c.name ? `<div class="cl-sub">${escapeHtml(c.company)}</div>` : ''}
+          </div>
+        </div>
+      </td>
+      <td>${clientTypeBadge(c.type)}</td>
+      <td>${clientStatusDot(c.status)} <span style="font-size:12px;color:#475569">${escapeHtml(c.status||'Active')}</span></td>
+      <td class="cl-cell-addr">${addr ? escapeHtml(addr) : '<span class="cl-empty-cell">—</span>'}</td>
+      <td class="cl-cell-contact">
+        ${c.email ? `<a class="cl-link" href="mailto:${escapeHtml(c.email)}" onclick="event.stopPropagation()">${escapeHtml(c.email)}</a>` : ''}
+        ${(c.phone||c.mobile) && c.email ? '<br>' : ''}
+        ${escapeHtml(c.phone||c.mobile||(!c.email?'—':''))}
+      </td>
+      <td>${tagHtml}</td>
+      <td style="text-align:center">${linkedOpps ? `<span class="cl-opp-count">${linkedOpps}</span>` : '<span style="color:#94a3b8;font-size:12px">—</span>'}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="7" style="text-align:center;padding:48px 24px;color:#94a3b8;font-size:14px">
+    ${q||typeFilter!=='all'||statusFilter!=='all' ? 'No clients match your filters.' : 'No clients yet — import from Homeworks or add manually.'}
+  </td></tr>`;
+
+  view.innerHTML = `
+    <div class="pl-page-header">
+      <div class="pl-page-title">
+        <h1 class="pl-title">Clients &amp; Properties</h1>
+        <span class="pl-subtitle">${counts.total} total · ${counts.active} active · ${counts.residential} residential · ${counts.commercial} commercial</span>
+      </div>
+      <div class="pl-page-actions">
+        <button class="primary-btn small" onclick="showClientForm()">+ Add Client</button>
+        <button class="secondary-btn small" onclick="exportClientsCsv()">Export CSV</button>
+        <button class="secondary-btn small" onclick="triggerClientImport()">Import CSV</button>
+      </div>
+    </div>
+
+    <input type="file" id="clientImportInput" accept=".csv,text/csv,text/plain" style="display:none"
+      onchange="handleClientImport(this)">
+
+    <div class="pl-toolbar" style="margin-bottom:10px">
+      <div class="cl-search-wrap">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.45">
+          <circle cx="5.5" cy="5.5" r="4" stroke="#475569" stroke-width="1.4"/>
+          <path d="M9 9l3 3" stroke="#475569" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <input id="clientSearchInput" class="cl-search-input" type="search" placeholder="Search clients, addresses, emails…"
+          value="${escapeHtml(window._clientSearch||'')}"
+          oninput="window._clientSearch=this.value;show('clients')">
+      </div>
+      <div class="pl-filter-divider"></div>
+      <div class="pl-filter-group">
+        <span class="pl-filter-label">Type</span>
+        ${typePills}
+      </div>
+      <div class="pl-filter-divider"></div>
+      <div class="pl-filter-group">
+        <span class="pl-filter-label">Status</span>
+        ${statusPills}
+      </div>
+    </div>
+    ${activeFilterBar}
+
+    <div class="cl-table-wrap card" style="padding:0;overflow:hidden">
+      <table class="cl-table">
+        <thead>
+          <tr>
+            <th style="width:26%">Client</th>
+            <th style="width:11%">Type</th>
+            <th style="width:9%">Status</th>
+            <th style="width:22%">Address</th>
+            <th style="width:20%">Contact</th>
+            <th style="width:8%">Tags</th>
+            <th style="width:4%;text-align:center" title="Linked pipeline opportunities">Opps</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:right">
+      ${filtered.length} client${filtered.length===1?'':'s'} shown
+    </div>
+  `;
+
+  // Auto-focus search
+  const si = document.getElementById('clientSearchInput');
+  if (si && !window._clientSearch) { /* don't steal focus on load */ }
+}
+window._clientSearch = window._clientSearch || '';
+window._clientTypeFilter = window._clientTypeFilter || 'all';
+window._clientStatusFilter = window._clientStatusFilter || 'all';
+
+// ── Trigger file input ──────────────────────────────────────────────────────
+window.triggerClientImport = function() {
+  document.getElementById('clientImportInput')?.click();
+};
+
+// ── Handle imported CSV ─────────────────────────────────────────────────────
+window.handleClientImport = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const imported = parseClientCsv(text);
+    if (!imported.length) { showToast('No valid clients found in CSV'); return; }
+    const existing = loadClients();
+    // Deduplicate by homeworksId or name match
+    let added = 0, skipped = 0;
+    imported.forEach(c => {
+      const dup = existing.find(x =>
+        (c.homeworksId && x.homeworksId && x.homeworksId === c.homeworksId) ||
+        x.name.toLowerCase() === c.name.toLowerCase()
+      );
+      if (dup) { skipped++; }
+      else { existing.push(c); added++; }
+    });
+    saveClients(existing);
+    showToast(`Imported ${added} clients${skipped?' ('+skipped+' duplicates skipped)':''}`);
+    input.value = '';
+    show('clients');
+  };
+  reader.readAsText(file);
+};
+
+// ── Add / Edit client form ──────────────────────────────────────────────────
+window.showClientForm = function(clientIdToEdit) {
+  const c = clientIdToEdit ? loadClients().find(x => x.id === clientIdToEdit) : null;
+  const isEdit = !!c;
+  const modal = document.createElement('div');
+  modal.id = 'clientFormModal';
+  modal.className = 'cl-modal-overlay';
+  modal.innerHTML = `
+    <div class="cl-modal">
+      <div class="cl-modal-header">
+        <h3>${isEdit ? 'Edit Client' : 'Add Client'}</h3>
+        <button class="cl-modal-close" onclick="document.getElementById('clientFormModal').remove()">✕</button>
+      </div>
+      <div class="cl-modal-body">
+        <div class="cl-form-grid">
+          <label class="cl-form-label full"><span>Name <span style="color:#dc2626">*</span></span>
+            <input id="clf-name" class="cl-input" value="${escapeHtml(c?.name||'')}" placeholder="Full name or company name">
+          </label>
+          <label class="cl-form-label"><span>First Name</span>
+            <input id="clf-first" class="cl-input" value="${escapeHtml(c?.firstName||'')}" placeholder="First">
+          </label>
+          <label class="cl-form-label"><span>Last Name</span>
+            <input id="clf-last" class="cl-input" value="${escapeHtml(c?.lastName||'')}" placeholder="Last">
+          </label>
+          <label class="cl-form-label"><span>Type</span>
+            <select id="clf-type" class="cl-input">
+              ${['Residential','Commercial','HOA','Vendor'].map(t => `<option ${(c?.type||'Residential')===t?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </label>
+          <label class="cl-form-label"><span>Status</span>
+            <select id="clf-status" class="cl-input">
+              ${['Active','Inactive','Lead'].map(s => `<option ${(c?.status||'Active')===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </label>
+          <label class="cl-form-label"><span>Email</span>
+            <input id="clf-email" class="cl-input" type="email" value="${escapeHtml(c?.email||'')}" placeholder="client@email.com">
+          </label>
+          <label class="cl-form-label"><span>Phone</span>
+            <input id="clf-phone" class="cl-input" value="${escapeHtml(c?.phone||'')}" placeholder="703-xxx-xxxx">
+          </label>
+          <label class="cl-form-label"><span>Mobile</span>
+            <input id="clf-mobile" class="cl-input" value="${escapeHtml(c?.mobile||'')}" placeholder="Mobile">
+          </label>
+          <label class="cl-form-label full"><span>Street Address</span>
+            <input id="clf-street" class="cl-input" value="${escapeHtml(c?.street||'')}" placeholder="123 Main St">
+          </label>
+          <label class="cl-form-label"><span>City</span>
+            <input id="clf-city" class="cl-input" value="${escapeHtml(c?.city||'')}" placeholder="Vienna">
+          </label>
+          <label class="cl-form-label" style="grid-template-columns:80px 1fr;gap:8px">
+            <div><span>State</span><input id="clf-state" class="cl-input" value="${escapeHtml(c?.state||'VA')}" placeholder="VA" maxlength="2"></div>
+            <div><span>Zip</span><input id="clf-zip" class="cl-input" value="${escapeHtml(c?.zip||'')}" placeholder="22180"></div>
+          </label>
+          <label class="cl-form-label full"><span>Tags <span style="color:#94a3b8;font-weight:400">(comma-separated)</span></span>
+            <input id="clf-tags" class="cl-input" value="${escapeHtml((c?.tags||[]).join(', '))}" placeholder="Annual Maintenance Client, HOA, etc.">
+          </label>
+          <label class="cl-form-label full"><span>Notes</span>
+            <textarea id="clf-notes" class="cl-input" rows="3" placeholder="Property access, billing notes, contacts…">${escapeHtml(c?.notes||'')}</textarea>
+          </label>
+          <label class="cl-form-label"><span>Homeworks ID</span>
+            <input id="clf-hwid" class="cl-input" value="${escapeHtml(c?.homeworksId||'')}" placeholder="CRM reference ID">
+          </label>
+          <label class="cl-form-label"><span>Client Since</span>
+            <input id="clf-since" class="cl-input" value="${escapeHtml(c?.since||'')}" placeholder="Jan 2025">
+          </label>
+        </div>
+      </div>
+      <div class="cl-modal-footer">
+        ${isEdit ? `<button class="danger-btn small" onclick="deleteClient('${c.id}')">Delete</button>` : ''}
+        <button class="secondary-btn small" onclick="document.getElementById('clientFormModal').remove()">Cancel</button>
+        <button class="primary-btn small" onclick="saveClientForm('${isEdit?c.id:''}')">
+          ${isEdit ? 'Save Changes' : 'Add Client'}
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('clf-name').focus();
+};
+
+window.saveClientForm = function(existingId) {
+  const val = id => (document.getElementById(id)?.value||'').trim();
+  const name = val('clf-name');
+  if (!name) { showToast('Name is required'); return; }
+  const tags = val('clf-tags').split(',').map(t=>t.trim()).filter(Boolean);
+  const list = loadClients();
+  if (existingId) {
+    const idx = list.findIndex(x => x.id === existingId);
+    if (idx < 0) return;
+    Object.assign(list[idx], {
+      name, firstName:val('clf-first'), lastName:val('clf-last'),
+      type:val('clf-type'), status:val('clf-status'),
+      email:val('clf-email'), phone:val('clf-phone'), mobile:val('clf-mobile'),
+      street:val('clf-street'), city:val('clf-city'), state:val('clf-state'), zip:val('clf-zip'),
+      tags, notes:val('clf-notes'), homeworksId:val('clf-hwid'), since:val('clf-since'),
+      updatedAt:new Date().toISOString()
+    });
+  } else {
+    list.push({
+      id:clientId(), name, firstName:val('clf-first'), lastName:val('clf-last'),
+      company:'', type:val('clf-type'), status:val('clf-status'),
+      email:val('clf-email'), phone:val('clf-phone'), mobile:val('clf-mobile'),
+      street:val('clf-street'), street2:'', city:val('clf-city'), state:val('clf-state'), zip:val('clf-zip'),
+      since:val('clf-since'), tags, notes:val('clf-notes'), homeworksId:val('clf-hwid'),
+      properties:[], createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+    });
+  }
+  saveClients(list);
+  document.getElementById('clientFormModal')?.remove();
+  showToast(existingId ? 'Client updated' : 'Client added');
+  show('clients', existingId || undefined);
+};
+
+window.deleteClient = function(id) {
+  if (!confirm('Delete this client? This cannot be undone.')) return;
+  const list = loadClients().filter(x => x.id !== id);
+  saveClients(list);
+  document.getElementById('clientFormModal')?.remove();
+  showToast('Client deleted');
+  show('clients');
+};
+
+// ── Client detail view ──────────────────────────────────────────────────────
+function clientDetail(id) {
+  const list = loadClients();
+  const c = list.find(x => x.id === id);
+  if (!c) { show('clients'); return; }
+
+  // Linked pipeline opportunities
+  const linkedOpps = state.opportunities.filter(o =>
+    o.clientId === c.id || (o.client||'').toLowerCase() === (c.name||'').toLowerCase()
+  );
+
+  const addr = [c.street, c.street2, c.city, c.state, c.zip].filter(Boolean).join(', ');
+  const tagHtml = (c.tags||[]).map(t => `<span class="cl-tag">${escapeHtml(t)}</span>`).join('');
+
+  const propertiesHtml = (c.properties||[]).length ? c.properties.map(p => `
+    <div class="cl-property-card">
+      <div class="cl-property-label">${escapeHtml(p.label||'Property')}</div>
+      <div class="cl-property-addr">${escapeHtml([p.street,p.street2,p.city,p.state,p.zip].filter(Boolean).join(', '))}</div>
+      ${p.notes ? `<div class="cl-property-notes">${escapeHtml(p.notes)}</div>` : ''}
+      <button class="cl-property-delete" onclick="deleteProperty('${c.id}','${p.id}')">Remove</button>
+    </div>`).join('') : `<p class="muted" style="font-size:13px">No additional properties. The primary address above is the main service location.</p>`;
+
+  const oppsHtml = linkedOpps.length ? linkedOpps.map(o =>
+    `<button class="mini-row" onclick="show('pipeline','${o.id}')">
+      <strong>${escapeHtml(o.client||'Unnamed')}</strong>
+      <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px">${escapeHtml(o.status||'New Lead')}</span>
+      <em>${escapeHtml(o.project||o.serviceLine||'Opportunity')}</em>
+      ${o.nextFollowUp ? `<span style="font-size:10px;color:#475569;margin-left:auto">${prettyDate(o.nextFollowUp)}</span>` : ''}
+    </button>`).join('')
+  : `<p class="muted" style="font-size:13px">No pipeline opportunities linked to this client yet.</p>`;
+
+  view.innerHTML = `
+    <div class="pl-page-header" style="margin-bottom:14px">
+      <div class="pl-page-title">
+        <button class="cl-back-btn" onclick="show('clients')">← Clients</button>
+        <h1 class="pl-title" style="margin-top:4px">${escapeHtml(c.name)}</h1>
+        <span class="pl-subtitle">${clientTypeBadge(c.type)} ${clientStatusDot(c.status)} ${escapeHtml(c.status||'Active')}${c.since?' · Since '+escapeHtml(c.since):''}</span>
+      </div>
+      <div class="pl-page-actions">
+        <button class="primary-btn small" onclick="show('lead')">+ New Opportunity</button>
+        <button class="secondary-btn small" onclick="showClientForm('${c.id}')">Edit</button>
+      </div>
+    </div>
+
+    <div class="grid grid-2 mt">
+      <!-- Contact card -->
+      <section class="card">
+        <div class="section-head"><h2>Contact Info</h2></div>
+        <dl class="cl-dl">
+          ${c.email  ? `<dt>Email</dt><dd><a class="cl-link" href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a></dd>` : ''}
+          ${c.phone  ? `<dt>Phone</dt><dd>${escapeHtml(c.phone)}</dd>` : ''}
+          ${c.mobile ? `<dt>Mobile</dt><dd>${escapeHtml(c.mobile)}</dd>` : ''}
+          ${addr     ? `<dt>Address</dt><dd>${escapeHtml(addr)}</dd>` : ''}
+          ${c.homeworksId ? `<dt>Homeworks ID</dt><dd style="color:#64748b;font-size:12px">${escapeHtml(c.homeworksId)}</dd>` : ''}
+        </dl>
+        ${tagHtml ? `<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">${tagHtml}</div>` : ''}
+        ${c.notes ? `<div class="cl-notes-block">${escapeHtml(c.notes)}</div>` : ''}
+      </section>
+
+      <!-- Pipeline opportunities -->
+      <section class="card">
+        <div class="section-head">
+          <h2>Pipeline</h2>
+          <span class="badge ${linkedOpps.length?'':'neutral-badge'}">${linkedOpps.length} opp${linkedOpps.length===1?'':'s'}</span>
+        </div>
+        ${oppsHtml}
+        ${linkedOpps.length ? `<div style="margin-top:10px"><button class="secondary-btn small" onclick="show('lead')">+ New Opportunity</button></div>` : ''}
+      </section>
+    </div>
+
+    <!-- Properties -->
+    <section class="card mt">
+      <div class="section-head">
+        <h2>Service Properties</h2>
+        <button class="secondary-btn small" onclick="showAddProperty('${c.id}')">+ Add Property</button>
+      </div>
+      <div class="cl-properties-grid">${propertiesHtml}</div>
+    </section>
+  `;
+}
+
+// ── Add property modal ──────────────────────────────────────────────────────
+window.showAddProperty = function(clientId) {
+  const existing = document.getElementById('addPropertyModal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'addPropertyModal';
+  modal.className = 'cl-modal-overlay';
+  modal.innerHTML = `
+    <div class="cl-modal" style="max-width:480px">
+      <div class="cl-modal-header">
+        <h3>Add Service Property</h3>
+        <button class="cl-modal-close" onclick="document.getElementById('addPropertyModal').remove()">✕</button>
+      </div>
+      <div class="cl-modal-body">
+        <div class="cl-form-grid">
+          <label class="cl-form-label full"><span>Label</span>
+            <input id="prop-label" class="cl-input" placeholder="e.g. Main Residence, Rental Property, Back Lot">
+          </label>
+          <label class="cl-form-label full"><span>Street</span>
+            <input id="prop-street" class="cl-input" placeholder="123 Service Rd">
+          </label>
+          <label class="cl-form-label"><span>City</span>
+            <input id="prop-city" class="cl-input" placeholder="Vienna">
+          </label>
+          <label class="cl-form-label" style="display:grid;grid-template-columns:80px 1fr;gap:8px">
+            <div><span>State</span><input id="prop-state" class="cl-input" value="VA" maxlength="2"></div>
+            <div><span>Zip</span><input id="prop-zip" class="cl-input" placeholder="22180"></div>
+          </label>
+          <label class="cl-form-label full"><span>Notes</span>
+            <textarea id="prop-notes" class="cl-input" rows="2" placeholder="Gate code, access notes, service area…"></textarea>
+          </label>
+        </div>
+      </div>
+      <div class="cl-modal-footer">
+        <button class="secondary-btn small" onclick="document.getElementById('addPropertyModal').remove()">Cancel</button>
+        <button class="primary-btn small" onclick="saveProperty('${clientId}')">Add Property</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('prop-label').focus();
+};
+
+window.saveProperty = function(clientId) {
+  const val = id => (document.getElementById(id)?.value||'').trim();
+  const list = loadClients();
+  const c = list.find(x => x.id === clientId);
+  if (!c) return;
+  c.properties = c.properties || [];
+  c.properties.push({
+    id: propId(),
+    label: val('prop-label') || 'Property',
+    street: val('prop-street'), street2: '',
+    city: val('prop-city'), state: val('prop-state'), zip: val('prop-zip'),
+    notes: val('prop-notes')
+  });
+  c.updatedAt = new Date().toISOString();
+  saveClients(list);
+  document.getElementById('addPropertyModal')?.remove();
+  showToast('Property added');
+  show('clients', clientId);
+};
+
+window.deleteProperty = function(clientId, propIdToDelete) {
+  if (!confirm('Remove this property?')) return;
+  const list = loadClients();
+  const c = list.find(x => x.id === clientId);
+  if (!c) return;
+  c.properties = (c.properties||[]).filter(p => p.id !== propIdToDelete);
+  c.updatedAt = new Date().toISOString();
+  saveClients(list);
+  showToast('Property removed');
+  show('clients', clientId);
+};
+
 // ────────────────────────────────────────────────────────────────────────────
 
 function lead(){
@@ -2173,8 +2766,8 @@ window._resetNavPerms = function() {
 };
 
 window._applyPermPreset = function(role, preset) {
-  const ALL_VIEWS = ['today','myDashboard','pipeline','lead','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings'];
-  const STANDARD  = ['today','myDashboard','pipeline','lead','process','forms','scripts','templates','objections','calculator','academy','settings'];
+  const ALL_VIEWS = ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings'];
+  const STANDARD  = ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','settings'];
   const VIEW_ONLY = ['today','pipeline','settings'];
   let views;
   if (preset === 'full')     views = [...ALL_VIEWS];
