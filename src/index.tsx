@@ -167,6 +167,7 @@ function getHtml(): string {
 
 <script src="/static/data.js"></script>
 <script src="/static/reps.js"></script>
+<script src="/static/academy.js"></script>
 <script src="/static/app_premium.js"></script>
 <script src="/static/integrations.js"></script>
 <script src="/static/import_clients_csv.js"></script>

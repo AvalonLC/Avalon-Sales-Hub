@@ -2417,58 +2417,789 @@ window.saveCalcToLead = function(){
 window.calcLabor = function(){ const h=Number(document.getElementById('hours').value||0), r=Number(document.getElementById('rate').value||0); document.getElementById('laborResult').innerHTML = h&&r ? `<strong>Labor line:</strong> ${money(h*r)}<br><span>${h} hours × ${money(r)}/hr</span>` : 'Enter labor hours and rate.'; }
 function money(n){ return n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}); }
 
-function academy(){
-  const onboardingPath = [
-    "Read Sections 1–4 to understand the Avalon sales system.",
-    "Shadow one intake call, one discovery call, one site walk, and one proposal review.",
-    "Complete the stage checklists using a real or sample opportunity.",
-    "Role-play discovery, budget discussion, proposal delivery, and objection handling.",
-    "Build one sample scope and proposal with manager review.",
-    "Own a low-complexity opportunity under supervision.",
-    "Review first won/lost opportunities in weekly coaching."
-  ];
+// ═══════════════════════════════════════════════════════════════════════════
+// Sales Academy 2.0 — View Layer (app_premium.js)
+// All data/logic lives in Academy global from academy.js
+// ═══════════════════════════════════════════════════════════════════════════
+
+function academy(param) {
+  if (!window.Academy) {
+    view.innerHTML = `<div class="card mt"><p style="color:var(--muted)">Academy engine loading…</p></div>`;
+    return;
+  }
+
+  // Route sub-views
+  if (param && param.startsWith('phase:')) {
+    return academyPhaseDetail(param.replace('phase:', ''));
+  }
+  if (param && param.startsWith('module:')) {
+    return academyModuleWorkspace(param.replace('module:', ''));
+  }
+  if (param === 'badges') {
+    return academyBadgesView();
+  }
+  if (param === 'admin') {
+    return academyAdminDashboard();
+  }
+  return academyHome();
+}
+
+// ─── Academy Home ─────────────────────────────────────────────────────────────
+function academyHome() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const repId = rep ? rep.id : 'ryan';
+  const hd = window.Academy.getHomeData(repId);
+  const level = hd.currentLevel;
+  const nextLevel = hd.nextLevel;
+  const pointsToNext = nextLevel ? nextLevel.minPoints - hd.points : 0;
+  const levelPct = nextLevel ? Math.round(((hd.points - level.minPoints) / (nextLevel.minPoints - level.minPoints)) * 100) : 100;
+
+  const isAdmin = rep && rep.role === 'admin';
+
   view.innerHTML = `
-    <div class="eyebrow">Training Path</div>
-    <h1>Avalon Sales Academy</h1>
-    <p class="lede">Nine modules that turn the Avalon Sales Manual and 6-Step Process into real skill — onboarding, team training, and manager sign-off certification.</p>
-    <div class="card mt" style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2)">
-      <h3>New Hire Onboarding Path</h3>
-      ${list(onboardingPath)}
+<style>
+.acad-header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border:1px solid #1e293b;border-radius:16px;padding:24px 28px;margin-bottom:20px}
+.acad-header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.acad-level-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:6px 14px;font-size:.85rem;font-weight:600}
+.acad-stats{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
+.acad-stat{text-align:center}
+.acad-stat-num{font-size:1.5rem;font-weight:700;color:#fff}
+.acad-stat-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-top:2px}
+.acad-level-bar-wrap{margin-top:14px}
+.acad-level-bar-track{height:6px;background:#1e293b;border-radius:4px;overflow:hidden;margin-top:4px}
+.acad-level-bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.phase-card{background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:20px;cursor:pointer;transition:border-color .2s,transform .15s;position:relative;overflow:hidden}
+.phase-card:hover:not(.phase-locked){border-color:#334155;transform:translateY(-2px)}
+.phase-card.phase-locked{opacity:.55;cursor:not-allowed}
+.phase-card-accent{position:absolute;top:0;left:0;width:4px;height:100%;border-radius:14px 0 0 14px}
+.phase-card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.phase-icon{font-size:1.8rem;line-height:1}
+.phase-num{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:4px}
+.phase-title{font-size:1.05rem;font-weight:700;color:#fff;margin:0}
+.phase-desc{font-size:.82rem;color:#94a3b8;margin:0 0 14px;line-height:1.5}
+.phase-prog-row{display:flex;align-items:center;gap:8px}
+.phase-prog-track{flex:1;height:5px;background:#1e293b;border-radius:4px;overflow:hidden}
+.phase-prog-fill{height:100%;border-radius:4px;transition:width .5s}
+.phase-prog-pct{font-size:.75rem;font-weight:600;color:#94a3b8;min-width:32px;text-align:right}
+.phase-mod-count{font-size:.72rem;color:#64748b;margin-top:6px}
+.phase-lock-badge{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;background:#1e293b;border-radius:99px;padding:3px 10px;color:#64748b;margin-top:8px}
+.acad-next-card{background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(6,182,212,.08));border:1px solid rgba(99,102,241,.3);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:border-color .2s}
+.acad-next-card:hover{border-color:rgba(99,102,241,.55)}
+.acad-next-icon{font-size:2rem;flex-shrink:0}
+.acad-next-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#6366f1;font-weight:700;margin-bottom:3px}
+.acad-next-title{font-size:1rem;font-weight:700;color:#fff;margin-bottom:2px}
+.acad-next-sub{font-size:.8rem;color:#94a3b8}
+.acad-next-arrow{margin-left:auto;font-size:1.3rem;color:#6366f1;flex-shrink:0}
+.badge-chip{display:inline-flex;align-items:center;gap:6px;background:#0f172a;border:1px solid #1e293b;border-radius:99px;padding:5px 12px;font-size:.78rem;cursor:pointer;transition:border-color .2s}
+.badge-chip:hover{border-color:#334155}
+.badge-chip-icon{font-size:1rem}
+.acad-section-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:12px}
+.recently-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e293b}
+.recently-item:last-child{border-bottom:none}
+.recently-check{width:26px;height:26px;background:rgba(16,185,129,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
+</style>
+
+<div class="acad-header">
+  <div class="acad-header-top">
+    <div>
+      <div class="eyebrow" style="margin-bottom:4px">Training Path</div>
+      <h1 style="margin:0;font-size:1.6rem">Avalon Sales Academy</h1>
     </div>
-    <div class="grid grid-3 mt">
-      ${data.modules.map(m=>{
-        const num = parseInt(m.id.slice(1));
-        return `<article class="card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-            <span class="badge">Module ${num}</span>
-            <label class="check-item" style="margin:0"><input type="checkbox" data-key="module-${m.id}"><span style="font-size:.75rem">Complete</span></label>
-          </div>
-          <h3>${escapeHtml(m.title)}</h3>
-          <p style="font-size:.85rem;color:var(--muted)">${escapeHtml(m.objective)}</p>
-          ${m.keyPoints && m.keyPoints.length ? `<h4>Key Takeaways</h4>${list(m.keyPoints)}` : ''}
-          <h4>Lessons</h4>${list(m.lessons)}
-          <details style="margin-top:10px">
-            <summary style="cursor:pointer;color:var(--accent);font-size:.85rem;font-weight:600">Quiz Questions</summary>
-            ${list(m.quiz)}
-          </details>
-        </article>`;
-      }).join('')}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div class="acad-level-chip" style="border-color:${level.color}40;color:${level.color}">
+        ${level.icon} ${level.name}
+      </div>
+      ${hd.streak_days > 0 ? `<div class="acad-level-chip" style="border-color:#f97316;color:#f97316">🔥 ${hd.streak_days}-day streak</div>` : ''}
+      ${isAdmin ? `<button class="secondary-btn" style="font-size:.78rem;padding:6px 12px" onclick="show('academy','admin')">👥 Team Progress</button>` : ''}
     </div>
-    <div class="card mt">
-      <h3>Sales Manual — Quick Reference</h3>
-      <div class="grid grid-2" style="gap:12px;margin-top:10px">
-        <div>
-          <h4>Core Sales Beliefs</h4>
-          ${list(['A qualified no is better than a confusing maybe that burns estimating time.','Budget conversations protect the client and Avalon when handled professionally.','The best proposal is not the longest — it is the clearest decision tool.','Objections are not attacks — they are signals that something needs clarification.','A signed proposal is not a finished sale until the job is activated and ready for production.'])}
-        </div>
-        <div>
-          <h4>Objection Handling Framework</h4>
-          ${list(['1. Pause and acknowledge — do not defend immediately.','2. Clarify the real issue: price, scope, timing, trust, or decision process.','3. Reconnect to the client\'s Core Buying Reasons.','4. Offer a path: proceed, revise scope, phase, hold, or close out.','5. Confirm the next step and date.'])}
-        </div>
+  </div>
+
+  <div class="acad-stats">
+    <div class="acad-stat">
+      <div class="acad-stat-num">${hd.overallPct}%</div>
+      <div class="acad-stat-label">Overall</div>
+    </div>
+    <div class="acad-stat">
+      <div class="acad-stat-num">${hd.completedModules}/${hd.totalModules}</div>
+      <div class="acad-stat-label">Modules</div>
+    </div>
+    <div class="acad-stat">
+      <div class="acad-stat-num">${hd.points}</div>
+      <div class="acad-stat-label">Points</div>
+    </div>
+    <div class="acad-stat">
+      <div class="acad-stat-num">${hd.badgesEarned}</div>
+      <div class="acad-stat-label">Badges</div>
+    </div>
+    <div class="acad-stat">
+      <div class="acad-stat-num">${hd.quizzesPassed}</div>
+      <div class="acad-stat-label">Quizzes Passed</div>
+    </div>
+  </div>
+
+  ${nextLevel ? `
+  <div class="acad-level-bar-wrap">
+    <div style="display:flex;justify-content:space-between;font-size:.72rem;color:#64748b;margin-bottom:4px">
+      <span>${level.icon} ${level.name}</span>
+      <span>${pointsToNext} pts to ${nextLevel.icon} ${nextLevel.name}</span>
+    </div>
+    <div class="acad-level-bar-track">
+      <div class="acad-level-bar-fill" style="width:${levelPct}%;background:${level.color}"></div>
+    </div>
+  </div>` : `<div style="margin-top:12px;font-size:.85rem;color:#f59e0b;font-weight:600">🌟 Maximum Level Achieved</div>`}
+</div>
+
+${hd.nextModule ? `
+<div style="margin-bottom:20px">
+  <div class="acad-section-label">Recommended Next</div>
+  <div class="acad-next-card" onclick="show('academy','module:${hd.nextModule.id}')">
+    <div class="acad-next-icon">
+      ${hd.nextModule.phase_id === 'phase_1' ? '🌱' : hd.nextModule.phase_id === 'phase_2' ? '⚙️' : '🏆'}
+    </div>
+    <div>
+      <div class="acad-next-label">Continue Learning</div>
+      <div class="acad-next-title">${escapeHtml(hd.nextModule.title)}</div>
+      <div class="acad-next-sub">${escapeHtml(hd.nextModule.short_description.substring(0,90))}…</div>
+    </div>
+    <div class="acad-next-arrow">→</div>
+  </div>
+</div>` : hd.overallPct === 100 ? `
+<div style="margin-bottom:20px">
+  <div class="acad-next-card" style="border-color:rgba(16,185,129,.4);cursor:default">
+    <div class="acad-next-icon">🏆</div>
+    <div>
+      <div class="acad-next-label" style="color:#10b981">Academy Complete!</div>
+      <div class="acad-next-title">All 9 modules finished</div>
+      <div class="acad-next-sub">You've mastered the full Avalon Sales Academy curriculum.</div>
+    </div>
+  </div>
+</div>` : ''}
+
+<div class="acad-section-label">Training Phases</div>
+<div class="grid grid-3 mt" style="margin-top:0;margin-bottom:20px">
+  ${hd.phaseProgress.map(ph => `
+  <article class="phase-card ${ph.locked ? 'phase-locked' : ''}" onclick="${ph.locked ? '' : `show('academy','phase:${ph.id}')`}">
+    <div class="phase-card-accent" style="background:${ph.color}"></div>
+    <div class="phase-card-header">
+      <div class="phase-icon">${ph.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="phase-num">Phase ${ph.sort_order}</div>
+        <div class="phase-title">${escapeHtml(ph.title)}</div>
+      </div>
+      ${ph.pct === 100 ? '<div style="font-size:1.2rem">✅</div>' : ph.inProgress ? '<div style="font-size:.7rem;color:#f59e0b;font-weight:700;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);padding:3px 8px;border-radius:99px">IN PROGRESS</div>' : ''}
+    </div>
+    <p class="phase-desc">${escapeHtml(ph.short_description)}</p>
+    <div class="phase-prog-row">
+      <div class="phase-prog-track">
+        <div class="phase-prog-fill" style="width:${ph.pct}%;background:${ph.color}"></div>
+      </div>
+      <span class="phase-prog-pct">${ph.pct}%</span>
+    </div>
+    <div class="phase-mod-count">${ph.modulesCompleted} of ${ph.totalModules} modules complete</div>
+    ${ph.locked ? `<div class="phase-lock-badge">🔒 Complete Phase ${ph.sort_order - 1} to unlock</div>` : ''}
+  </article>`).join('')}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+  <div class="card">
+    <div class="acad-section-label">Upcoming Badges</div>
+    ${hd.upcomingBadges.length ? hd.upcomingBadges.map(b => `
+    <div class="badge-chip" style="display:flex;border-radius:8px;padding:10px;margin-bottom:8px;width:100%;box-sizing:border-box;align-items:center;gap:10px" onclick="show('academy','badges')">
+      <span class="badge-chip-icon">${b.icon}</span>
+      <div>
+        <div style="font-weight:600;font-size:.85rem;color:#fff">${escapeHtml(b.name)}</div>
+        <div style="font-size:.72rem;color:#64748b">${escapeHtml(b.desc)}</div>
+      </div>
+    </div>`).join('') : '<p style="color:var(--muted);font-size:.85rem">All badges earned! 🎉</p>'}
+    <button class="secondary-btn" style="width:100%;margin-top:8px;font-size:.78rem" onclick="show('academy','badges')">View All Badges</button>
+  </div>
+
+  <div class="card">
+    <div class="acad-section-label">Recently Completed</div>
+    ${hd.recentlyCompleted.length ? hd.recentlyCompleted.map(m => `
+    <div class="recently-item" onclick="show('academy','module:${m.id}')" style="cursor:pointer">
+      <div class="recently-check">✓</div>
+      <div>
+        <div style="font-size:.85rem;font-weight:600;color:#fff">${escapeHtml(m.title)}</div>
+        <div style="font-size:.72rem;color:#64748b">Module ${m.sort_order}</div>
+      </div>
+    </div>`).join('') : '<p style="color:var(--muted);font-size:.85rem">No modules completed yet — start with Phase 1!</p>'}
+  </div>
+</div>
+
+<div class="card" style="background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.15)">
+  <h3 style="margin-top:0">New Hire Onboarding Path</h3>
+  ${list(['Read through all 3 Phase 1 modules to understand the Avalon sales system.','Shadow one intake call, one discovery call, one site walk, and one proposal review.','Complete each module quiz — 75% passing score required.','Role-play discovery, budget discussion, proposal delivery, and objection handling.','Build one sample scope and proposal with manager review.','Own a low-complexity opportunity under supervision.','Review first won/lost opportunities in weekly coaching.'])}
+</div>`;
+}
+
+// ─── Phase Detail ─────────────────────────────────────────────────────────────
+function academyPhaseDetail(phaseId) {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const repId = rep ? rep.id : 'ryan';
+  const content = window.Academy.getContent();
+  const ph = content.phases.find(p => p.id === phaseId);
+  if (!ph) { academy(); return; }
+
+  const rp = window.Academy.getRepProgress(repId);
+  const phaseMods = content.modules.filter(m => m.phase_id === phaseId).sort((a,b) => a.sort_order - b.sort_order);
+  const completedCount = phaseMods.filter(m => (rp.modules[m.id] || {}).status === 'completed').length;
+  const pct = Math.round((completedCount / phaseMods.length) * 100);
+
+  view.innerHTML = `
+<style>
+.mod-roadmap-item{display:flex;align-items:flex-start;gap:14px;padding:16px;border-radius:12px;cursor:pointer;transition:background .15s;margin-bottom:8px;border:1px solid transparent}
+.mod-roadmap-item:hover:not(.mod-locked){background:#0f172a;border-color:#1e293b}
+.mod-roadmap-item.mod-locked{opacity:.5;cursor:not-allowed}
+.mod-step{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0}
+.mod-step.done{background:rgba(16,185,129,.15);border:2px solid #10b981;color:#10b981}
+.mod-step.inprog{background:rgba(245,158,11,.12);border:2px solid #f59e0b;color:#f59e0b}
+.mod-step.notstarted{background:#1e293b;border:2px solid #334155;color:#64748b}
+.mod-step.locked{background:#111827;border:2px dashed #1e293b;color:#334155}
+.mod-roadmap-body{flex:1;min-width:0}
+.mod-roadmap-title{font-weight:700;color:#fff;margin-bottom:3px}
+.mod-roadmap-desc{font-size:.82rem;color:#94a3b8;margin-bottom:6px;line-height:1.4}
+.mod-roadmap-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mod-tag{font-size:.7rem;background:#1e293b;border-radius:99px;padding:2px 8px;color:#64748b}
+.mod-tag.done-tag{background:rgba(16,185,129,.1);color:#10b981}
+.mod-tag.inprog-tag{background:rgba(245,158,11,.1);color:#f59e0b}
+</style>
+
+<button class="secondary-btn" style="margin-bottom:16px" onclick="show('academy')">← Academy Home</button>
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+  <span style="font-size:2.5rem">${ph.icon}</span>
+  <div>
+    <div class="eyebrow">Phase ${ph.sort_order}</div>
+    <h1 style="margin:0">${escapeHtml(ph.title)}</h1>
+  </div>
+</div>
+<p class="lede" style="margin-bottom:16px">${escapeHtml(ph.long_description)}</p>
+
+<div class="card" style="margin-bottom:20px;background:#0f172a">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <span style="font-weight:600">Phase Progress</span>
+    <span style="font-weight:700;color:${ph.color}">${pct}%</span>
+  </div>
+  <div style="height:8px;background:#1e293b;border-radius:4px;overflow:hidden">
+    <div style="height:100%;width:${pct}%;background:${ph.color};border-radius:4px;transition:width .5s"></div>
+  </div>
+  <div style="margin-top:8px;font-size:.8rem;color:#64748b">${completedCount} of ${phaseMods.length} modules complete</div>
+</div>
+
+<div class="acad-section-label" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:10px">Module Roadmap</div>
+
+${phaseMods.map((m, i) => {
+  const mp = rp.modules[m.id] || {};
+  const status = mp.status || 'not_started';
+  const isLocked = window.Academy.isModuleLocked(m.id, repId);
+  const stepClass = status === 'completed' ? 'done' : status === 'in_progress' ? 'inprog' : isLocked ? 'locked' : 'notstarted';
+  const stepLabel = status === 'completed' ? '✓' : status === 'in_progress' ? '▶' : isLocked ? '🔒' : (i + 1);
+  const statusTag = status === 'completed' ? '<span class="mod-tag done-tag">✓ Complete</span>' :
+                    status === 'in_progress' ? '<span class="mod-tag inprog-tag">▶ In Progress</span>' :
+                    isLocked ? '<span class="mod-tag">🔒 Locked</span>' :
+                    '<span class="mod-tag">Not Started</span>';
+  const quizTag = mp.quiz_best_score != null ? `<span class="mod-tag ${mp.quiz_passed ? 'done-tag' : ''}" style="${mp.quiz_passed?'':'color:#f87171;background:rgba(248,113,113,.08)'}">Quiz: ${mp.quiz_best_score}%</span>` : '';
+  const pctTag = status !== 'not_started' ? `<span class="mod-tag">${mp.percent_complete || 0}% done</span>` : '';
+
+  return `<article class="mod-roadmap-item ${isLocked ? 'mod-locked' : ''}" ${isLocked ? '' : `onclick="show('academy','module:${m.id}')"`}>
+    <div class="mod-step ${stepClass}">${stepLabel}</div>
+    <div class="mod-roadmap-body">
+      <div class="mod-roadmap-title">Module ${m.sort_order} — ${escapeHtml(m.title)}</div>
+      <div class="mod-roadmap-desc">${escapeHtml(m.short_description)}</div>
+      <div class="mod-roadmap-meta">
+        ${statusTag}
+        ${pctTag}
+        ${quizTag}
+        <span class="mod-tag">~${m.estimated_minutes} min</span>
+        <span class="mod-tag">${m.difficulty}</span>
       </div>
     </div>
-  `;
-  wireChecks();
+    ${isLocked ? '' : `<div style="color:#334155;font-size:1.1rem;align-self:center;flex-shrink:0">→</div>`}
+  </article>`;
+}).join('')}`;
+}
+
+// ─── Module Workspace ─────────────────────────────────────────────────────────
+function academyModuleWorkspace(moduleId) {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const repId = rep ? rep.id : 'ryan';
+  const content = window.Academy.getContent();
+  const mod = content.modules.find(m => m.id === moduleId);
+  if (!mod) { academy(); return; }
+
+  const ph = content.phases.find(p => p.id === mod.phase_id);
+  const rp = window.Academy.getRepProgress(repId);
+  const mp = window.Academy.getModuleProgress(repId, moduleId);
+  const isLocked = window.Academy.isModuleLocked(moduleId, repId);
+
+  if (isLocked) {
+    view.innerHTML = `
+<button class="secondary-btn" style="margin-bottom:16px" onclick="show('academy','phase:${mod.phase_id}')">← ${escapeHtml(ph ? ph.title : 'Phase')}</button>
+<div class="card" style="text-align:center;padding:40px">
+  <div style="font-size:3rem;margin-bottom:12px">🔒</div>
+  <h2>Module Locked</h2>
+  <p style="color:var(--muted)">Complete all modules in Phase ${ph ? ph.sort_order - 1 : ''} to unlock this module.</p>
+  <button class="primary-btn" onclick="show('academy')">Back to Academy</button>
+</div>`;
+    return;
+  }
+
+  // Mark first non-quiz section as started if nothing completed yet
+  const firstSection = mod.sections.find(s => s.section_type !== 'quiz');
+  if (firstSection && !mp.sections_completed.includes(firstSection.id) && mp.status === 'not_started') {
+    // Don't auto-mark — let user click
+  }
+
+  // Which section to show — default to first
+  const _sectionId = `acad_active_${moduleId}`;
+  const activeSectionId = localStorage.getItem(_sectionId) || (mod.sections[0] && mod.sections[0].id);
+  const activeSection = mod.sections.find(s => s.id === activeSectionId) || mod.sections[0];
+
+  view.innerHTML = `
+<style>
+.workspace-layout{display:grid;grid-template-columns:220px 1fr;gap:0;min-height:500px;border:1px solid #1e293b;border-radius:14px;overflow:hidden;background:#0a0f1a}
+@media(max-width:700px){.workspace-layout{grid-template-columns:1fr;}}
+.workspace-nav{background:#0f172a;border-right:1px solid #1e293b;padding:0}
+.workspace-nav-header{padding:16px;border-bottom:1px solid #1e293b}
+.workspace-nav-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:8px}
+.workspace-nav-pct{font-size:1.4rem;font-weight:700;color:#fff}
+.workspace-nav-bar{height:4px;background:#1e293b;border-radius:4px;margin-top:6px;overflow:hidden}
+.workspace-nav-fill{height:100%;border-radius:4px;transition:width .4s}
+.ws-nav-item{display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:.82rem}
+.ws-nav-item:hover{background:#1e293b}
+.ws-nav-item.active-section{background:#162032;border-left-color:${ph ? ph.color : '#6366f1'};color:#fff}
+.ws-nav-item.done-section{color:#10b981}
+.ws-nav-item.pending-section{color:#94a3b8}
+.ws-nav-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0;background:#1e293b;color:#64748b}
+.ws-nav-dot.done{background:rgba(16,185,129,.15);color:#10b981;border:1px solid #10b981}
+.ws-nav-dot.active{background:${ph ? ph.color+'20' : 'rgba(99,102,241,.2)'};color:${ph ? ph.color : '#6366f1'};border:1px solid ${ph ? ph.color : '#6366f1'}}
+.workspace-main{padding:28px;overflow-y:auto}
+.ws-section-title{font-size:1.25rem;font-weight:700;color:#fff;margin:0 0 6px}
+.ws-section-type{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:16px}
+.ws-content-block{margin-bottom:16px;line-height:1.65;color:#cbd5e1}
+.ws-key-point{display:flex;gap:10px;padding:10px 14px;background:#0f172a;border-left:3px solid ${ph ? ph.color : '#6366f1'};border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.88rem;color:#e2e8f0}
+.ws-complete-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,${ph ? ph.color : '#6366f1'},${ph ? ph.color+'aa' : '#4f46e5'});color:#fff;border:none;border-radius:10px;padding:12px 22px;font-size:.9rem;font-weight:600;cursor:pointer;margin-top:16px;transition:opacity .15s}
+.ws-complete-btn:hover{opacity:.88}
+.ws-complete-btn:disabled{opacity:.5;cursor:not-allowed}
+.ws-done-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(16,185,129,.12);border:1px solid #10b981;color:#10b981;border-radius:10px;padding:10px 18px;font-size:.88rem;font-weight:600;margin-top:16px}
+.quiz-container{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:20px}
+.quiz-q{margin-bottom:20px}
+.quiz-q-prompt{font-weight:600;color:#fff;margin-bottom:10px;line-height:1.4}
+.quiz-choice{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid #1e293b;border-radius:8px;cursor:pointer;margin-bottom:6px;transition:border-color .15s,background .15s}
+.quiz-choice:hover{border-color:#334155;background:#0f172a}
+.quiz-choice.selected{border-color:${ph ? ph.color : '#6366f1'};background:${ph ? ph.color+'12' : 'rgba(99,102,241,.08)'}}
+.quiz-choice.correct{border-color:#10b981;background:rgba(16,185,129,.08)}
+.quiz-choice.wrong{border-color:#f87171;background:rgba(248,113,113,.06)}
+.quiz-choice input{margin-top:3px;flex-shrink:0}
+.quiz-submit-btn{background:${ph ? ph.color : '#6366f1'};color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:16px;transition:opacity .15s}
+.quiz-submit-btn:hover{opacity:.88}
+.quiz-submit-btn:disabled{opacity:.5;cursor:not-allowed}
+.quiz-result{border-radius:12px;padding:16px;margin-top:16px}
+.quiz-result.pass{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25)}
+.quiz-result.fail{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2)}
+.quiz-feedback-item{padding:8px 12px;border-radius:8px;margin-bottom:6px;font-size:.83rem}
+.quiz-feedback-item.correct{background:rgba(16,185,129,.08);border-left:3px solid #10b981}
+.quiz-feedback-item.wrong{background:rgba(248,113,113,.06);border-left:3px solid #f87171}
+.quiz-explanation{font-size:.78rem;color:#94a3b8;margin-top:4px;line-height:1.4}
+.prev-attempts-chip{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;color:#64748b;background:#1e293b;border-radius:99px;padding:3px 10px;margin-bottom:12px}
+</style>
+
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+  <button class="secondary-btn" onclick="show('academy','phase:${mod.phase_id}')">← ${escapeHtml(ph ? ph.title : 'Phase')}</button>
+  <span style="color:#334155;font-size:.85rem">›</span>
+  <span style="color:#94a3b8;font-size:.85rem">Module ${mod.sort_order}</span>
+</div>
+
+<h1 style="font-size:1.4rem;margin:0 0 4px">${escapeHtml(mod.title)}</h1>
+<p style="color:#94a3b8;font-size:.88rem;margin:0 0 16px">${escapeHtml(mod.short_description)}</p>
+
+<div class="workspace-layout">
+  <nav class="workspace-nav" id="ws-nav">
+    <div class="workspace-nav-header">
+      <div class="workspace-nav-title">Progress</div>
+      <div class="workspace-nav-pct" id="ws-pct">${mp.percent_complete}%</div>
+      <div class="workspace-nav-bar"><div class="workspace-nav-fill" id="ws-bar" style="width:${mp.percent_complete}%;background:${ph ? ph.color : '#6366f1'}"></div></div>
+    </div>
+    ${mod.sections.map(s => {
+      const done = mp.sections_completed.includes(s.id);
+      const isActive = s.id === (activeSection && activeSection.id);
+      const sIcon = s.section_type === 'overview' ? '📋' : s.section_type === 'lesson' ? '📖' : s.section_type === 'quiz' ? '📝' : '🔧';
+      return `<div class="ws-nav-item ${isActive ? 'active-section' : done ? 'done-section' : 'pending-section'}" onclick="academyShowSection('${moduleId}','${s.id}')" id="ws-nav-${s.id}">
+        <div class="ws-nav-dot ${done ? 'done' : isActive ? 'active' : ''}">${done ? '✓' : sIcon}</div>
+        <span style="line-height:1.3">${escapeHtml(s.title)}</span>
+      </div>`;
+    }).join('')}
+  </nav>
+  <main class="workspace-main" id="ws-main">
+    ${renderWorkspaceSection(mod, activeSection, mp, repId, ph)}
+  </main>
+</div>`;
+
+  // Make section-switch global for this view
+  window.academyShowSection = function(modId, sectId) {
+    localStorage.setItem(`acad_active_${modId}`, sectId);
+    const c = window.Academy.getContent();
+    const m = c.modules.find(x => x.id === modId);
+    const sec = m && m.sections.find(s => s.id === sectId);
+    if (!m || !sec) return;
+    const r = window.getCurrentRep ? window.getCurrentRep() : null;
+    const rId = r ? r.id : 'ryan';
+    const mpNow = window.Academy.getModuleProgress(rId, modId);
+    const phNow = c.phases.find(p => p.id === m.phase_id);
+    const main = document.getElementById('ws-main');
+    if (main) main.innerHTML = renderWorkspaceSection(m, sec, mpNow, rId, phNow);
+    // Update nav highlights
+    document.querySelectorAll('.ws-nav-item').forEach(el => {
+      const elId = el.getAttribute('onclick');
+      if (elId && elId.includes(`'${sectId}'`)) {
+        el.classList.add('active-section');
+      } else {
+        el.classList.remove('active-section');
+      }
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+}
+
+function renderWorkspaceSection(mod, section, mp, repId, ph) {
+  if (!section) return '<p style="color:var(--muted)">Select a section from the left.</p>';
+  const isDone = mp.sections_completed.includes(section.id);
+  const phColor = ph ? ph.color : '#6366f1';
+
+  if (section.section_type === 'quiz') {
+    return renderQuizSection(mod, mp, repId, ph);
+  }
+
+  let body = '';
+  if (section.section_type === 'overview') {
+    body = `
+<div class="ws-content-block">
+  <h3 style="color:#fff;font-size:1rem;margin-bottom:8px">Module Objective</h3>
+  <p style="color:#cbd5e1;line-height:1.65">${escapeHtml(section.content.objective)}</p>
+</div>
+${section.content.keyPoints && section.content.keyPoints.length ? `
+<h4 style="color:#fff;font-size:.9rem;margin-top:20px;margin-bottom:10px">Key Takeaways</h4>
+${section.content.keyPoints.map(kp => `<div class="ws-key-point">💡 ${escapeHtml(kp)}</div>`).join('')}` : ''}`;
+  } else if (section.section_type === 'lesson') {
+    body = `<div class="ws-content-block"><p>${escapeHtml(section.content.body)}</p></div>
+<div style="margin-top:12px;padding:14px;background:#0f172a;border-radius:10px;border:1px dashed #1e293b">
+  <p style="font-size:.82rem;color:#64748b;margin:0">💬 <em>This lesson covers the Avalon methodology for this skill area. Apply it in your next real or practice opportunity.</em></p>
+</div>`;
+  }
+
+  const completeBtn = isDone
+    ? `<div class="ws-done-badge">✅ Section Complete</div>`
+    : `<button class="ws-complete-btn" onclick="academyCompleteSection('${mod.id}','${section.id}')">Mark Section Complete →</button>`;
+
+  // Next section hint
+  const sectionIdx = mod.sections.findIndex(s => s.id === section.id);
+  const nextSec = mod.sections[sectionIdx + 1];
+  const nextHint = nextSec ? `<div style="margin-top:20px;padding:12px;background:#0a0f1a;border-radius:8px;cursor:pointer;border:1px solid #1e293b" onclick="academyShowSection('${mod.id}','${nextSec.id}')">
+    <div style="font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Up Next</div>
+    <div style="color:#94a3b8;font-size:.85rem;font-weight:600">${escapeHtml(nextSec.title)} →</div>
+  </div>` : '';
+
+  return `
+<div class="ws-section-type">${section.section_type.replace(/_/g,' ').toUpperCase()}</div>
+<h2 class="ws-section-title">${escapeHtml(section.title)}</h2>
+${body}
+${completeBtn}
+${nextHint}`;
+}
+
+function renderQuizSection(mod, mp, repId, ph) {
+  const quiz = mod.quiz;
+  if (!quiz) return '<p style="color:var(--muted)">No quiz for this module.</p>';
+  const phColor = ph ? ph.color : '#6366f1';
+  const prevAttempts = window.Academy.getQuizAttempts(repId, quiz.id);
+  const lastAttempt = prevAttempts[prevAttempts.length - 1];
+  const alreadyPassed = mp.quiz_passed;
+
+  let attemptsHtml = prevAttempts.length > 0 ? `<div class="prev-attempts-chip">📊 ${prevAttempts.length} previous attempt${prevAttempts.length>1?'s':''} — Best: ${Math.max(...prevAttempts.map(a=>a.percent_score))}%</div>` : '';
+
+  const questionsHtml = quiz.questions.map((q, qi) => `
+<div class="quiz-q" id="qq_${q.id}">
+  <div class="quiz-q-prompt">Q${qi+1}. ${escapeHtml(q.prompt)}</div>
+  ${q.choices.map(ch => `
+  <label class="quiz-choice" id="qc_${q.id}_${ch.value}" onclick="academySelectChoice('${q.id}','${ch.value}')">
+    <input type="radio" name="q_${q.id}" value="${ch.value}" style="flex-shrink:0;margin-top:3px">
+    <span style="font-size:.88rem;color:#cbd5e1"><strong style="color:#64748b;margin-right:4px">${ch.label}.</strong> ${escapeHtml(ch.text)}</span>
+  </label>`).join('')}
+</div>`).join('');
+
+  return `
+<div class="ws-section-type">KNOWLEDGE CHECK</div>
+<h2 class="ws-section-title">Module Quiz</h2>
+<p style="color:#94a3b8;margin-bottom:12px">Answer all questions. ${quiz.pass_score}% required to pass.</p>
+${attemptsHtml}
+${alreadyPassed ? `<div class="ws-done-badge" style="margin-bottom:14px">✅ Quiz Passed — ${mp.quiz_best_score}%</div>` : ''}
+<div class="quiz-container" id="quiz-form-${quiz.id}">
+  ${questionsHtml}
+  <button class="quiz-submit-btn" id="quiz-submit-btn" onclick="academySubmitQuiz('${mod.id}','${quiz.id}','${repId}')">Submit Quiz</button>
+</div>
+<div id="quiz-result-area"></div>`;
+}
+
+// Global quiz interaction handlers
+window.academySelectChoice = function(questionId, value) {
+  document.querySelectorAll(`[id^="qc_${questionId}_"]`).forEach(el => el.classList.remove('selected'));
+  const chosen = document.getElementById(`qc_${questionId}_${value}`);
+  if (chosen) chosen.classList.add('selected');
+};
+
+window.academyCompleteSection = function(moduleId, sectionId) {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const repId = rep ? rep.id : 'ryan';
+  window.Academy.markSectionComplete(repId, moduleId, sectionId);
+
+  // Update the button to done state
+  const btn = document.querySelector('.ws-complete-btn');
+  if (btn) {
+    btn.outerHTML = '<div class="ws-done-badge">✅ Section Complete</div>';
+  }
+
+  // Update nav dot
+  const navDot = document.querySelector(`#ws-nav-${sectionId} .ws-nav-dot`);
+  if (navDot) {
+    navDot.classList.remove('active');
+    navDot.classList.add('done');
+    navDot.textContent = '✓';
+  }
+  const navItem = document.getElementById(`ws-nav-${sectionId}`);
+  if (navItem) navItem.classList.add('done-section');
+
+  // Update progress bar
+  const mp = window.Academy.getModuleProgress(repId, moduleId);
+  const pctEl = document.getElementById('ws-pct');
+  const barEl = document.getElementById('ws-bar');
+  if (pctEl) pctEl.textContent = mp.percent_complete + '%';
+  if (barEl) barEl.style.width = mp.percent_complete + '%';
+
+  // Auto-advance to next section
+  const content = window.Academy.getContent();
+  const mod = content.modules.find(m => m.id === moduleId);
+  if (mod) {
+    const idx = mod.sections.findIndex(s => s.id === sectionId);
+    const next = mod.sections[idx + 1];
+    if (next) {
+      setTimeout(() => window.academyShowSection(moduleId, next.id), 400);
+    }
+  }
+};
+
+window.academySubmitQuiz = function(moduleId, quizId, repId) {
+  const content = window.Academy.getContent();
+  const mod = content.modules.find(m => m.id === moduleId);
+  if (!mod) return;
+
+  // Gather answers
+  const answers = {};
+  mod.quiz.questions.forEach(q => {
+    const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
+    if (selected) answers[q.id] = selected.value;
+  });
+
+  const unanswered = mod.quiz.questions.filter(q => !answers[q.id]);
+  if (unanswered.length > 0) {
+    toast(`Please answer all ${unanswered.length} remaining question${unanswered.length>1?'s':''}.`);
+    return;
+  }
+
+  const submitBtn = document.getElementById('quiz-submit-btn');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Scoring…'; }
+
+  const result = window.Academy.submitQuizAttempt(repId, quizId, moduleId, answers);
+  const resultArea = document.getElementById('quiz-result-area');
+  const formEl = document.getElementById(`quiz-form-${quizId}`);
+
+  // Apply correct/wrong styling to choices
+  if (formEl) {
+    result.feedback.forEach(f => {
+      mod.quiz.questions.forEach(q => {
+        if (q.id !== f.questionId) return;
+        q.choices.forEach(ch => {
+          const el = document.getElementById(`qc_${q.id}_${ch.value}`);
+          if (!el) return;
+          if (ch.is_correct) el.classList.add('correct');
+          else if (answers[q.id] === ch.value && !ch.is_correct) el.classList.add('wrong');
+        });
+      });
+    });
+    if (submitBtn) submitBtn.style.display = 'none';
+  }
+
+  // Show result
+  const passed = result.passed;
+  const score = result.percentScore;
+  const passedCount = result.feedback.filter(f => f.correct).length;
+  const totalCount = result.feedback.length;
+  const ph = content.phases.find(p => p.id === mod.phase_id);
+  const phColor = ph ? ph.color : '#6366f1';
+
+  if (resultArea) {
+    resultArea.innerHTML = `
+<div class="quiz-result ${passed ? 'pass' : 'fail'}" style="margin-top:16px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+    <span style="font-size:2rem">${passed ? '🎉' : '📚'}</span>
+    <div>
+      <div style="font-size:1.1rem;font-weight:700;color:${passed?'#10b981':'#f87171'}">${passed ? 'Quiz Passed!' : 'Not quite yet'}</div>
+      <div style="font-size:.85rem;color:#94a3b8">${score}% — ${passedCount}/${totalCount} correct — ${passed ? 'Module progress updated.' : `${mod.quiz.pass_score}% required to pass.`}</div>
+    </div>
+  </div>
+  ${result.feedback.map(f => {
+    const q = mod.quiz.questions.find(q => q.id === f.questionId);
+    return `<div class="quiz-feedback-item ${f.correct ? 'correct' : 'wrong'}">
+      <div style="font-weight:600;font-size:.82rem;color:${f.correct?'#10b981':'#f87171'}">${f.correct ? '✓ Correct' : '✗ Incorrect'}</div>
+      <div class="quiz-explanation">${escapeHtml(q && q.explanation ? q.explanation : '')}</div>
+    </div>`;
+  }).join('')}
+  ${passed ? `<div style="margin-top:12px"><button class="ws-complete-btn" style="background:${phColor}" onclick="show('academy','phase:${mod.phase_id}')">← Back to Phase Overview</button></div>` :
+    `<div style="margin-top:12px"><button class="quiz-submit-btn" style="background:#334155" onclick="show('academy','module:${moduleId}')">Review & Retry Quiz</button></div>`}
+</div>`;
+  }
+};
+
+// ─── Badges View ──────────────────────────────────────────────────────────────
+function academyBadgesView() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const repId = rep ? rep.id : 'ryan';
+  const rp = window.Academy.getRepProgress(repId);
+  const earned = new Set(rp.badges || []);
+  const earnedBadges = window.Academy.BADGE_DEFS.filter(b => earned.has(b.id));
+  const lockedBadges = window.Academy.BADGE_DEFS.filter(b => !earned.has(b.id));
+
+  view.innerHTML = `
+<button class="secondary-btn" style="margin-bottom:16px" onclick="show('academy')">← Academy Home</button>
+<div class="eyebrow">Achievements</div>
+<h1>Badges & Achievements</h1>
+<p class="lede">${earnedBadges.length} of ${window.Academy.BADGE_DEFS.length} badges earned</p>
+
+${earnedBadges.length ? `
+<div class="acad-section-label" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:12px">Earned Badges (${earnedBadges.length})</div>
+<div class="grid grid-3 mt" style="margin-top:0;margin-bottom:24px">
+  ${earnedBadges.map(b => `
+  <article class="card" style="text-align:center;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(16,185,129,.02));border-color:rgba(16,185,129,.2)">
+    <div style="font-size:2.5rem;margin-bottom:8px">${b.icon}</div>
+    <div style="font-weight:700;color:#10b981;margin-bottom:4px">${escapeHtml(b.name)}</div>
+    <div style="font-size:.78rem;color:#94a3b8">${escapeHtml(b.desc)}</div>
+    <div style="font-size:.7rem;color:#64748b;margin-top:6px;text-transform:uppercase;letter-spacing:.05em">${b.type}</div>
+  </article>`).join('')}
+</div>` : `<div class="card" style="text-align:center;padding:30px;margin-bottom:20px">
+  <div style="font-size:2rem;margin-bottom:8px">🎯</div>
+  <p style="color:var(--muted)">No badges earned yet — complete modules to start earning!</p>
+</div>`}
+
+<div class="acad-section-label" style="font-size:.72px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:12px;font-size:.72rem">Locked Badges (${lockedBadges.length})</div>
+<div class="grid grid-3 mt" style="margin-top:0">
+  ${lockedBadges.map(b => `
+  <article class="card" style="text-align:center;opacity:.55">
+    <div style="font-size:2.5rem;margin-bottom:8px;filter:grayscale(1)">${b.icon}</div>
+    <div style="font-weight:700;color:#64748b;margin-bottom:4px">${escapeHtml(b.name)}</div>
+    <div style="font-size:.78rem;color:#475569">${escapeHtml(b.desc)}</div>
+    <div style="font-size:.7rem;color:#334155;margin-top:6px;text-transform:uppercase;letter-spacing:.05em">${b.type}</div>
+  </article>`).join('')}
+</div>`;
+}
+
+// ─── Admin Progress Dashboard ─────────────────────────────────────────────────
+function academyAdminDashboard() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep || rep.role !== 'admin') {
+    view.innerHTML = `<div class="card"><p style="color:var(--muted)">Admin access required.</p></div>`;
+    return;
+  }
+
+  const allReps = window.Academy.getAllRepsProgress();
+  const content = window.Academy.getContent();
+
+  view.innerHTML = `
+<style>
+.admin-rep-row{display:grid;grid-template-columns:160px 1fr 80px 80px 80px 80px 80px;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid #1e293b;font-size:.83rem}
+.admin-rep-row:hover{background:#0f172a}
+.admin-rep-row.header-row{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;border-bottom:2px solid #1e293b;cursor:default}
+.admin-rep-row.header-row:hover{background:transparent}
+.admin-prog-bar{height:6px;background:#1e293b;border-radius:4px;overflow:hidden}
+.admin-prog-fill{height:100%;border-radius:4px;background:#6366f1}
+.admin-level-chip{font-size:.7rem;padding:2px 8px;border-radius:99px;font-weight:600;display:inline-flex;align-items:center;gap:3px}
+</style>
+
+<button class="secondary-btn" style="margin-bottom:16px" onclick="show('academy')">← Academy Home</button>
+<div class="eyebrow">Admin Dashboard</div>
+<h1>Team Academy Progress</h1>
+
+<div class="grid grid-3 mt" style="margin-bottom:20px">
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.6rem;font-weight:700;color:#fff">${allReps.length}</div>
+    <div style="font-size:.75rem;color:#64748b;margin-top:4px">Total Reps</div>
+  </div>
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.6rem;font-weight:700;color:#10b981">${allReps.filter(r => r.pct === 100).length}</div>
+    <div style="font-size:.75rem;color:#64748b;margin-top:4px">Academy Complete</div>
+  </div>
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.6rem;font-weight:700;color:#6366f1">${allReps.length ? Math.round(allReps.reduce((s,r)=>s+r.pct,0)/allReps.length) : 0}%</div>
+    <div style="font-size:.75rem;color:#64748b;margin-top:4px">Avg Completion</div>
+  </div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
+  <div class="admin-rep-row header-row">
+    <span>Rep</span>
+    <span>Progress</span>
+    <span>%</span>
+    <span>Level</span>
+    <span>Points</span>
+    <span>Badges</span>
+    <span>Quiz Avg</span>
+  </div>
+  ${allReps.map(r => `
+  <div class="admin-rep-row">
+    <div>
+      <div style="font-weight:600;color:#fff">${escapeHtml(r.rep.name)}</div>
+      <div style="font-size:.7rem;color:#64748b;text-transform:capitalize">${r.rep.role}</div>
+    </div>
+    <div>
+      <div class="admin-prog-bar"><div class="admin-prog-fill" style="width:${r.pct}%;background:${r.pct===100?'#10b981':'#6366f1'}"></div></div>
+      <div style="font-size:.7rem;color:#64748b;margin-top:3px">${r.completedMods}/${r.totalMods} modules</div>
+    </div>
+    <div style="font-weight:700;color:${r.pct===100?'#10b981':'#94a3b8'}">${r.pct}%</div>
+    <div><span class="admin-level-chip" style="background:${r.level.color}20;color:${r.level.color};border:1px solid ${r.level.color}40">${r.level.icon} ${r.level.name.split(' ')[0]}</span></div>
+    <div style="color:#fff;font-weight:600">${r.points}</div>
+    <div style="color:#f59e0b">${r.badgesEarned} 🏅</div>
+    <div style="color:${r.quizAvg!=null?(r.quizAvg>=75?'#10b981':'#f87171'):'#64748b'}">${r.quizAvg != null ? r.quizAvg + '%' : '—'}</div>
+  </div>`).join('')}
+</div>
+
+<div style="margin-top:20px">
+  <h3>Module Completion Matrix</h3>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.78rem;min-width:600px">
+      <thead>
+        <tr style="border-bottom:1px solid #1e293b">
+          <th style="text-align:left;padding:8px;color:#64748b;font-weight:600">Rep</th>
+          ${content.modules.map(m => `<th style="padding:6px;color:#64748b;font-weight:600;text-align:center;font-size:.65rem;max-width:60px">${m.id}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${allReps.map(r => {
+          const rp = window.Academy.getRepProgress(r.rep.id);
+          return `<tr style="border-bottom:1px solid #0f172a">
+            <td style="padding:8px;color:#fff;font-weight:600">${escapeHtml(r.rep.name)}</td>
+            ${content.modules.map(m => {
+              const ms = (rp.modules[m.id] || {}).status || 'not_started';
+              const qScore = (rp.modules[m.id] || {}).quiz_best_score;
+              const bg = ms === 'completed' ? 'rgba(16,185,129,.15)' : ms === 'in_progress' ? 'rgba(245,158,11,.1)' : '#0a0f1a';
+              const text = ms === 'completed' ? '✓' : ms === 'in_progress' ? '▶' : '·';
+              const color = ms === 'completed' ? '#10b981' : ms === 'in_progress' ? '#f59e0b' : '#334155';
+              return `<td style="text-align:center;padding:6px;background:${bg};color:${color};font-weight:700" title="${m.title} — ${ms}${qScore != null ? ' | Quiz: ' + qScore + '%' : ''}">${text}</td>`;
+            }).join('')}
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:8px;font-size:.72rem;color:#64748b">✓ = Complete · ▶ = In Progress · · = Not Started</div>
+</div>`;
 }
 function manager(){
   const fy = getResolvedFY();
