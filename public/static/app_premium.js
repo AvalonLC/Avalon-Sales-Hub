@@ -3294,30 +3294,107 @@ function academyAdminDashboard() {
     return;
   }
 
-  const allReps = window.Academy.getAllRepsProgress();
-  const content = window.Academy.getContent();
-  const avgPct = allReps.length ? Math.round(allReps.reduce((s,r)=>s+r.pct,0)/allReps.length) : 0;
+  const allReps   = window.Academy.getAllRepsProgress();
+  const content   = window.Academy.getContent();
+  const avgPct    = allReps.length ? Math.round(allReps.reduce((s,r)=>s+r.pct,0)/allReps.length) : 0;
+  const totalQuizAvgs = allReps.filter(r=>r.quizAvg!=null);
+  const teamQuizAvg   = totalQuizAvgs.length ? Math.round(totalQuizAvgs.reduce((s,r)=>s+r.quizAvg,0)/totalQuizAvgs.length) : null;
+  const activeStreaks  = allReps.filter(r=>(r.streak||0)>0).length;
+  const CERT_KEY  = 'avalonAcademyCerts';
 
-  // Per-rep expandable cards with module detail + admin actions
+  function loadCerts() { try { return JSON.parse(localStorage.getItem(CERT_KEY)||'{}'); } catch(e){ return {}; } }
+  function saveCerts(d) { localStorage.setItem(CERT_KEY, JSON.stringify(d)); }
+  function loadNote(repId) { return localStorage.getItem('acad_admin_note_'+repId) || ''; }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+  }
+  function fmtRelative(iso) {
+    if (!iso) return 'Never';
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    return diff+'d ago';
+  }
+  function truncate(str, n) { return str && str.length > n ? str.slice(0,n)+'…' : (str||''); }
+
+  const SVG_FLAME = `<svg width="13" height="13" viewBox="0 0 24 24" fill="#f97316" stroke="none"><path d="M12 2C8 7 6 10 6 14a6 6 0 0 0 12 0c0-4-2-7-6-12zM9.5 17c-.3-1.2.5-2.4 2.5-3-.5 1.5.2 2.5 1 3 .3-1 1-1.8 1-3 1 .8 1.5 2 1 3a4 4 0 0 1-5.5 0z"/></svg>`;
+  const SVG_CERT  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/><path d="M8 21l4-2 4 2v-6H8z"/></svg>`;
+  const SVG_BULK  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/><polyline points="20 12 9 23 4 18"/></svg>`;
+
+  const certs = loadCerts();
+
+  // Build phase rows with Certify + Bulk Complete controls
+  const phaseRows = content.phases.map(ph => {
+    const phMods = content.modules.filter(m => ph.module_ids.includes(m.id));
+    const certRow = allReps.map(r => {
+      const isCert = !!(certs[r.rep.id] && certs[r.rep.id][ph.id]);
+      const certData = isCert ? certs[r.rep.id][ph.id] : null;
+      const allDone = phMods.every(m => (r.moduleDetail[m.id]||{}).status === 'completed');
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
+        <div style="width:110px;font-size:.8rem;font-weight:600;color:var(--ink)">${escapeHtml(r.rep.name)}</div>
+        <div style="flex:1">
+          ${isCert
+            ? `<span style="font-size:.75rem;color:#f59e0b;font-weight:600">${SVG_CERT} Certified ${fmtDate(certData.at)} by ${escapeHtml(certData.by)}</span>`
+            : (allDone
+                ? `<button class="admin-action-btn" style="background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.35)" onclick="academyAdminCertifyPhase('${r.rep.id}','${ph.id}','${escapeHtml(r.rep.name)}','${escapeHtml(ph.certification_name||ph.title)}')">${SVG_CERT} Certify ${escapeHtml(ph.certification_name||ph.title)}</button>`
+                : `<span style="font-size:.75rem;color:var(--muted)">Modules not yet complete</span>`
+              )
+          }
+        </div>
+        <button class="admin-action-btn" style="font-size:.72rem" onclick="academyAdminBulkPhase('${r.rep.id}','${ph.id}','${escapeHtml(r.rep.name)}','${escapeHtml(ph.title)}')">${SVG_BULK} Bulk Complete ${escapeHtml(ph.title)}</button>
+      </div>`;
+    }).join('');
+
+    return `<details style="margin-bottom:10px;border:1px solid ${ph.borderColor||'var(--line)'};border-radius:10px;overflow:hidden">
+      <summary style="cursor:pointer;padding:12px 16px;background:${ph.color}0d;display:flex;align-items:center;gap:10px;list-style:none;user-select:none">
+        <span style="width:10px;height:10px;border-radius:50%;background:${ph.color};display:inline-block;flex-shrink:0"></span>
+        <span style="font-weight:700;color:var(--ink);flex:1">${escapeHtml(ph.title)} Phase</span>
+        <span style="font-size:.72rem;color:var(--muted)">${ph.module_ids.join(', ')} · click to expand</span>
+      </summary>
+      <div style="padding:12px 16px;background:#fff">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Certifications &amp; Bulk Actions</div>
+        ${certRow}
+      </div>
+    </details>`;
+  }).join('');
+
+  // Per-rep expandable cards
   const repCards = allReps.map(r => {
     const rp = window.Academy.getRepProgress(r.rep.id);
+    const note = loadNote(r.rep.id);
+    const streak = r.streak || 0;
+    const streakChip = streak > 0
+      ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:.72rem;font-weight:600;color:#f97316;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:99px;padding:2px 8px">${SVG_FLAME}${streak}-day streak</span>`
+      : '';
+
+    // Module cells — clickable for quiz drill-down
     const modCells = content.modules.map(m => {
-      const ms = (rp.modules[m.id]||{}).status || 'not_started';
-      const qScore = (rp.modules[m.id]||{}).quiz_best_score;
-      const isComp = ms === 'completed';
+      const md   = r.moduleDetail[m.id] || {};
+      const ms   = md.status || 'not_started';
+      const qScore = md.quiz_best;
+      const isComp   = ms === 'completed';
       const isInProg = ms === 'in_progress';
-      return `<div class="admin-mod-cell${isComp ? ' completed' : isInProg ? ' in-progress' : ''}" title="${escapeHtml(m.title)} — ${ms}${qScore!=null?' | Quiz: '+qScore+'%':''}">
+      const hasAttempts = (md.quiz_attempts||0) > 0;
+      return `<div class="admin-mod-cell${isComp ? ' completed' : isInProg ? ' in-progress' : ''}"
+        style="cursor:${hasAttempts?'pointer':'default'}"
+        onclick="${hasAttempts ? `academyAdminShowQuizDrill('${r.rep.id}','${m.id}')` : ''}"
+        title="${escapeHtml(m.title)} — ${ms}${qScore!=null?' | Quiz: '+qScore+'%':''}${hasAttempts?' | Click for quiz detail':''}">
         <div style="font-size:.68rem;font-weight:700;color:inherit">${m.id}</div>
         <div style="margin-top:3px">${isComp ? SVG_CHECK : isInProg ? SVG_PLAY : '–'}</div>
         ${qScore != null ? `<div style="font-size:.6rem;margin-top:2px;color:${isComp&&qScore>=75?'#10b981':'var(--muted)'}">${qScore}%</div>` : ''}
       </div>`;
     }).join('');
 
-    // Per-module mark-complete buttons (only for non-completed modules)
+    // Mark complete buttons — full module title
     const markBtns = content.modules
-      .filter(m => (rp.modules[m.id]||{}).status !== 'completed')
-      .map(m => `<button class="admin-action-btn" onclick="academyAdminMarkModule('${r.rep.id}','${m.id}')" title="Mark ${m.id} complete for ${r.rep.name}">Mark ${m.id} Complete</button>`)
-      .join(' ');
+      .filter(m => (r.moduleDetail[m.id]||{}).status !== 'completed')
+      .map(m => {
+        const label = m.id + ': ' + truncate(m.title, 22);
+        return `<button class="admin-action-btn" onclick="academyAdminMarkModule('${r.rep.id}','${m.id}','${escapeHtml(m.title)}')" title="Mark complete: ${escapeHtml(m.title)}">${SVG_CHECK} ${escapeHtml(label)}</button>`;
+      }).join(' ');
 
     return `<div class="admin-rep-card">
       <div class="admin-rep-header" onclick="toggleAdminRepDetail('${r.rep.id}')">
@@ -3333,7 +3410,12 @@ function academyAdminDashboard() {
             <div style="font-size:.7rem;color:var(--muted);margin-top:3px">${r.completedMods}/${r.totalMods} modules</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          ${streakChip}
+          <div style="text-align:center">
+            <div style="font-size:.72rem;color:var(--muted)">${fmtRelative(r.last_activity)}</div>
+            <div style="font-size:.6rem;color:var(--muted)">last active</div>
+          </div>
           <div style="text-align:center">
             <div style="font-size:1.1rem;font-weight:700;color:${r.pct===100?'#10b981':'var(--ink)'}">${r.pct}%</div>
             <div style="font-size:.65rem;color:var(--muted)">done</div>
@@ -3349,18 +3431,41 @@ function academyAdminDashboard() {
             <div style="font-size:1rem;font-weight:700;color:${r.quizAvg!=null?(r.quizAvg>=75?'#10b981':'#ef4444'):'var(--muted)'}">${r.quizAvg != null ? r.quizAvg+'%' : '—'}</div>
             <div style="font-size:.65rem;color:var(--muted)">quiz avg</div>
           </div>
-          <div>${svgBadgeShape('hex',r.level.color,22)}</div>
           <div style="color:var(--muted);font-size:.8rem">${SVG_ARROW}</div>
         </div>
       </div>
+
       <div id="rep-detail-${r.rep.id}" style="display:none">
+        <!-- Module matrix -->
         <div class="admin-mod-matrix">
-          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:12px 0 8px">Module Status</div>
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:12px 0 4px">Module Status — click a cell with quiz data for drill-down</div>
           <div style="display:flex;flex-wrap:wrap">${modCells}</div>
         </div>
+
+        <!-- Quiz drill-down panel (hidden until cell clicked) -->
+        <div id="quiz-drill-${r.rep.id}" style="display:none;padding:12px 16px;background:#f8fafc;border-top:1px solid var(--line)"></div>
+
+        <!-- Mark complete buttons -->
+        <div style="padding:10px 16px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:4px">Mark Complete:</span>
+          ${markBtns || `<span style="font-size:.8rem;color:#10b981">${SVG_CHECK} All modules complete</span>`}
+        </div>
+
+        <!-- Coaching notes -->
+        <div style="padding:10px 16px;border-top:1px solid var(--line)">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px">${SVG_NOTE} Coaching Notes (private, admin only)</div>
+          <textarea
+            id="note-${r.rep.id}"
+            rows="3"
+            placeholder="Add private coaching notes for ${escapeHtml(r.rep.name)}…"
+            style="width:100%;box-sizing:border-box;font-size:.83rem;border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink);resize:vertical;font-family:inherit"
+            oninput="localStorage.setItem('acad_admin_note_${r.rep.id}',this.value)"
+          >${escapeHtml(note)}</textarea>
+        </div>
+
+        <!-- Danger zone -->
         <div style="padding:10px 16px 14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-          <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:4px">Admin Actions:</span>
-          ${markBtns || `<span style="font-size:.8rem;color:#10b981">All modules complete</span>`}
+          <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#ef4444;margin-right:4px">Danger:</span>
           <button class="admin-action-btn danger" onclick="academyAdminResetRep('${r.rep.id}','${escapeHtml(r.rep.name)}')">Reset All Progress</button>
         </div>
       </div>
@@ -3372,51 +3477,158 @@ function academyAdminDashboard() {
 <div class="eyebrow">Admin Dashboard</div>
 <h1 style="color:var(--ink)">Team Academy Progress</h1>
 
-<div class="grid grid-3 mt" style="margin-bottom:22px">
+<div class="grid grid-3 mt" style="margin-bottom:22px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
   <div class="card" style="text-align:center">
     <div style="font-size:1.7rem;font-weight:700;color:var(--ink)">${allReps.length}</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Team Members</div>
   </div>
   <div class="card" style="text-align:center">
-    <div style="font-size:1.7rem;font-weight:700;color:#10b981">${allReps.filter(r => r.pct === 100).length}</div>
+    <div style="font-size:1.7rem;font-weight:700;color:#10b981">${allReps.filter(r=>r.pct===100).length}</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Academy Complete</div>
   </div>
   <div class="card" style="text-align:center">
     <div style="font-size:1.7rem;font-weight:700;color:var(--blue)">${avgPct}%</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Avg Completion</div>
   </div>
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.7rem;font-weight:700;color:#f59e0b">${teamQuizAvg != null ? teamQuizAvg+'%' : '—'}</div>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Team Quiz Avg</div>
+  </div>
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.7rem;font-weight:700;color:#f97316">${activeStreaks}</div>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Active Streaks</div>
+  </div>
 </div>
 
-<div class="acad-section-label">Rep Progress — click a row to expand details and actions</div>
+<div class="acad-section-label" style="margin-top:4px">Rep Progress — click a row to expand</div>
 ${repCards}
 
-<div class="card" style="margin-top:18px;border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.03)">
-  <div style="font-size:.78rem;font-weight:700;color:#ef4444;margin-bottom:6px">Admin Controls</div>
-  <p style="font-size:.83rem;color:var(--muted);margin:0">Click any rep row to expand their full module breakdown. Use <strong>Mark Complete</strong> to credit a module for a rep (e.g. after an in-person session). Use <strong>Reset All Progress</strong> to clear a rep's data — this cannot be undone.</p>
+<div class="acad-section-label" style="margin-top:24px">Phase Certifications &amp; Bulk Actions</div>
+${phaseRows}
+
+<div class="card" style="margin-top:18px;border-color:rgba(99,102,241,.2);background:rgba(99,102,241,.03)">
+  <div style="font-size:.78rem;font-weight:700;color:#6366f1;margin-bottom:8px">Admin Controls Guide</div>
+  <div style="font-size:.82rem;color:var(--muted);display:grid;gap:6px">
+    <div><strong style="color:var(--ink)">Module cells</strong> — click any cell that shows a quiz score to see the full question-by-question drill-down for that rep.</div>
+    <div><strong style="color:var(--ink)">Mark Complete</strong> — credit a specific module for a rep (e.g. after an in-person session). Shows full module title so you know exactly what you're marking.</div>
+    <div><strong style="color:var(--ink)">Coaching Notes</strong> — private textarea per rep, saved in your browser. Notes are never visible to the rep.</div>
+    <div><strong style="color:var(--ink)">Certify Phase</strong> — stamp your approval once all modules in a phase are done. Saved permanently with your name and date.</div>
+    <div><strong style="color:var(--ink)">Bulk Complete Phase</strong> — instantly mark every module in a phase done for a rep (useful after in-person bootcamps).</div>
+    <div><strong style="color:var(--ink)">Reset All Progress</strong> — wipes all academy data for that rep, including certifications. Cannot be undone.</div>
+  </div>
 </div>`;
 
-  // Toggle detail expand/collapse
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
   window.toggleAdminRepDetail = function(repId) {
-    const el = document.getElementById(`rep-detail-${repId}`);
+    const el = document.getElementById('rep-detail-'+repId);
     if (!el) return;
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
   };
 
-  // Mark module complete for rep
-  window.academyAdminMarkModule = function(repId, moduleId) {
-    if (!window.Academy.adminMarkModuleComplete) return showToast('Admin function unavailable');
-    window.Academy.adminMarkModuleComplete(repId, moduleId);
-    showToast(`Module ${moduleId} marked complete for rep.`);
-    academyAdminDashboard(); // Re-render
+  window.academyAdminShowQuizDrill = function(repId, moduleId) {
+    const panel = document.getElementById('quiz-drill-'+repId);
+    if (!panel) return;
+    // Toggle off if already showing same module
+    if (panel._moduleId === moduleId && panel.style.display !== 'none') {
+      panel.style.display = 'none';
+      panel._moduleId = null;
+      return;
+    }
+    panel._moduleId = moduleId;
+    panel.style.display = 'block';
+
+    const content = window.Academy.getContent();
+    const mod = content.modules.find(m=>m.id===moduleId);
+    if (!mod || !mod.quiz) { panel.innerHTML = '<p style="color:var(--muted);font-size:.83rem">No quiz data.</p>'; return; }
+
+    const attempts = window.Academy.getQuizAttempts(repId, 'quiz_'+moduleId);
+    if (!attempts.length) { panel.innerHTML = '<p style="color:var(--muted);font-size:.83rem">No quiz attempts yet.</p>'; return; }
+
+    panel._attemptIdx = attempts.length - 1; // show latest attempt first
+    function renderAttempt(idx) {
+      const att = attempts[idx];
+      const fb  = att.feedback || [];
+      const questionsHtml = fb.map(f => {
+        const q = mod.quiz.questions.find(x=>x.id===f.questionId) || {};
+        const repAnswerVal = (att.answers||{})[f.questionId];
+        const repAnswerText = (q.choices||[]).find(c=>c.value===repAnswerVal)?.text || repAnswerVal || '—';
+        const correctText   = (q.choices||[]).find(c=>c.correct)?.text || f.correct_answer || '—';
+        return `<div style="margin-bottom:12px;padding:10px;border-radius:8px;background:${f.correct?'rgba(16,185,129,.06)':'rgba(239,68,68,.06)'};border:1px solid ${f.correct?'rgba(16,185,129,.2)':'rgba(239,68,68,.2)'}">
+          <div style="font-size:.83rem;font-weight:600;color:var(--ink);margin-bottom:6px">${escapeHtml(q.prompt||f.questionId)}</div>
+          <div style="font-size:.78rem;color:${f.correct?'#10b981':'#ef4444'};margin-bottom:4px">
+            ${f.correct ? SVG_CHECK+' Correct' : '✗ Incorrect'}
+            &nbsp;·&nbsp; Rep answered: <em>${escapeHtml(repAnswerText)}</em>
+            ${!f.correct ? `&nbsp;·&nbsp; Correct: <em>${escapeHtml(correctText)}</em>` : ''}
+          </div>
+          ${f.explanation ? `<div style="font-size:.75rem;color:var(--muted);margin-top:4px">${escapeHtml(f.explanation)}</div>` : ''}
+        </div>`;
+      }).join('');
+
+      panel.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <div style="font-weight:700;font-size:.85rem;color:var(--ink)">Quiz Drill-Down: ${moduleId} — ${escapeHtml(mod.title)}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:.78rem;color:var(--muted)">Attempt ${idx+1} of ${attempts.length} · ${fmtDate(att.submitted_at)} · Score: <strong style="color:${att.passed?'#10b981':'#ef4444'}">${att.percent_score}%</strong> ${att.passed?'PASSED':'FAILED'}</span>
+            ${idx > 0 ? `<button class="admin-action-btn" onclick="academyAdminShowAttempt('${repId}','${moduleId}',${idx-1})">← Older</button>` : ''}
+            ${idx < attempts.length-1 ? `<button class="admin-action-btn" onclick="academyAdminShowAttempt('${repId}','${moduleId}',${idx+1})">Newer →</button>` : ''}
+            <button class="admin-action-btn" onclick="document.getElementById('quiz-drill-${repId}').style.display='none'">Close ✕</button>
+          </div>
+        </div>
+        ${questionsHtml || '<p style="color:var(--muted);font-size:.83rem">No question detail available.</p>'}
+      `;
+      panel._attemptIdx = idx;
+    }
+
+    window.academyAdminShowAttempt = function(rId, mId, aidx) {
+      if (rId !== repId || mId !== moduleId) return;
+      renderAttempt(aidx);
+    };
+
+    renderAttempt(panel._attemptIdx);
   };
 
-  // Reset rep progress
+  window.academyAdminMarkModule = function(repId, moduleId, moduleTitle) {
+    const titleDisplay = moduleTitle || moduleId;
+    if (!confirm('Mark "' + titleDisplay + '" complete for this rep?\n\nThis cannot be undone.')) return;
+    if (!window.Academy.adminMarkModuleComplete) return showToast('Admin function unavailable');
+    window.Academy.adminMarkModuleComplete(repId, moduleId);
+    showToast(moduleId + ' marked complete.');
+    academyAdminDashboard();
+  };
+
+  window.academyAdminBulkPhase = function(repId, phaseId, repName, phaseTitle) {
+    if (!confirm('Mark ALL modules in the ' + phaseTitle + ' phase complete for ' + repName + '?\n\nThis is for in-person bootcamp use. Cannot be undone.')) return;
+    const content = window.Academy.getContent();
+    const ph = content.phases.find(p=>p.id===phaseId);
+    if (!ph) return showToast('Phase not found');
+    ph.module_ids.forEach(mId => {
+      window.Academy.adminMarkModuleComplete(repId, mId);
+    });
+    showToast('All ' + phaseTitle + ' modules marked complete for ' + repName + '.');
+    academyAdminDashboard();
+  };
+
+  window.academyAdminCertifyPhase = function(repId, phaseId, repName, certName) {
+    if (!confirm('Certify "' + certName + '" for ' + repName + '?\n\nThis stamps your approval with today\'s date.')) return;
+    const certs = loadCerts();
+    if (!certs[repId]) certs[repId] = {};
+    certs[repId][phaseId] = { at: new Date().toISOString(), by: rep.name };
+    saveCerts(certs);
+    showToast(certName + ' certified for ' + repName + '.');
+    academyAdminDashboard();
+  };
+
   window.academyAdminResetRep = function(repId, repName) {
-    if (!confirm(`Reset ALL academy progress for ${repName}? This cannot be undone.`)) return;
+    if (!confirm('Reset ALL academy progress for ' + repName + '?\n\nThis also clears all phase certifications for this rep. Cannot be undone.')) return;
     if (!window.Academy.adminResetRepProgress) return showToast('Admin function unavailable');
     window.Academy.adminResetRepProgress(repId);
-    showToast(`Progress reset for ${repName}.`);
-    academyAdminDashboard(); // Re-render
+    // Also clear certs for this rep
+    const certs = loadCerts();
+    delete certs[repId];
+    saveCerts(certs);
+    showToast('Progress reset for ' + repName + '.');
+    academyAdminDashboard();
   };
 }
 function manager(){
