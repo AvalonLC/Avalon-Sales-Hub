@@ -2516,16 +2516,24 @@ function academy(param) {
     view.innerHTML = `<div class="card mt"><p style="color:var(--muted)">Academy engine loading…</p></div>`;
     return;
   }
-
-  if (param && param.startsWith('phase:')) return academyPhaseDetail(param.replace('phase:', ''));
-  if (param && param.startsWith('module:')) return academyModuleWorkspace(param.replace('module:', ''));
-  if (param === 'badges') return academyBadgesView();
-  if (param === 'admin') {
-    const rep = window.getCurrentRep ? window.getCurrentRep() : null;
-    if (!rep || rep.role !== 'admin') { academy(); return; }
-    return academyAdminDashboard();
+  try {
+    if (param && param.startsWith('phase:')) return academyPhaseDetail(param.replace('phase:', ''));
+    if (param && param.startsWith('module:')) return academyModuleWorkspace(param.replace('module:', ''));
+    if (param === 'badges') return academyBadgesView();
+    if (param === 'admin') {
+      const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+      if (!rep || rep.role !== 'admin') { academy(); return; }
+      return academyAdminDashboard();
+    }
+    return academyHome();
+  } catch(e) {
+    console.error('[Academy] render error:', e);
+    view.innerHTML = `<div class="card mt" style="border-color:#ef4444">
+      <h3 style="color:#ef4444;margin-top:0">Academy Error</h3>
+      <p style="color:var(--muted);font-family:monospace;font-size:.8rem">${escapeHtml(e.message)}</p>
+      <button class="secondary-btn" onclick="localStorage.removeItem('avalonAcademyContentV1');location.reload()">Clear Cache &amp; Reload</button>
+    </div>`;
   }
-  return academyHome();
 }
 
 // ─── Shared Academy Styles ────────────────────────────────────────────────────
