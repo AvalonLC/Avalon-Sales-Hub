@@ -259,21 +259,29 @@ function today(){
     ${statCards()}
     <div class="grid grid-2 mt">
       <section class="card app-card">
-        <div class="section-head"><h2>Due Now</h2>${badge(`${due.length} follow-up${due.length===1?'':'s'}`, due.length?'warn-badge':'')}</div>
-        ${due.length ? due.map(oppCard).join('') : `<div class="due-now-clear">
-          
-          <p style="color:#4ade80;font-weight:600;margin:0 0 10px;font-size:14px">No follow-ups due today.</p>
+        <div class="section-head">
+          <h2>Due Now</h2>
+          ${due.length
+            ? badge(`${due.length} follow-up${due.length===1?'':'s'}`, 'warn-badge')
+            : `<span class="badge neutral-badge">All clear</span>`}
         </div>
+        ${due.length ? due.map(oppCard).join('') : `<div class="due-now-clear">No follow-ups due today.</div>
         ${buildSuggestedActions(_todayRep)}`}
       </section>
       <section class="card app-card">
-        <h2>Daily Sales Start-Up</h2>
+        <div class="section-head"><h2>Daily Sales Start-Up</h2></div>
         ${renderChecklist(data.checklists.find(c=>c.id==='daily'), true)}
       </section>
     </div>
     <div class="grid grid-2 mt">
-      <section class="card"><h2>Coming Up</h2>${next.length ? next.map(oppMini).join('') : empty('No upcoming follow-ups.', '', `<button class="secondary-btn small" onclick="show('pipeline')">View Pipeline</button>`)}</section>
-      <section class="card"><h2>Recently Updated</h2>${recent.length ? recent.map(oppMini).join('') : empty('No leads yet.', '', `<button class="primary-btn small" onclick="show('lead')">+ Add First Lead</button>`)}</section>
+      <section class="card">
+        <div class="section-head"><h2>Coming Up</h2></div>
+        ${next.length ? next.map(oppMini).join('') : empty('No upcoming follow-ups.', '', `<button class="secondary-btn small" onclick="show('pipeline')">View Pipeline</button>`)}
+      </section>
+      <section class="card">
+        <div class="section-head"><h2>Recently Updated</h2></div>
+        ${recent.length ? recent.map(oppMini).join('') : empty('No leads yet.', '', `<button class="primary-btn small" onclick="show('lead')">+ Add First Lead</button>`)}
+      </section>
     </div>
     ${renderTodayActivityWidget()}
   `;
