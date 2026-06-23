@@ -542,7 +542,7 @@ async function integrations() {
     ${!clientIdConfigured ? `
     <div style="padding:12px 14px;background:#1c1a0a;border:1px solid #f59e0b40;border-radius:8px;margin-bottom:16px;font-size:13px;color:#f59e0b">
       ⚠ Google Client ID not configured. Ask Tyler (Admin) to set it up in
-      <strong>Admin → User Management → Workspace Connections</strong>.
+      <strong>Admin → User Management → Users &amp; Workspace tab</strong>.
     </div>` : ''}
     <button class="primary-btn" style="width:100%;justify-content:center;font-size:14px;padding:12px 20px;${!clientIdConfigured?'opacity:.5;cursor:not-allowed':''}"
       ${!clientIdConfigured?'disabled':''} onclick="intSaveClientIdAndConnect()">
@@ -1703,6 +1703,21 @@ async function intSubmitEstimate() {
     const modal = document.getElementById('int-estimate-modal');
     if (modal) modal.style.display = 'none';
   } catch(e) { showIntToast(e.message, 'error'); }
+}
+
+// Connect handler for the "Sign in with Google" button on the connect screen.
+// Delegates to _umMyConnect (the module-level OAuth launcher set by user_management.js)
+// with a fallback to the local googleOAuthConnect helper.
+async function intSaveClientIdAndConnect() {
+  if (typeof window._umMyConnect === 'function') {
+    await window._umMyConnect();
+    // Give the OAuth popup time to resolve then re-render the hub
+    setTimeout(() => integrations(), 1200);
+  } else {
+    // Fallback: call the local OAuth connect and re-render on success
+    const ok = await googleOAuthConnect();
+    if (ok) integrations();
+  }
 }
 
 // Expose integrations as a view route

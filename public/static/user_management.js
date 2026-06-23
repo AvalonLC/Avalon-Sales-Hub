@@ -4,7 +4,7 @@
  * Provides:
  *  - Admin → Users: create/edit/deactivate users, assign roles, reset PINs
  *  - Admin → Roles & Permissions: role templates + per-view access matrix
- *  - Admin → Workspace Connections: per-user Google OAuth status grid
+ *  - Admin → Users & Workspace: per-user Google OAuth status + Client ID config
  *  - Login audit log (last login, failed attempts)
  *
  * Storage keys:
@@ -301,7 +301,7 @@ function umRenderUsers(container) {
   const googleMap= umLoadUserGoogle();
   const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
 
-  // ── Shared Client ID (formerly "Workspace Connections" tab) ──────────────
+  // ── Shared Client ID config (Google OAuth app credentials) ──────────────
   let globalIntState = {};
   try { globalIntState = JSON.parse(localStorage.getItem('avalonIntegrationsV1') || '{}'); } catch(e) {}
   const sharedClientId = globalIntState.googleClientId || '';
@@ -776,7 +776,7 @@ function umRenderWorkspace(container) {
 
   container.innerHTML = `
 <div style="margin-bottom:20px">
-  <h3 style="margin:0 0 4px;font-size:16px">Per-User Google Workspace Connections</h3>
+  <h3 style="margin:0 0 4px;font-size:16px">Team Google Workspace Connections</h3>
   <p style="color:#64748b;font-size:13px;margin:0">Each team member connects their own Google account. Connections are isolated — no shared tokens.</p>
 </div>
 
@@ -977,7 +977,7 @@ function umRenderMyGoogleConnection(container) {
     : `<p style="color:#64748b;font-size:13px;margin:0 0 14px">Connect your personal Google account to use Gmail, Calendar, and Drive directly from the Sales Hub.</p>
        ${!clientId
          ? `<div style="font-size:13px;color:#f59e0b;background:#f59e0b15;border:1px solid #f59e0b40;border-radius:8px;padding:12px">
-              ⚠ Google Client ID not configured. Ask Tyler (Admin) to set it up in <strong>Admin → User Management → Workspace Connections</strong>.
+              ⚠ Google Client ID not configured. Ask Tyler (Admin) to set it up in <strong>Admin → User Management → Users &amp; Workspace tab</strong>.
             </div>`
          : `<button class="primary-btn" onclick="window._umMyConnect()">Connect My Google Account</button>`
        }`
@@ -996,7 +996,7 @@ async function umMyConnect() {
     try { return JSON.parse(localStorage.getItem('avalonIntegrationsV1') || '{}').googleClientId || ''; } catch(e) { return ''; }
   })();
   if (!clientId) {
-    umToast('Google Client ID not configured. Ask Tyler (Admin) to set it up in User Management → Workspace Connections.', 'warn');
+    umToast('Google Client ID not configured. Ask Tyler (Admin) to set it up in User Management → Users & Workspace tab.', 'warn');
     return;
   }
 
