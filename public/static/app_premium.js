@@ -283,20 +283,8 @@ function today(){
 function renderTodayActivityWidget(){
   const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
   const targets = window.AVALON_DATA.activityTargets;
-  // Office manager (Jen) has no personal activity targets — suppress widget entirely
-  if(currentRep && currentRep.role === 'office_manager') return '';
-  if(!currentRep || !targets[currentRep.id]) {
-    // Show generic KPI strip for admin
-    return `<div class="card mt">
-      <h3>Weekly KPI Targets (Ryan)</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px">
-        ${Object.entries(targets.ryan||{}).map(([k,v])=>`<div style="background:var(--bg2);border-radius:8px;padding:12px">
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">${escapeHtml(v.label)}</div>
-          <div style="font-size:1.1rem;font-weight:700;color:var(--accent)">${v.target !== undefined ? (v.floor ? '0 stale' : v.target+'/wk') : (v.min === v.max ? v.min : (v.min||'—')+'–'+(v.max||'—'))}</div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }
+  // Admin (Tyler) and office manager (Jen) — no personal KPI widget on Today; Ryan sees his own below
+  if(!currentRep || currentRep.role === 'admin' || currentRep.role === 'office_manager') return '';
   const repTargets = targets[currentRep.id];
   if(!repTargets) return '';
   return `<div class="card mt" style="border-left:3px solid ${currentRep.color||'#00d4ff'}">
