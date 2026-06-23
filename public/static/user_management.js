@@ -894,95 +894,127 @@ function umRenderMyGoogleConnection(container) {
   }
 </section>`;
 
-  window._umMyConnect = async function() {
-    const clientId = (() => {
-      try { return JSON.parse(localStorage.getItem('avalonIntegrationsV1')||'{}').googleClientId||''; } catch(e) { return ''; }
-    })();
-    if (!clientId) { umToast('Google Client ID not configured. Ask admin to set it up.', 'warn'); return; }
-
-    const scopes = [
-      'https://www.googleapis.com/auth/gmail.compose',
-      'https://www.googleapis.com/auth/gmail.readonly',
-      'https://www.googleapis.com/auth/calendar.events',
-      'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/drive.readonly',
-      'email', 'profile'
-    ].join(' ');
-
-    const state  = Math.random().toString(36).slice(2);
-    // NOTE: nonce is NOT used with response_type=token (implicit flow).
-    // Only id_token flows require nonce. Including it causes Error 400.
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: `${location.origin}/auth/google/callback`,
-      response_type: 'token',
-      scope: scopes,
-      state,
-      prompt: 'select_account'
-    });
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-    const popup = window.open(authUrl, 'google_oauth', 'width=520,height=600,scrollbars=yes,resizable=yes');
-    if (!popup) { umToast('Popup blocked — allow popups for this site', 'warn'); return; }
-
-    umToast('Google sign-in window opened…');
-
-    // Poll the popup for the token in its hash
-    const timer = setInterval(async () => {
-      try {
-        if (popup.closed) { clearInterval(timer); return; }
-        let hash = '';
-        try { hash = popup.location.hash; } catch(e) { return; }
-        if (!hash) return;
-        const hp = new URLSearchParams(hash.replace(/^#/, ''));
-        const accessToken = hp.get('access_token');
-        const expiresIn   = parseInt(hp.get('expires_in') || '3600');
-        if (!accessToken) return;
-        clearInterval(timer);
-        popup.close();
-
-        // Fetch user info
-        let googleEmail = '';
-        try {
-          const res  = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
-          const info = await res.json();
-          googleEmail = info.email || '';
-        } catch(e) {}
-
-        const map = umLoadUserGoogle();
-        const rep = window.getCurrentRep();
-        if (!rep) return;
-        map[rep.id] = {
-          token: accessToken,
-          expiry: Date.now() + expiresIn * 1000,
-          email: googleEmail,
-          gmail: true,
-          calendar: true,
-          drive: true,
-          connectedAt: new Date().toISOString()
-        };
-        umSaveUserGoogle(map);
-        umAddAuditEntry({ type: 'google_connected', userId: rep.id, userName: rep.name, by: rep.name });
-        umToast(`✅ Google connected as ${googleEmail}`);
-
-        // Refresh if we're on the settings or userManagement view
-        if (typeof userManagement === 'function') userManagement('workspace');
-        else if (typeof window.show === 'function') window.show('settings');
-      } catch(e) {}
-    }, 800);
-  };
-
-  window._umMyDisconnect = function() {
-    const rep = window.getCurrentRep();
-    if (!rep) return;
-    if (!confirm('Disconnect your Google account? You will need to reconnect to use Gmail, Calendar, and Drive.')) return;
-    const map = umLoadUserGoogle();
-    delete map[rep.id];
-    umSaveUserGoogle(map);
-    umAddAuditEntry({ type: 'google_disconnected_by_admin', userId: rep.id, userName: rep.name, by: rep.name });
-    umToast('Google account disconnected');
-    umRenderMyGoogleConnection(container);
-  };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Per-user Google connect / disconnect — module-level so always available
+// regardless of which view rendered first. Called from Integrations view,
+// Settings widget, and User Management workspace tab.
+// ═══════════════════════════════════════════════════════════════════════════════
+async function umMyConnect() {
+  const clientId = (() => {
+    try { return JSON.parse(localStorage.getItem('avalonIntegrationsV1') || '{}').googleClientId || ''; } catch(e) { return ''; }
+  })();
+  if (!clientId) {
+    umToast('Google Client ID not configured. Ask Tyler (Admin) to set it up in User Management → Workspace Connections.', 'warn');
+    return;
+  }
+
+  const scopes = [
+    'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/calendar.events',
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/drive.readonly',
+    'email', 'profile'
+  ].join(' ');
+
+  const state  = Math.random().toString(36).slice(2);
+  // NOTE: nonce must NOT be sent with response_type=token (implicit flow).
+  // It is only valid for id_token flows. Including it causes Error 400.
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: `${location.origin}/auth/google/callback`,
+    response_type: 'token',
+    scope: scopes,
+    state,
+    prompt: 'select_account'
+  });
+
+  const popup = window.open(
+    `https://accounts.google.com/o/oauth2/v2/auth?${params}`,
+    'google_oauth',
+    'width=520,height=600,scrollbars=yes,resizable=yes'
+  );
+  if (!popup) { umToast('Popup blocked — allow popups for this site', 'warn'); return; }
+
+  umToast('Google sign-in window opened…');
+
+  const timer = setInterval(async () => {
+    try {
+      if (popup.closed) { clearInterval(timer); return; }
+      let hash = '';
+      try { hash = popup.location.hash; } catch(e) { return; } // cross-origin until redirect
+      if (!hash) return;
+      const hp = new URLSearchParams(hash.replace(/^#/, ''));
+      const accessToken = hp.get('access_token');
+      const expiresIn   = parseInt(hp.get('expires_in') || '3600');
+      if (!accessToken) return;
+      clearInterval(timer);
+      popup.close();
+
+      // Fetch the Google account email for this token
+      let googleEmail = '';
+      try {
+        const res  = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const info = await res.json();
+        googleEmail = info.email || '';
+      } catch(e) {}
+
+      // Store under this user's ID only
+      const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+      if (!rep) return;
+      const map = umLoadUserGoogle();
+      map[rep.id] = {
+        token: accessToken,
+        expiry: Date.now() + expiresIn * 1000,
+        email: googleEmail,
+        gmail: true,
+        calendar: true,
+        drive: true,
+        connectedAt: new Date().toISOString()
+      };
+      umSaveUserGoogle(map);
+      umAddAuditEntry({ type: 'google_connected', userId: rep.id, userName: rep.name, by: rep.name });
+      umToast(`✅ Google connected as ${googleEmail}`);
+
+      // Refresh whatever view is currently visible
+      if (typeof window.integrations === 'function') window.integrations();
+      else if (typeof window.show === 'function') window.show('settings');
+    } catch(e) {}
+  }, 800);
+}
+
+function umMyDisconnect() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) return;
+  if (!confirm('Disconnect your Google account? You will need to reconnect to use Gmail, Calendar, and Drive.')) return;
+  const map = umLoadUserGoogle();
+  delete map[rep.id];
+  umSaveUserGoogle(map);
+  // Also clear the legacy shared slot so it doesn't bleed through the fallback
+  try {
+    const intState = JSON.parse(localStorage.getItem('avalonIntegrationsV1') || '{}');
+    delete intState.googleToken;
+    delete intState.googleExpiry;
+    delete intState.googleEmail;
+    localStorage.setItem('avalonIntegrationsV1', JSON.stringify(intState));
+  } catch(e) {}
+  umAddAuditEntry({ type: 'google_disconnected', userId: rep.id, userName: rep.name, by: rep.name });
+  umToast('Google account disconnected');
+  // Refresh the visible view
+  if (typeof window.integrations === 'function') window.integrations();
+  else if (typeof window.show === 'function') window.show('settings');
+}
+
+// Expose on window immediately — available as soon as user_management.js loads,
+// regardless of which view has rendered. This is the single source of truth
+// for per-user Google connect/disconnect across Integrations, Settings, and
+// User Management workspace tab.
+window._umMyConnect    = umMyConnect;
+window._umMyDisconnect = umMyDisconnect;
 
 // ── Helper: get current user's Google token (used by integrations.js patches) ──
 window.umGetUserGoogleToken = function() {
