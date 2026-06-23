@@ -1004,8 +1004,9 @@ function adminMarkModuleComplete(repId, moduleId){
 
 // ─── Expose ───────────────────────────────────────────────────────────────────
 window.Academy = {
-  getContent:          initContent,
+  getContent:           initContent,
   getHomeData,
+  // canonical names
   repProgress,
   modProgress,
   markSectionComplete,
@@ -1018,7 +1019,12 @@ window.Academy = {
   adminResetRepProgress,
   adminMarkModuleComplete,
   trackEvent,
-  POINTS, LEVELS, BADGE_DEFS, RICH_LESSONS
+  POINTS, LEVELS, BADGE_DEFS, RICH_LESSONS,
+  // view-layer aliases (app_premium.js uses these names)
+  getRepProgress:       repProgress,
+  getModuleProgress:    modProgress,
+  isModuleLocked:       isLocked,
+  submitQuizAttempt:    submitQuiz,
 };
 
 // Force re-seed with version 2 content
