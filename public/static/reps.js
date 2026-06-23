@@ -776,8 +776,9 @@ function renderOMDashboard(viewEl, rep) {
           onmouseover="this.style.background='#1a0a0a'" onmouseout="this.style.background='#0f172a'">
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
-            <div style="font-size:11px;color:#64748b;margin-top:1px">${escapeHtml(o.status)} · Due ${o.nextFollowUp}${o.repId ? ' · ' + (window.REPS||[]).find(r=>r.id===o.repId)?.avatar || '' : ' · unassigned'}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:1px">${escapeHtml(o.status)} · Due ${o.nextFollowUp}</div>
           </div>
+          ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:10px;font-weight:600;color:${_r.color||'#94a3b8'};background:${_r.color||'#94a3b8'}18;border:1px solid ${_r.color||'#94a3b8'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${_r.avatar} ${escapeHtml(_r.name)}</span>` : `<span style="font-size:10px;font-weight:600;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`; })()}
           <span style="font-size:10px;color:#f87171;font-weight:700;white-space:nowrap">OVERDUE</span>
         </div>`).join('')}
     ${overdueList.length > 8 ? `<p style="font-size:12px;color:#64748b;text-align:center;margin-top:8px">+ ${overdueList.length - 8} more — <button class="link-btn" onclick="show('pipeline')" style="color:var(--accent);background:none;border:none;cursor:pointer;font-size:12px;padding:0">Open pipeline</button></p>` : ''}
@@ -1148,7 +1149,8 @@ ${(()=>{
           onmouseover="this.style.background='#1a0a0a'" onmouseout="this.style.background='#0f172a'">
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
-            <div style="font-size:10px;color:#64748b">${escapeHtml(o.status)} · Due ${o.nextFollowUp}${o.repId ? ' · ' + ((window.REPS||[]).find(r=>r.id===o.repId)?.avatar||'') : ' · unassigned'}</div>
+            <div style="font-size:10px;color:#64748b">${escapeHtml(o.status)} · Due ${o.nextFollowUp}</div>
+            ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:9px;font-weight:600;color:${_r.color||'#94a3b8'};background:${_r.color||'#94a3b8'}18;border:1px solid ${_r.color||'#94a3b8'}40;border-radius:20px;padding:1px 6px;white-space:nowrap">${_r.avatar} ${escapeHtml(_r.name)}</span>` : `<span style="font-size:9px;font-weight:600;color:#f59e0b;border:1px solid #f59e0b40;border-radius:20px;padding:1px 6px">⚠ Unassigned</span>`; })()}
           </div>
           <span style="font-size:9px;color:#f87171;font-weight:700">OVERDUE</span>
         </div>`).join('')}

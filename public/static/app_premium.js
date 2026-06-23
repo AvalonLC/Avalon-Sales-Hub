@@ -326,11 +326,18 @@ function oppMini(o){
   const isOverdue = o.nextFollowUp && o.nextFollowUp < _today && !['Sold / Activation','Closed Lost'].includes(o.status);
   const daysSince = o.updatedAt ? Math.floor((Date.now()-new Date(o.updatedAt).getTime())/86400000) : null;
   const urgencyDot = isOverdue ? `<span style="display:inline-block;width:7px;height:7px;background:#f87171;border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0"></span>` : '';
+  const repObj = (window.REPS||[]).find(r => r.id === o.repId);
+  const repPill = repObj
+    ? `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:${repObj.color||'#94a3b8'};background:${repObj.color||'#94a3b8'}18;border:1px solid ${repObj.color||'#94a3b8'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${repObj.avatar} ${escapeHtml(repObj.name)}</span>`
+    : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`;
   return `<button class="mini-row ${isOverdue?'mini-row-overdue':''}" onclick="show('pipeline','${o.id}')">
     <strong>${urgencyDot}${escapeHtml(o.client||'Unnamed')}</strong>
     <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px;padding:1px 6px">${escapeHtml(o.status||'New Lead')}</span>
     <em>${escapeHtml(o.project||o.serviceLine||'Opportunity')}</em>
-    ${daysSince !== null ? `<span style="font-size:10px;color:#475569;margin-left:auto">${daysSince===0?'Today':daysSince+'d ago'}</span>` : ''}
+    <span style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
+      ${repPill}
+      ${daysSince !== null ? `<span style="font-size:10px;color:#475569">${daysSince===0?'Today':daysSince+'d ago'}</span>` : ''}
+    </span>
   </button>`;
 }
 function oppCard(o){
@@ -354,7 +361,9 @@ function oppCard(o){
       ${badge(o.status||'New Lead')}
       ${o.nextFollowUp ? `<span class="opp-next">Next: ${prettyDate(o.nextFollowUp)}</span>` : ''}
       ${o.jobValue ? `<span class="opp-value">${money(Number(o.jobValue))}</span>` : ''}
-      ${repObj ? `<span class="opp-rep" title="${escapeHtml(repObj.name)}">${repObj.avatar}</span>` : ''}
+      ${repObj
+        ? `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:${repObj.color||'#94a3b8'};background:${repObj.color||'#94a3b8'}18;border:1px solid ${repObj.color||'#94a3b8'}40;border-radius:20px;padding:1px 8px;white-space:nowrap;margin-left:auto">${repObj.avatar} ${escapeHtml(repObj.name)}</span>`
+        : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:1px 8px;white-space:nowrap;margin-left:auto">⚠ Unassigned</span>`}
     </div>
   </article>`;
 }
@@ -1104,13 +1113,21 @@ function clientDetail(id) {
       <button class="cl-property-delete" onclick="deleteProperty('${c.id}','${p.id}')">Remove</button>
     </div>`).join('') : `<p class="muted" style="font-size:13px">No additional properties. The primary address above is the main service location.</p>`;
 
-  const oppsHtml = linkedOpps.length ? linkedOpps.map(o =>
-    `<button class="mini-row" onclick="show('pipeline','${o.id}')">
+  const oppsHtml = linkedOpps.length ? linkedOpps.map(o => {
+    const _repO = (window.REPS||[]).find(r => r.id === o.repId);
+    const _repPill = _repO
+      ? `<span style="font-size:10px;font-weight:600;color:${_repO.color||'#94a3b8'};background:${_repO.color||'#94a3b8'}18;border:1px solid ${_repO.color||'#94a3b8'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${_repO.avatar} ${escapeHtml(_repO.name)}</span>`
+      : `<span style="font-size:10px;font-weight:600;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`;
+    return `<button class="mini-row" onclick="show('pipeline','${o.id}')">
       <strong>${escapeHtml(o.client||'Unnamed')}</strong>
       <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px">${escapeHtml(o.status||'New Lead')}</span>
       <em>${escapeHtml(o.project||o.serviceLine||'Opportunity')}</em>
-      ${o.nextFollowUp ? `<span style="font-size:10px;color:#475569;margin-left:auto">${prettyDate(o.nextFollowUp)}</span>` : ''}
-    </button>`).join('')
+      <span style="display:flex;align-items:center;gap:5px;margin-left:auto;flex-shrink:0">
+        ${_repPill}
+        ${o.nextFollowUp ? `<span style="font-size:10px;color:#475569">${prettyDate(o.nextFollowUp)}</span>` : ''}
+      </span>
+    </button>`;
+  }).join('')
   : `<p class="muted" style="font-size:13px">No pipeline opportunities linked to this client yet.</p>`;
 
   view.innerHTML = `
