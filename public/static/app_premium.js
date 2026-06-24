@@ -2227,13 +2227,14 @@ function openLeadPicker(onSelect){
   const open = state.opportunities.filter(o => !['Sold / Activation','Closed Lost'].includes(o.status));
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding-top:80px';
   modal.innerHTML = `
-    <div class="modal" style="max-width:480px">
-      <h3 style="margin:0 0 12px">Select a Lead</h3>
+    <div style="background:#0f172a;border:1px solid #1e4d6b;border-radius:14px;padding:24px;width:100%;max-width:480px;box-shadow:0 25px 60px rgba(0,0,0,0.6);margin:0 16px">
+      <h3 style="margin:0 0 14px;color:#f1f5f9;font-size:1.1rem">Select a Lead</h3>
       <input id="lpSearch" type="text" placeholder="Search by client or project..."
-        style="width:100%;padding:8px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;margin-bottom:12px;box-sizing:border-box">
+        style="width:100%;padding:9px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;margin-bottom:12px;box-sizing:border-box;font-size:14px;outline:none">
       <div id="lpList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
-      <button class="secondary-btn mt8" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+      <button class="secondary-btn mt8" style="margin-top:14px;width:100%" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
     </div>`;
   document.body.appendChild(modal);
   const listEl = modal.querySelector('#lpList');
