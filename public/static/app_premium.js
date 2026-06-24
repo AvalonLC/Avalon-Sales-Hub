@@ -21,7 +21,7 @@ const toastEl = document.getElementById('toast');
 let deferredPrompt;
 
 const STORAGE_KEY = 'avalonSalesHubStateV3';
-const DEFAULT_STATE = { opportunities: [], tasks: [], notes: [], settings: { repName: '', email: '' } };
+const DEFAULT_STATE = { opportunities: [], tasks: [], notes: [], communications: [], settings: { repName: '', email: '' } };
 let state = loadState();
 
 function loadState(){
@@ -1832,6 +1832,8 @@ function opportunityDetail(id){
   const o = state.opportunities.find(x=>x.id===id);
   if(!o){ return pipeline(); }
   const stageGuess = Math.max(1, data.statuses.indexOf(o.status)+1);
+  const _activeTab = window._leadTab || 'overview';
+
   view.innerHTML = `
     <button class="secondary-btn" onclick="show('pipeline')">← Back to Pipeline</button>
     ${(()=>{
@@ -1875,6 +1877,27 @@ function opportunityDetail(id){
         ${(()=>{ const _cr = window.getCurrentRep ? window.getCurrentRep() : null; const _ia = _cr && _cr.role === 'admin'; const _iom = _cr && _cr.role === 'office_manager'; return _ia ? `<button class="secondary-btn" onclick="duplicateOpportunity('${o.id}')">Duplicate</button><button class="danger-btn" onclick="deleteOpportunity('${o.id}')">Delete</button>` : _iom ? `<button class="secondary-btn" onclick="duplicateOpportunity('${o.id}')">Duplicate</button>` : ''; })()}
       </div>
     </div>
+
+    <!-- Lead Tab Bar -->
+    <div class="lead-tab-bar">
+      <button class="lead-tab ${_activeTab==='overview'?'lead-tab-active':''}" onclick="window._leadTab='overview';show('pipeline','${o.id}')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M4 5h6M4 7.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Overview
+      </button>
+      <button class="lead-tab ${_activeTab==='comms'?'lead-tab-active':''}" onclick="window._leadTab='comms';show('pipeline','${o.id}')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        Communications
+        ${(()=>{ const _cnt=(state.communications||[]).filter(c=>c.oppId===o.id).length; return _cnt ? '<span class="lead-tab-badge">'+_cnt+'</span>' : ''; })()}
+      </button>
+      <button class="lead-tab ${_activeTab==='files'?'lead-tab-active':''}" onclick="window._leadTab='files';show('pipeline','${o.id}')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2h5.5L11 4.5V12H3V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 2v3h3" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" opacity=".6"/></svg>
+        Files & Attachments
+        ${(()=>{ const _acnt=(state.communications||[]).filter(c=>c.oppId===o.id&&c.files&&c.files.length).reduce((a,c)=>a+c.files.length,0); return _acnt ? '<span class="lead-tab-badge">'+_acnt+'</span>' : ''; })()}
+      </button>
+    </div>
+
+    <!-- TAB: Overview (all existing content) -->
+    <div id="leadTabOverview" style="display:${_activeTab==='overview'?'block':'none'}">
     <div class="grid grid-3 mt">
       <article class="card"><h3>Status</h3>${selectWithId('statusEdit',data.statuses,o.status)}<button class="secondary-btn small mt8" onclick="setOppField('${o.id}','status',document.getElementById('statusEdit').value)">Update Status</button></article>
       <article class="card"><h3>Next Follow-Up</h3><input id="followEdit" type="date" value="${escapeHtml(o.nextFollowUp||'')}"><button class="secondary-btn small mt8" onclick="setOppField('${o.id}','nextFollowUp',document.getElementById('followEdit').value)">Update Follow-Up</button></article>
@@ -2001,8 +2024,292 @@ function opportunityDetail(id){
         </div>
       </section>
     </div>
+    </div><!-- /leadTabOverview -->
+
+    <!-- TAB: Communications -->
+    <div id="leadTabComms" style="display:${_activeTab==='comms'?'block':'none'}">
+      ${commsBoardHtml(o.id, o)}
+    </div>
+
+    <!-- TAB: Files & Attachments -->
+    <div id="leadTabFiles" style="display:${_activeTab==='files'?'block':'none'}">
+      ${filesTabHtml(o.id, o)}
+    </div>
   `;
+
+  // Wire up Communications compose after render
+  if(_activeTab==='comms') wireCommsCompose(o.id, o);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMUNICATIONS BOARD — per-lead conversation, messages, calls, emails, files
+// ═══════════════════════════════════════════════════════════════════════════
+
+function commsBoardHtml(oppId, opp){
+  const msgs = (state.communications||[]).filter(c=>c.oppId===oppId).sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+  const clientName = escapeHtml(opp.client||'Lead');
+  const clientEmail = escapeHtml(opp.email||'');
+  const clientPhone = escapeHtml(opp.phone||'');
+
+  const TYPE_META = {
+    sms:   { label:'SMS',      color:'#10b981', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' },
+    email: { label:'Email',    color:'#6366f1', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 5l5.5 3.5L12.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>' },
+    call:  { label:'Call',     color:'#f59e0b', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4.5 2C4.5 2 5 4 4 5S2 5.5 2 5.5C2 8 6 12 8.5 12c0 0 .5-2 1.5-2s3 .5 3 .5-.5 2-2 2C7 13 1 7 1 3.5c0 0 2 .5 3-1S4.5 2 4.5 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' },
+    note:  { label:'Note',     color:'#64748b', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' },
+    proposal:{ label:'Proposal', color:'#a855f7', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2h5.5L11 4.5V12H3V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 2v3h3" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" opacity=".6"/></svg>' },
+  };
+
+  // Group messages by date
+  function groupByDate(msgs){
+    const groups = {};
+    msgs.forEach(m => {
+      const d = m.ts ? new Date(m.ts).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}) : 'Unknown';
+      if(!groups[d]) groups[d] = [];
+      groups[d].push(m);
+    });
+    return groups;
+  }
+
+  function fileChips(files){
+    if(!files||!files.length) return '';
+    return '<div class="comm-file-chips">' + files.map(f=>{
+      const ext = (f.name||'').split('.').pop().toLowerCase();
+      const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
+      const isPdf = ext==='pdf';
+      const icon = isImg ? '🖼' : isPdf ? '📄' : ext==='docx'||ext==='doc' ? '📝' : '📎';
+      return '<span class="comm-file-chip" title="'+escapeHtml(f.name)+'">' + icon + ' <span>'+escapeHtml(f.name)+'</span></span>';
+    }).join('') + '</div>';
+  }
+
+  function renderMsg(m){
+    const meta = TYPE_META[m.type] || TYPE_META.note;
+    const isOut = m.direction === 'out';
+    const fmt = dt => { try{ return new Date(dt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }catch(e){return '';} };
+    return '<div class="comm-msg comm-msg-'+(isOut?'out':'in')+'">' +
+      '<div class="comm-bubble">' +
+        '<div class="comm-meta-row">' +
+          '<span class="comm-type-badge" style="background:'+meta.color+'22;color:'+meta.color+';border-color:'+meta.color+'44">'+meta.icon+' '+meta.label+'</span>' +
+          (m.subject ? '<span class="comm-subject">'+escapeHtml(m.subject)+'</span>' : '') +
+          '<span class="comm-time">'+fmt(m.ts)+'</span>' +
+          '<button class="comm-delete-btn" title="Delete" onclick="deleteComm(\''+m.id+'\',\''+oppId+'\')">×</button>' +
+        '</div>' +
+        '<div class="comm-body">'+nl2br(m.body||'')+'</div>' +
+        fileChips(m.files) +
+        (m.callDuration ? '<div class="comm-call-dur">⏱ '+escapeHtml(m.callDuration)+'</div>' : '') +
+      '</div>' +
+    '</div>';
+  }
+
+  const groups = groupByDate(msgs);
+  const threadHtml = Object.keys(groups).length === 0
+    ? '<div class="comm-empty"><div class="comm-empty-icon">💬</div><p>No communications yet for '+clientName+'.</p><p class="muted" style="font-size:.82rem">Use the compose bar below to log a call, send a message, draft an email, or attach a proposal.</p></div>'
+    : Object.keys(groups).map(date =>
+        '<div class="comm-date-divider"><span>'+date+'</span></div>' +
+        groups[date].map(renderMsg).join('')
+      ).join('');
+
+  return '<div class="comms-board">' +
+    '<div class="comms-header">' +
+      '<div class="comms-contact-info">' +
+        '<h2 style="margin:0;font-size:1.05rem;color:var(--ink)">Communications — '+clientName+'</h2>' +
+        '<div class="comms-contact-chips">' +
+          (clientPhone ? '<a class="comm-contact-chip" href="tel:'+opp.phone+'"><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M4.5 2C4.5 2 5 4 4 5S2 5.5 2 5.5C2 8 6 12 8.5 12c0 0 .5-2 1.5-2s3 .5 3 .5-.5 2-2 2C7 13 1 7 1 3.5c0 0 2 .5 3-1S4.5 2 4.5 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg> '+clientPhone+'</a>' : '') +
+          (clientEmail ? '<a class="comm-contact-chip" href="mailto:'+opp.email+'"><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 5l5.5 3.5L12.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> '+clientEmail+'</a>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="comms-thread" id="commsThread">'+threadHtml+'</div>' +
+    '<div class="comms-compose" id="commsCompose">' +
+      '<div class="compose-type-tabs" id="composeTypeTabs">' +
+        '<button class="ctype-btn ctype-active" data-ctype="sms">💬 SMS</button>' +
+        '<button class="ctype-btn" data-ctype="email">✉️ Email</button>' +
+        '<button class="ctype-btn" data-ctype="call">📞 Log Call</button>' +
+        '<button class="ctype-btn" data-ctype="note">📋 Internal Note</button>' +
+        '<button class="ctype-btn" data-ctype="proposal">📄 Proposal</button>' +
+      '</div>' +
+      '<div id="composeSubjectRow" style="display:none;margin-bottom:8px">' +
+        '<input id="composeSubject" type="text" placeholder="Email subject line…" style="width:100%;padding:9px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box">' +
+      '</div>' +
+      '<div id="composeCallDurRow" style="display:none;margin-bottom:8px;display:none">' +
+        '<input id="composeCallDur" type="text" placeholder="Call duration (e.g. 4 min 30 sec)…" style="width:100%;padding:9px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box">' +
+      '</div>' +
+      '<div class="compose-body-row">' +
+        '<textarea id="composeBody" rows="3" placeholder="Type your message, call notes, or proposal details…" style="flex:1;resize:vertical;min-height:72px;padding:10px 12px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#e2e8f0;font-size:13px;line-height:1.5;box-sizing:border-box;width:100%"></textarea>' +
+      '</div>' +
+      '<div class="compose-actions-row">' +
+        '<label class="compose-attach-btn" title="Attach file (photo, PDF, DOCX, etc.)">' +
+          '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8.5l-6.5 6.5a4.243 4.243 0 01-6-6l7-7a2.5 2.5 0 013.5 3.5L5.5 12A1 1 0 014 10.5l6-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          ' Attach' +
+          '<input type="file" id="composeFileInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" style="display:none">' +
+        '</label>' +
+        '<div id="attachPreview" class="attach-preview-row"></div>' +
+        '<div style="margin-left:auto;display:flex;gap:8px;align-items:center">' +
+          '<select id="composeDirection" style="padding:6px 10px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94a3b8;font-size:12px">' +
+            '<option value="out">Outbound ↑</option>' +
+            '<option value="in">Inbound ↓</option>' +
+          '</select>' +
+          '<button class="primary-btn" style="padding:8px 20px;font-size:13px" onclick="sendComm(\''+oppId+'\')">Send / Log</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function filesTabHtml(oppId, opp){
+  const allMsgs = (state.communications||[]).filter(c=>c.oppId===oppId && c.files && c.files.length);
+  const allFiles = [];
+  allMsgs.forEach(m => m.files.forEach(f => allFiles.push({...f, ts:m.ts, type:m.type, commId:m.id})));
+  allFiles.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+
+  const fmt = dt => { try{ return new Date(dt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '';} };
+
+  if(!allFiles.length) return '<div class="comms-board"><div class="comm-empty"><div class="comm-empty-icon">📁</div><p>No files attached yet.</p><p class="muted" style="font-size:.82rem">Attach photos, PDFs, proposals, and documents from the Communications tab.</p></div></div>';
+
+  const ext2icon = ext => {
+    const e = (ext||'').toLowerCase();
+    if(['jpg','jpeg','png','gif','webp'].includes(e)) return '🖼';
+    if(e==='pdf') return '📄';
+    if(['doc','docx'].includes(e)) return '📝';
+    if(['xls','xlsx'].includes(e)) return '📊';
+    return '📎';
+  };
+
+  return '<div class="comms-board">' +
+    '<div class="comms-header"><h2 style="margin:0;font-size:1.05rem;color:var(--ink)">Files & Attachments — '+escapeHtml(opp.client||'Lead')+'</h2>' +
+    '<p class="muted" style="font-size:.82rem;margin:4px 0 0">'+allFiles.length+' file'+( allFiles.length!==1?'s':'')+' attached across all communications</p></div>' +
+    '<div class="files-grid">' +
+    allFiles.map(f=>{
+      const ext = (f.name||'').split('.').pop();
+      const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext.toLowerCase());
+      return '<div class="file-card">' +
+        '<div class="file-card-icon">'+(isImg&&f.dataUrl?'<img src="'+f.dataUrl+'" alt="'+escapeHtml(f.name)+'" style="width:100%;height:80px;object-fit:cover;border-radius:6px;">':ext2icon(ext)+'<span style="font-size:.65rem;color:#64748b;display:block;margin-top:4px">'+ext.toUpperCase()+'</span>')+'</div>' +
+        '<div class="file-card-name" title="'+escapeHtml(f.name)+'">'+escapeHtml(f.name)+'</div>' +
+        '<div class="file-card-meta">'+fmt(f.ts)+'</div>' +
+        (f.dataUrl ? '<a class="file-card-dl" href="'+f.dataUrl+'" download="'+escapeHtml(f.name)+'" target="_blank">Download</a>' : '<span class="file-card-dl muted" style="opacity:.4">No preview</span>') +
+      '</div>';
+    }).join('') +
+    '</div></div>';
+}
+
+function wireCommsCompose(oppId){
+  const typeTabs = document.querySelectorAll('.ctype-btn');
+  let currentType = 'sms';
+  const subjectRow = document.getElementById('composeSubjectRow');
+  const callDurRow = document.getElementById('composeCallDurRow');
+  const fileInput  = document.getElementById('composeFileInput');
+  const preview    = document.getElementById('attachPreview');
+  let pendingFiles = [];
+
+  typeTabs.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      typeTabs.forEach(b=>b.classList.remove('ctype-active'));
+      btn.classList.add('ctype-active');
+      currentType = btn.dataset.ctype;
+      if(subjectRow) subjectRow.style.display = currentType==='email'?'block':'none';
+      if(callDurRow) callDurRow.style.display = currentType==='call'?'block':'none';
+      const body = document.getElementById('composeBody');
+      if(body){
+        const placeholders = {
+          sms: 'Type your SMS message…',
+          email: 'Type your email body…',
+          call: 'Call notes, outcome, what was discussed…',
+          note: 'Internal note (not sent to client)…',
+          proposal: 'Proposal details, scope summary, pricing notes…'
+        };
+        body.placeholder = placeholders[currentType]||'Type…';
+      }
+    });
+  });
+
+  if(fileInput){
+    fileInput.addEventListener('change', ()=>{
+      Array.from(fileInput.files).forEach(file=>{
+        const reader = new FileReader();
+        reader.onload = e=>{
+          pendingFiles.push({ name:file.name, size:file.size, dataUrl:e.target.result });
+          renderAttachPreview();
+        };
+        reader.readAsDataURL(file);
+      });
+      fileInput.value='';
+    });
+  }
+
+  function renderAttachPreview(){
+    if(!preview) return;
+    preview.innerHTML = pendingFiles.map((f,i)=>{
+      const ext = f.name.split('.').pop().toLowerCase();
+      const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
+      return '<span class="attach-chip">'+(isImg?'🖼':'📎')+' <span>'+escapeHtml(f.name)+'</span><button onclick="removePendingFile('+i+')" title="Remove">×</button></span>';
+    }).join('');
+  }
+
+  window.removePendingFile = function(idx){
+    pendingFiles.splice(idx,1);
+    renderAttachPreview();
+  };
+
+  window._commsPendingFiles = pendingFiles;
+  window._commsCurrentType  = function(){ return currentType; };
+}
+
+window.sendComm = function(oppId){
+  const body      = (document.getElementById('composeBody')||{}).value||'';
+  const subject   = (document.getElementById('composeSubject')||{}).value||'';
+  const callDur   = (document.getElementById('composeCallDur')||{}).value||'';
+  const direction = (document.getElementById('composeDirection')||{}).value||'out';
+  const type      = window._commsCurrentType ? window._commsCurrentType() : 'note';
+  const files     = window._commsPendingFiles || [];
+
+  if(!body.trim() && !files.length){
+    showToast('Type a message or attach a file first');
+    return;
+  }
+
+  const msg = {
+    id: uid('comm'),
+    oppId,
+    type,
+    direction,
+    body: body.trim(),
+    subject: subject.trim()||null,
+    callDuration: callDur.trim()||null,
+    files: files.map(f=>({name:f.name, size:f.size, dataUrl:f.dataUrl})),
+    ts: new Date().toISOString(),
+    sentBy: (window.getCurrentRep ? window.getCurrentRep() : null)?.name || 'Rep'
+  };
+
+  if(!state.communications) state.communications = [];
+  state.communications.push(msg);
+
+  // Also push a mirror note into opp.notes for timeline visibility
+  const opp = state.opportunities.find(x=>x.id===oppId);
+  if(opp){
+    const notePrefix = { sms:'[SMS]', email:'[Email]', call:'[Call]', note:'[Note]', proposal:'[Proposal]' }[type]||'[Comm]';
+    const shortBody  = (subject ? subject+': ' : '') + (body||'').slice(0,120);
+    opp.notes = opp.notes||[];
+    opp.notes.push({ id:uid('note'), text:notePrefix+' '+shortBody, createdAt:msg.ts, type });
+    opp.updatedAt = new Date().toISOString();
+  }
+
+  saveState();
+
+  const typeLabels = { sms:'SMS sent', email:'Email logged', call:'Call logged', note:'Note saved', proposal:'Proposal logged' };
+  showToast((typeLabels[type]||'Logged') + (files.length?' + '+files.length+' file(s)':''));
+
+  window._commsPendingFiles = [];
+  window._leadTab = 'comms';
+  show('pipeline', oppId);
+};
+
+window.deleteComm = function(commId, oppId){
+  if(!confirm('Delete this communication entry?')) return;
+  state.communications = (state.communications||[]).filter(c=>c.id!==commId);
+  saveState();
+  showToast('Deleted');
+  window._leadTab = 'comms';
+  show('pipeline', oppId);
+};
 
 // ── T6: Quick Action button orchestrator — loading + success states ──────────
 window.qaAction = function(type, oppId, btn) {
