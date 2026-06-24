@@ -1831,214 +1831,464 @@ function textarea(name,label,value=''){ return `<label class="full"><span>${labe
 function opportunityDetail(id){
   const o = state.opportunities.find(x=>x.id===id);
   if(!o){ return pipeline(); }
-  const stageGuess = Math.max(1, data.statuses.indexOf(o.status)+1);
-  const _activeTab = window._leadTab || 'overview';
+  const stageGuess   = Math.max(1, data.statuses.indexOf(o.status)+1);
+  const _activeTab   = window._leadTab || 'overview';
+  const _repObj      = (window.REPS||[]).find(r=>r.id===o.repId);
+  const _repName     = _repObj ? _repObj.name : 'Unassigned';
+  const _isOvd       = o.nextFollowUp && o.nextFollowUp < todayISO() && !['Sold / Activation','Closed Lost'].includes(o.status);
+  const _estComm     = estCommission(o);
+  const _cr          = window.getCurrentRep ? window.getCurrentRep() : null;
+  const _isAdm       = _cr && _cr.role === 'admin';
+  const _isOM        = _cr && _cr.role === 'office_manager';
+  const _commsCnt    = (state.communications||[]).filter(c=>c.oppId===o.id).length;
+  const _filesCnt    = (state.communications||[]).filter(c=>c.oppId===o.id&&c.files&&c.files.length).reduce((a,c)=>a+c.files.length,0);
+  const _notesCnt    = (o.notes||[]).length;
+  const _lastComm    = (state.communications||[]).filter(c=>c.oppId===o.id).sort((a,b)=>new Date(b.ts)-new Date(a.ts))[0];
+  const _isSold      = o.status === 'Sold / Activation';
+  const _isClosed    = o.status === 'Closed Lost';
+
+  // ── Stat chip helper ─────────────────────────────────────────────────────
+  const statChip = (icon, label, value, accent='') =>
+    `<div class="ld-stat-chip${accent?' ld-stat-chip--'+accent:''}">
+      <span class="ld-stat-icon">${icon}</span>
+      <div class="ld-stat-body">
+        <span class="ld-stat-label">${label}</span>
+        <span class="ld-stat-val">${value}</span>
+      </div>
+    </div>`;
+
+  // ── Right-rail activity snapshot ─────────────────────────────────────────
+  const TYPE_ICON = { sms:'💬', email:'✉️', call:'📞', note:'📋', proposal:'📄' };
+  const recentComms = (state.communications||[]).filter(c=>c.oppId===o.id)
+    .sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,5);
+  const railActivityHtml = recentComms.length ? recentComms.map(m => {
+    const fmt = dt => { try{ return new Date(dt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '';} };
+    const preview = (m.subject ? m.subject : (m.body||'').slice(0,60)) || '(no content)';
+    return `<div class="rail-activity-item">
+      <div class="rail-act-icon">${TYPE_ICON[m.type]||'📋'}</div>
+      <div class="rail-act-body">
+        <div class="rail-act-type">${m.type.toUpperCase()} <span class="rail-act-dir">${m.direction==='out'?'↑ Sent':'↓ Received'}</span></div>
+        <div class="rail-act-preview">${escapeHtml(preview)}</div>
+        <div class="rail-act-time">${fmt(m.ts)}</div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="rail-empty"><p>No activity yet</p></div>`;
+
+  // ── Stage checklist for right rail ───────────────────────────────────────
+  const stageChecklist = (window.AVALON_DATA.checklists||[]).find(c=>c.stage===stageGuess);
 
   view.innerHTML = `
-    <button class="secondary-btn" onclick="show('pipeline')">← Back to Pipeline</button>
-    ${(()=>{
-      const _repObj = (window.REPS||[]).find(r=>r.id===o.repId);
-      const _repName = _repObj ? _repObj.name : null;
-      const _repAvatar = '';
-      const _isOvd = o.nextFollowUp && o.nextFollowUp < todayISO() && !['Sold / Activation','Closed Lost'].includes(o.status);
-      const _estComm = estCommission(o);
-      return `<div class="lead-header-bar">
-        <div class="lhb-cell">
-          <span class="lhb-label">Stage</span>
-          <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:11px">${escapeHtml(o.status||'New Lead')}</span>
+  <!-- ══ STICKY LEAD HEADER ══════════════════════════════════════════════ -->
+  <div class="ld-sticky-header" id="ldStickyHeader">
+    <div class="ld-sticky-inner">
+      <button class="ld-back-btn" onclick="show('pipeline')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L4 7l5-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Pipeline
+      </button>
+      <div class="ld-sticky-identity">
+        <div class="ld-sticky-avatar">${(o.client||'?')[0].toUpperCase()}</div>
+        <div>
+          <div class="ld-sticky-name">${escapeHtml(o.client||'Unnamed Lead')}</div>
+          <div class="ld-sticky-sub">
+            <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px;padding:2px 8px">${escapeHtml(o.status||'New Lead')}</span>
+            <span style="color:#64748b;font-size:12px">${escapeHtml(_repName)}</span>
+            ${o.jobValue ? `<span style="color:#16a34a;font-size:12px;font-weight:700">${money(Number(o.jobValue))}</span>` : ''}
+          </div>
         </div>
-        <div class="lhb-cell">
-          <span class="lhb-label">Rep</span>
-          <span>${escapeHtml(_repName||'Unassigned')}</span>
-        </div>
-        <div class="lhb-cell">
-          <span class="lhb-label">Est. Value</span>
-          <strong>${o.jobValue ? money(Number(o.jobValue)) : '—'}</strong>
-        </div>
-        <div class="lhb-cell">
-          <span class="lhb-label">Est. Commission</span>
-          <strong style="color:#4ade80">${_estComm > 0 ? money(_estComm) : '—'}</strong>
-        </div>
-        <div class="lhb-cell">
-          <span class="lhb-label">Next Follow-Up</span>
-          <span class="${_isOvd ? 'overdue-chip' : ''}">${prettyDate(o.nextFollowUp)}</span>
-        </div>
-        <div class="lhb-cell">
-          <span class="lhb-label">Commission</span>
-          <span class="status-chip ${o.commissionApproved ? 'sold' : 'pending'}" style="font-size:10px">${o.commissionApproved ? 'Approved' : '⏳ Pending'}</span>
-        </div>
-      </div>`;
-    })()}
-    <div class="detail-head">
-      <div><div class="eyebrow">Opportunity</div><h1>${escapeHtml(o.client||'Unnamed Lead')}</h1><p class="lede">${escapeHtml(o.project||o.serviceLine||'Opportunity')} • ${escapeHtml(o.address||'No address')}</p></div>
-      <div class="detail-actions">
-        <button class="primary-btn" onclick="saveOpportunity('${o.id}')">Save Changes</button>
-        ${o.status !== 'Sold / Activation' && o.status !== 'Closed Lost' ? `<button class="primary-btn" style="background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 8px 20px rgba(22,163,74,.25)" onclick="openMarkSoldModal('${o.id}')">Mark Sold</button>` : o.status === 'Sold / Activation' ? `<span style="background:#16a34a18;border:1px solid #16a34a40;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;color:#16a34a">Sold</span>` : ''}
-        ${(()=>{ const _cr = window.getCurrentRep ? window.getCurrentRep() : null; const _ia = _cr && _cr.role === 'admin'; const _iom = _cr && _cr.role === 'office_manager'; return _ia ? `<button class="secondary-btn" onclick="duplicateOpportunity('${o.id}')">Duplicate</button><button class="danger-btn" onclick="deleteOpportunity('${o.id}')">Delete</button>` : _iom ? `<button class="secondary-btn" onclick="duplicateOpportunity('${o.id}')">Duplicate</button>` : ''; })()}
+      </div>
+      <div class="ld-sticky-actions">
+        <button class="ld-action-save" onclick="saveOpportunity('${o.id}')">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7.5L5.5 11 12 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Save
+        </button>
+        ${!_isSold && !_isClosed ? `<button class="ld-action-sold" onclick="openMarkSoldModal('${o.id}')">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 4h4l-3.2 2.4 1.2 4L7 9l-3.5 2.4 1.2-4L1.5 5h4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          Mark Sold
+        </button>` : _isSold ? `<span class="ld-sold-badge">✓ Sold</span>` : ''}
+        ${_isAdm||_isOM ? `<div class="ld-overflow-wrap">
+          <button class="ld-overflow-btn" onclick="toggleLeadOverflow(this)" title="More actions">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="13" r="1.2" fill="currentColor"/></svg>
+          </button>
+          <div class="ld-overflow-menu" style="display:none">
+            <button onclick="duplicateOpportunity('${o.id}');toggleLeadOverflow()">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 10V2h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Duplicate
+            </button>
+            ${_isAdm ? `<button class="danger" onclick="deleteOpportunity('${o.id}')">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M5 4V2h4v2M11 4l-.75 8H3.75L3 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Delete Lead
+            </button>` : ''}
+          </div>
+        </div>` : ''}
       </div>
     </div>
+  </div>
 
-    <!-- Lead Tab Bar -->
-    <div class="lead-tab-bar">
-      <button class="lead-tab ${_activeTab==='overview'?'lead-tab-active':''}" onclick="window._leadTab='overview';show('pipeline','${o.id}')">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M4 5h6M4 7.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        Overview
-      </button>
-      <button class="lead-tab ${_activeTab==='comms'?'lead-tab-active':''}" onclick="window._leadTab='comms';show('pipeline','${o.id}')">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
-        Communications
-        ${(()=>{ const _cnt=(state.communications||[]).filter(c=>c.oppId===o.id).length; return _cnt ? '<span class="lead-tab-badge">'+_cnt+'</span>' : ''; })()}
-      </button>
-      <button class="lead-tab ${_activeTab==='files'?'lead-tab-active':''}" onclick="window._leadTab='files';show('pipeline','${o.id}')">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2h5.5L11 4.5V12H3V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 2v3h3" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" opacity=".6"/></svg>
-        Files & Attachments
-        ${(()=>{ const _acnt=(state.communications||[]).filter(c=>c.oppId===o.id&&c.files&&c.files.length).reduce((a,c)=>a+c.files.length,0); return _acnt ? '<span class="lead-tab-badge">'+_acnt+'</span>' : ''; })()}
-      </button>
-    </div>
-
-    <!-- TAB: Overview (all existing content) -->
-    <div id="leadTabOverview" style="display:${_activeTab==='overview'?'block':'none'}">
-    <div class="grid grid-3 mt">
-      <article class="card"><h3>Status</h3>${selectWithId('statusEdit',data.statuses,o.status)}<button class="secondary-btn small mt8" onclick="setOppField('${o.id}','status',document.getElementById('statusEdit').value)">Update Status</button></article>
-      <article class="card"><h3>Next Follow-Up</h3><input id="followEdit" type="date" value="${escapeHtml(o.nextFollowUp||'')}"><button class="secondary-btn small mt8" onclick="setOppField('${o.id}','nextFollowUp',document.getElementById('followEdit').value)">Update Follow-Up</button></article>
-      <article class="card"><h3>Quick Stage Help</h3><p class="muted">Use the process page to confirm what this stage requires before moving forward.</p><button class="secondary-btn small" onclick="show('process',${Math.min(stageGuess,12)})">Open likely stage</button></article>
-    </div>
-    <form class="card form mt" id="oppForm">
-      <div class="form-grid">
-        ${inputEdit('client','Client Name',o.client)}${inputEdit('phone','Phone',o.phone)}${inputEdit('email','Email',o.email,'email')}${inputEdit('address','Property Address',o.address)}
-        ${selectEdit('serviceLine','Service Line',data.serviceLines,o.serviceLine)}${selectEdit('source','Lead Source',data.leadSources,o.source)}${inputEdit('project','Project / Opportunity Name',o.project)}${inputEdit('urgency','Urgency / Timing',o.urgency)}${inputEdit('decisionMaker','Decision-Maker(s)',o.decisionMaker)}${inputEdit('budget','Budget language / range',o.budget)}
-      </div>
-      <div class="form-grid" style="margin-top:16px;padding-top:16px;border-top:1px solid #1e293b">
-        <div style="grid-column:1/-1;margin-bottom:4px">
-          <span style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7c3aed">Estimate Tracking</span>
-          <span style="font-size:11px;color:#475569;margin-left:8px">Paper on the Street data</span>
+  <!-- ══ HERO IDENTITY BLOCK ════════════════════════════════════════════ -->
+  <div class="ld-hero">
+    <div class="ld-hero-left">
+      <div class="ld-hero-avatar">${(o.client||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase()}</div>
+      <div class="ld-hero-info">
+        <div class="ld-eyebrow">
+          <span>OPPORTUNITY</span>
+          ${o.source ? `<span class="ld-source-pill">${escapeHtml(o.source)}</span>` : ''}
         </div>
-        <label><span>Estimate Status</span>
-          <select id="estimateStatusEdit" name="estimateStatus">
-            <option value="" ${!o.estimateStatus?'selected':''}>Not started</option>
-            <option value="draft"             ${o.estimateStatus==='draft'?'selected':''}>Draft — not yet sent</option>
-            <option value="sent"              ${o.estimateStatus==='sent'?'selected':''}>Sent — awaiting response</option>
-            <option value="revised"           ${o.estimateStatus==='revised'?'selected':''}>Revised &amp; resent</option>
-            <option value="viewed"            ${o.estimateStatus==='viewed'?'selected':''}>Viewed by customer</option>
-            <option value="awaiting_response" ${o.estimateStatus==='awaiting_response'?'selected':''}>Awaiting response</option>
-            <option value="accepted"          ${o.estimateStatus==='accepted'?'selected':''}>Accepted</option>
-            <option value="declined"          ${o.estimateStatus==='declined'?'selected':''}>Declined</option>
-            <option value="expired"           ${o.estimateStatus==='expired'?'selected':''}>Expired</option>
-          </select>
-        </label>
-        ${inputEdit('estimateAmount','Estimate Amount ($)',o.estimateAmount,'number')}
-        ${inputEdit('estimateSentDate','Date Sent to Customer',o.estimateSentDate,'date')}
-        ${inputEdit('estimateCount','# Estimates Issued',o.estimateCount,'number')}
+        <h1 class="ld-name">${escapeHtml(o.client||'Unnamed Lead')}</h1>
+        <p class="ld-subtitle">
+          ${escapeHtml(o.project||o.serviceLine||'Opportunity')}
+          ${o.address ? `<span class="ld-subtitle-sep">·</span> ${escapeHtml(o.address)}` : ''}
+        </p>
+        <div class="ld-stat-chips">
+          ${statChip('<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 11V5l5-3 5 3v6H9V8H5v3H2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>', 'Stage', escapeHtml(o.status||'New Lead'))}
+          ${statChip('<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M1 13c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>', 'Rep', escapeHtml(_repName))}
+          ${o.jobValue ? statChip('<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M4.5 9.5c0 1.1.67 2 2.5 2s2.5-.9 2.5-2-1-1.8-2.5-2-2.5-.9-2.5-2 .67-2 2.5-2 2.5.9 2.5 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>', 'Est. Value', money(Number(o.jobValue)), 'green') : ''}
+          ${_estComm > 0 ? statChip('<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 12L7 2l5 10M4.5 8h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>', 'Commission', money(_estComm), 'blue') : ''}
+          ${statChip('<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><rect x="2" y="2.5" width="10" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M5 1.5v2M9 1.5v2M2 6h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>', 'Follow-Up', prettyDate(o.nextFollowUp), _isOvd?'red':'')}
+          ${statChip('<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 2l5.5 10H1.5L7 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7 6v3M7 10.5h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>', 'Commission', o.commissionApproved?'Approved':'Pending', o.commissionApproved?'green':'amber')}
+        </div>
       </div>
-      ${textarea('prompt','What prompted the inquiry?',o.prompt)}${textarea('desiredOutcome','Desired outcome / what good looks like',o.desiredOutcome)}${textarea('fitConcerns','Fit concerns / risk flags',o.fitConcerns)}
-    </form>
-    <div class="grid grid-2 mt">
-      <section class="card"><h2>Activity & Notes</h2><div id="noteList">${renderNotes(o.id)}</div><textarea id="newNote" rows="4" placeholder="Add call note, site note, objection, or next step..."></textarea><button class="primary-btn mt8" onclick="addNote('${o.id}')">Add Note</button></section>
-      ${(()=>{
-        const stageNum = Math.max(1, data.statuses.indexOf(o.status)+1);
-        const stageChecklist = (window.AVALON_DATA.checklists||[]).find(c=>c.stage===stageNum);
-        if (!stageChecklist) return '<section class="card"><h2>Stage Checklist</h2><p class="muted">No checklist for this stage.</p></section>';
-        return `<section class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">${escapeHtml(stageChecklist.title)}</h2><span class="badge" style="font-size:.7rem;background:rgba(0,212,255,.12);color:#00d4ff">Stage ${stageNum}</span></div>${renderChecklist(stageChecklist, true, o.id)}</section>`;
-      })()}
-    ${(()=>{
-      const _cr = window.getCurrentRep ? window.getCurrentRep() : null;
-      const _isAdm = _cr && _cr.role === 'admin';
-      const _isOM  = _cr && _cr.role === 'office_manager';
-      if (!_isAdm && !_isOM) return '';
-      const _ca = state.opportunities.find(x=>x.id==='${o.id}') || {};
-      // Commission Approved checkbox — Tyler (admin) only
-      const _commApprovedHtml = _isAdm ? `
-          <div>
-            <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Commission Approved</label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="commApproved" ${_ca.commissionApproved?'checked':''} onchange="setOppField('${o.id}','commissionApproved',this.checked);showToast('Commission approval updated')">
-              <span style="font-size:13px">${_ca.commissionApproved ? 'Approved' : 'Pending approval'}</span>
+    </div>
+    <div class="ld-hero-actions">
+      <button class="ld-btn-primary" onclick="saveOpportunity('${o.id}')">
+        <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M2 7.5L5.5 11 12 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Save Changes
+      </button>
+      ${!_isSold && !_isClosed ? `<button class="ld-btn-sold" onclick="openMarkSoldModal('${o.id}')">
+        <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 4h4l-3.2 2.4 1.2 4L7 9l-3.5 2.4 1.2-4L1.5 5h4z" fill="currentColor" opacity=".9"/></svg>
+        Mark Sold
+      </button>` : _isSold ? `<span class="ld-sold-badge-large">✓ Sold</span>` : ''}
+      ${_isAdm||_isOM ? `<div class="ld-overflow-wrap ld-overflow-hero">
+        <button class="ld-btn-secondary" onclick="toggleLeadOverflow(this)">More ▾</button>
+        <div class="ld-overflow-menu" style="display:none">
+          <button onclick="duplicateOpportunity('${o.id}');toggleLeadOverflow()">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 10V2h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Duplicate Lead
+          </button>
+          <button onclick="show('integrations')">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Manage Integrations
+          </button>
+          ${_isAdm ? `<button class="danger" onclick="if(confirm('Delete this lead? This cannot be undone.')) deleteOpportunity('${o.id}')">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M5 4V2h4v2M11 4l-.75 8H3.75L3 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Delete Lead
+          </button>` : ''}
+        </div>
+      </div>` : ''}
+    </div>
+  </div>
+
+  <!-- ══ PRIMARY TABS ════════════════════════════════════════════════════ -->
+  <div class="ld-tab-bar">
+    <button class="ld-tab ${_activeTab==='overview'?'ld-tab-active':''}" onclick="window._leadTab='overview';show('pipeline','${o.id}')">
+      <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M4 5h6M4 7.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Overview
+    </button>
+    <button class="ld-tab ${_activeTab==='comms'?'ld-tab-active':''}" onclick="window._leadTab='comms';show('pipeline','${o.id}')">
+      <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      Communications
+      ${_commsCnt ? `<span class="ld-tab-count">${_commsCnt}</span>` : ''}
+    </button>
+    <button class="ld-tab ${_activeTab==='files'?'ld-tab-active':''}" onclick="window._leadTab='files';show('pipeline','${o.id}')">
+      <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M3 2h5.5L11 4.5V12H3V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 2v3h3" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" opacity=".5"/></svg>
+      Files
+      ${_filesCnt ? `<span class="ld-tab-count">${_filesCnt}</span>` : ''}
+    </button>
+    <button class="ld-tab ${_activeTab==='notes'?'ld-tab-active':''}" onclick="window._leadTab='notes';show('pipeline','${o.id}')">
+      <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5h5M4.5 7.5h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Notes
+      ${_notesCnt ? `<span class="ld-tab-count">${_notesCnt}</span>` : ''}
+    </button>
+    <button class="ld-tab ${_activeTab==='activity'?'ld-tab-active':''}" onclick="window._leadTab='activity';show('pipeline','${o.id}')">
+      <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M7 4.5V7l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Activity
+    </button>
+  </div>
+
+  <!-- ══ TWO-COLUMN BODY ═════════════════════════════════════════════════ -->
+  <div class="ld-body">
+
+    <!-- Main working column -->
+    <div class="ld-main">
+
+      <!-- TAB: Overview -->
+      <div id="ldTabOverview" style="display:${_activeTab==='overview'?'block':'none'}">
+
+        <!-- Contact & Opportunity Info -->
+        <div class="ld-section-head">
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M1 13c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Contact &amp; Opportunity
+        </div>
+        <form class="ld-card ld-form" id="oppForm">
+          <div class="ld-form-grid">
+            ${inputEdit('client','Client Name',o.client)}
+            ${inputEdit('phone','Phone',o.phone)}
+            ${inputEdit('email','Email',o.email,'email')}
+            ${inputEdit('address','Property Address',o.address)}
+            ${selectEdit('serviceLine','Service Line',data.serviceLines,o.serviceLine)}
+            ${selectEdit('source','Lead Source',data.leadSources,o.source)}
+            ${inputEdit('project','Project / Opportunity',o.project)}
+            ${inputEdit('urgency','Urgency / Timing',o.urgency)}
+            ${inputEdit('decisionMaker','Decision-Maker(s)',o.decisionMaker)}
+            ${inputEdit('budget','Budget Range',o.budget)}
+          </div>
+        </form>
+
+        <!-- Stage & Scheduling -->
+        <div class="ld-section-head" style="margin-top:20px">
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><rect x="2" y="2.5" width="10" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M5 1.5v2M9 1.5v2M2 6h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Stage &amp; Scheduling
+        </div>
+        <div class="ld-card-row">
+          <div class="ld-card ld-card-sm">
+            <div class="ld-card-label">Pipeline Stage</div>
+            ${selectWithId('statusEdit',data.statuses,o.status)}
+            <button class="ld-inline-btn" onclick="setOppField('${o.id}','status',document.getElementById('statusEdit').value)">Update Stage</button>
+          </div>
+          <div class="ld-card ld-card-sm">
+            <div class="ld-card-label">Next Follow-Up</div>
+            <input id="followEdit" type="date" value="${escapeHtml(o.nextFollowUp||'')}">
+            <button class="ld-inline-btn" onclick="setOppField('${o.id}','nextFollowUp',document.getElementById('followEdit').value)">Set Date</button>
+          </div>
+          <div class="ld-card ld-card-sm">
+            <div class="ld-card-label">Stage Guide</div>
+            <p style="font-size:12px;color:#64748b;margin:6px 0 10px;line-height:1.5">See what this stage requires before moving forward.</p>
+            <button class="ld-inline-btn" onclick="show('process',${Math.min(stageGuess,12)})">Open Stage ${stageGuess} Guide</button>
+          </div>
+        </div>
+
+        <!-- Estimate Tracking -->
+        <div class="ld-section-head" style="margin-top:20px">
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 7l1.5 1.5L9.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Estimate Tracking
+          <span class="ld-section-sub">Paper on the street</span>
+        </div>
+        <div class="ld-card ld-form">
+          <div class="ld-form-grid">
+            <label><span>Estimate Status</span>
+              <select id="estimateStatusEdit" name="estimateStatus">
+                <option value="" ${!o.estimateStatus?'selected':''}>Not started</option>
+                <option value="draft" ${o.estimateStatus==='draft'?'selected':''}>Draft — not yet sent</option>
+                <option value="sent" ${o.estimateStatus==='sent'?'selected':''}>Sent — awaiting response</option>
+                <option value="revised" ${o.estimateStatus==='revised'?'selected':''}>Revised &amp; resent</option>
+                <option value="viewed" ${o.estimateStatus==='viewed'?'selected':''}>Viewed by customer</option>
+                <option value="awaiting_response" ${o.estimateStatus==='awaiting_response'?'selected':''}>Awaiting response</option>
+                <option value="accepted" ${o.estimateStatus==='accepted'?'selected':''}>Accepted</option>
+                <option value="declined" ${o.estimateStatus==='declined'?'selected':''}>Declined</option>
+                <option value="expired" ${o.estimateStatus==='expired'?'selected':''}>Expired</option>
+              </select>
             </label>
-          </div>` : `
-          <div style="opacity:.5">
-            <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Commission Approved</label>
-            <span style="font-size:12px;color:#64748b">Tyler (Owner) only</span>
+            ${inputEdit('estimateAmount','Amount ($)',o.estimateAmount,'number')}
+            ${inputEdit('estimateSentDate','Date Sent',o.estimateSentDate,'date')}
+            ${inputEdit('estimateCount','# Estimates Issued',o.estimateCount,'number')}
+          </div>
+        </div>
+
+        <!-- Qualification Notes -->
+        <div class="ld-section-head" style="margin-top:20px">
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v9a.5.5 0 01-.5.5h-9A.5.5 0 012 11.5v-9z" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Qualification Notes
+        </div>
+        <form class="ld-card ld-form">
+          ${textarea('prompt','What prompted the inquiry?',o.prompt)}
+          ${textarea('desiredOutcome','Desired outcome / what good looks like',o.desiredOutcome)}
+          ${textarea('fitConcerns','Fit concerns / risk flags',o.fitConcerns)}
+        </form>
+
+        <!-- Quick Actions -->
+        <div class="ld-section-head" style="margin-top:20px">
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 4h4l-3.2 2.4 1.2 4L7 9l-3.5 2.4 1.2-4L1.5 5h4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          Quick Actions
+        </div>
+        <div class="ld-qa-grid">
+          <button class="ld-qa-btn" id="qa_homeworks_${o.id}" onclick="qaAction('homeworks','${o.id}',this)">
+            <svg width="18" height="18" viewBox="0 0 14 14" fill="none"><path d="M7 1L1 5v8h4V9h4v4h4V5L7 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            <div><div class="ld-qa-title">Push to Homeworks</div><div class="ld-qa-sub">Sync to CRM</div></div>
+          </button>
+          <button class="ld-qa-btn" id="qa_calendar_${o.id}" onclick="qaAction('calendar','${o.id}',this)">
+            <svg width="18" height="18" viewBox="0 0 14 14" fill="none"><rect x="2" y="2.5" width="10" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M5 1.5v2M9 1.5v2M2 6h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <div><div class="ld-qa-title">Schedule Event</div><div class="ld-qa-sub">Google Calendar</div></div>
+          </button>
+          <button class="ld-qa-btn" id="qa_gmail_${o.id}" onclick="qaAction('gmail','${o.id}',this)">
+            <svg width="18" height="18" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 5l5.5 3.5L12.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <div><div class="ld-qa-title">Compose Email</div><div class="ld-qa-sub">Gmail draft</div></div>
+          </button>
+        </div>
+
+        <!-- Admin / Office Controls (role-gated) -->
+        ${(()=>{
+          if (!_isAdm && !_isOM) return '';
+          const _ca = o;
+          const _commApprovedHtml = _isAdm
+            ? `<label class="ld-toggle-row"><input type="checkbox" id="commApproved" ${_ca.commissionApproved?'checked':''} onchange="setOppField('${o.id}','commissionApproved',this.checked);showToast('Commission approval updated')"><span>Commission Approved</span></label>`
+            : `<div class="ld-locked-field">Commission Approved — Tyler (Owner) only</div>`;
+          const _borderColor = _isAdm ? '#06b6d4' : '#f59e0b';
+          const _panelTitle  = _isAdm ? 'Admin Controls' : 'Office Controls';
+          return `<div class="ld-section-head" style="margin-top:20px;border-color:${_borderColor}40">
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M7 1l5.5 3v4c0 2.8-2 5-5.5 6C2 14 0 11.8 0 9V4L7 1z" stroke="${_borderColor}" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            <span style="color:${_borderColor}">${_panelTitle}</span>
+          </div>
+          <div class="ld-card" style="border-color:${_borderColor}40">
+            <div class="ld-form-grid ld-form-grid-3">
+              <div>${_commApprovedHtml}</div>
+              <div><label class="ld-toggle-row"><input type="checkbox" id="payCollected" ${_ca.collected?'checked':''} onchange="setOppField('${o.id}','collected',this.checked);showToast('Collection status updated')"><span>Payment Collected</span></label></div>
+              <div>
+                <div class="ld-card-label">Reassign Rep</div>
+                <select onchange="setOppField('${o.id}','repId',this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px">
+                  <option value="">— Assign —</option>
+                  ${(window.REPS||[]).map(r=>`<option value="${r.id}" ${o.repId===r.id?'selected':''}>${r.name}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <p style="font-size:11.5px;color:#94a3b8;margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line)">Commission paid only when both Approved + Collected are checked. Approval is Tyler's decision.</p>
           </div>`;
-      const _borderColor = _isAdm ? '#00d4ff' : '#f59e0b';
-      const _panelTitle  = _isAdm ? 'Admin Controls <span style="font-size:11px;font-weight:400;color:#64748b;margin-left:6px">Tyler Only</span>' : 'Office Controls <span style="font-size:11px;font-weight:400;color:#64748b;margin-left:6px">Jen — Sales Ops</span>';
-      return `<section class="card" style="border:2px solid ${_borderColor}">
-        <h2>${_panelTitle}</h2>
-        <div class="grid grid-3" style="gap:12px;margin-top:12px">
-          ${_commApprovedHtml}
-          <div>
-            <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Payment Collected</label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="payCollected" ${_ca.collected?'checked':''} onchange="setOppField('${o.id}','collected',this.checked);showToast('Collection status updated')">
-              <span style="font-size:13px">${_ca.collected ? 'Collected' : 'Outstanding'}</span>
-            </label>
-          </div>
-          <div>
-            <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Reassign Rep</label>
-            <select onchange="setOppField('${o.id}','repId',this.value)" style="width:100%;padding:6px 8px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px">
-              <option value="">— Assign —</option>
-              ${(window.REPS||[]).map(r=>`<option value="${r.id}" ${_ca.repId===r.id?'selected':''}>${r.name}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:12px;padding:10px;background:#0f172a;border-radius:8px;font-size:12px;color:#64748b">
-          Commission is paid only after both "Commission Approved" and "Payment Collected" are checked. Commission approval is Tyler's decision only. Jen can mark payment collected and reassign reps.
-        </div>
-      </section>`;
-    })()}
-    </div>
-    <div class="mt">
-      <section class="card" style="border:1px solid rgba(0,167,225,.2)">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-          <h2 style="margin:0">Quick Actions</h2>
-          <button class="secondary-btn small" onclick="show('integrations')" style="font-size:11px">Manage Integrations</button>
-        </div>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Push this lead to your connected tools — CRM, calendar, or email.</p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
-          <button class="int-action-btn" id="qa_homeworks_${o.id}"
-            onclick="qaAction('homeworks','${o.id}',this)"
-            aria-label="Push ${escapeHtml(o.client||'lead')} to Homeworks CRM">
-            
-            <div style="text-align:left">
-              <div style="font-weight:700;font-size:13px">Push to Homeworks</div>
-              <div style="font-size:11px;color:var(--muted);font-weight:400">Sync to CRM</div>
-            </div>
-          </button>
-          <button class="int-action-btn" id="qa_calendar_${o.id}"
-            onclick="qaAction('calendar','${o.id}',this)"
-            aria-label="Schedule Google Calendar event for ${escapeHtml(o.client||'lead')}">
-            
-            <div style="text-align:left">
-              <div style="font-weight:700;font-size:13px">Schedule Event</div>
-              <div style="font-size:11px;color:var(--muted);font-weight:400">Google Calendar</div>
-            </div>
-          </button>
-          <button class="int-action-btn" id="qa_gmail_${o.id}"
-            onclick="qaAction('gmail','${o.id}',this)"
-            aria-label="Open Gmail compose for ${escapeHtml(o.client||'lead')}">
-            
-            <div style="text-align:left">
-              <div style="font-weight:700;font-size:13px">Compose Email</div>
-              <div style="font-size:11px;color:var(--muted);font-weight:400">Gmail draft</div>
-            </div>
-          </button>
-        </div>
-      </section>
-    </div>
-    </div><!-- /leadTabOverview -->
+        })()}
 
-    <!-- TAB: Communications -->
-    <div id="leadTabComms" style="display:${_activeTab==='comms'?'block':'none'}">
-      ${commsBoardHtml(o.id, o)}
-    </div>
+      </div><!-- /ldTabOverview -->
 
-    <!-- TAB: Files & Attachments -->
-    <div id="leadTabFiles" style="display:${_activeTab==='files'?'block':'none'}">
-      ${filesTabHtml(o.id, o)}
-    </div>
+      <!-- TAB: Communications -->
+      <div id="ldTabComms" style="display:${_activeTab==='comms'?'block':'none'}">
+        ${commsBoardHtml(o.id, o)}
+      </div>
+
+      <!-- TAB: Files -->
+      <div id="ldTabFiles" style="display:${_activeTab==='files'?'block':'none'}">
+        ${filesTabHtml(o.id, o)}
+      </div>
+
+      <!-- TAB: Notes -->
+      <div id="ldTabNotes" style="display:${_activeTab==='notes'?'block':'none'}">
+        <div class="ld-card" style="margin-top:16px">
+          <div class="ld-section-head" style="border:none;margin:0 0 12px;padding:0">
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5h5M4.5 7.5h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Activity &amp; Notes
+          </div>
+          <div id="noteList" style="margin-bottom:16px">${renderNotes(o.id)}</div>
+          <textarea id="newNote" rows="4" placeholder="Add call note, site observation, objection, or next step…" style="width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13px;resize:vertical"></textarea>
+          <button class="ld-btn-primary" style="margin-top:10px" onclick="addNote('${o.id}')">Add Note</button>
+        </div>
+      </div>
+
+      <!-- TAB: Activity -->
+      <div id="ldTabActivity" style="display:${_activeTab==='activity'?'block':'none'}">
+        <div class="ld-card" style="margin-top:16px">
+          <div class="ld-section-head" style="border:none;margin:0 0 16px;padding:0">
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M7 4.5V7l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Full Activity Log
+          </div>
+          ${(state.communications||[]).filter(c=>c.oppId===o.id).length === 0 ?
+            `<div style="text-align:center;padding:40px;color:#64748b">
+              <div style="font-size:28px;margin-bottom:12px">📋</div>
+              <p style="font-weight:600;margin:0 0 6px">No activity yet</p>
+              <p style="font-size:12.5px;color:#475569;margin:0">Activity will appear here as you log calls, emails, and notes.</p>
+            </div>` :
+            (state.communications||[]).filter(c=>c.oppId===o.id)
+              .sort((a,b)=>new Date(b.ts)-new Date(a.ts))
+              .map(m => {
+                const fmt = dt => { try{ return new Date(dt).toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '';} };
+                const typeColors = {sms:'#10b981',email:'#6366f1',call:'#f59e0b',note:'#64748b',proposal:'#a855f7'};
+                const tc = typeColors[m.type]||'#64748b';
+                return `<div class="ld-activity-item">
+                  <div class="ld-act-dot" style="background:${tc}22;border-color:${tc}44;color:${tc}">${TYPE_ICON[m.type]||'📋'}</div>
+                  <div class="ld-act-content">
+                    <div class="ld-act-header">
+                      <span class="ld-act-type" style="color:${tc}">${m.type.toUpperCase()}</span>
+                      <span class="ld-act-dir">${m.direction==='out'?'↑ Outbound':'↓ Inbound'}</span>
+                      <span class="ld-act-time">${fmt(m.ts)}</span>
+                    </div>
+                    ${m.subject ? `<div class="ld-act-subject">${escapeHtml(m.subject)}</div>` : ''}
+                    <div class="ld-act-body">${escapeHtml((m.body||'').slice(0,160))}${(m.body||'').length>160?'…':''}</div>
+                    ${m.sentBy ? `<div class="ld-act-actor">by ${escapeHtml(m.sentBy)}</div>` : ''}
+                  </div>
+                </div>`;
+              }).join('')
+          }
+        </div>
+      </div>
+
+    </div><!-- /ld-main -->
+
+    <!-- ── RIGHT CONTEXT RAIL ──────────────────────────────────────── -->
+    <aside class="ld-rail">
+
+      <!-- Follow-up card -->
+      <div class="ld-rail-card ${_isOvd?'ld-rail-card--alert':''}">
+        <div class="ld-rail-card-head">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2.5" width="10" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M5 1.5v2M9 1.5v2M2 6h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Next Follow-Up
+        </div>
+        <div class="ld-rail-follow-date ${_isOvd?'overdue':''}">${prettyDate(o.nextFollowUp)}</div>
+        ${_isOvd ? '<div class="ld-rail-overdue-badge">⚠ Overdue</div>' : ''}
+        <input type="date" id="railFollowEdit" value="${escapeHtml(o.nextFollowUp||'')}" style="width:100%;margin-top:10px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-size:12px">
+        <button class="ld-rail-btn" onclick="setOppField('${o.id}','nextFollowUp',document.getElementById('railFollowEdit').value);showToast('Follow-up updated')">Update</button>
+      </div>
+
+      <!-- Last contact card -->
+      <div class="ld-rail-card">
+        <div class="ld-rail-card-head">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          Last Contact
+        </div>
+        ${_lastComm ? `
+          <div class="ld-rail-last-type">${TYPE_ICON[_lastComm.type]||'📋'} ${_lastComm.type.toUpperCase()}</div>
+          <div class="ld-rail-last-time">${(()=>{ try{ return new Date(_lastComm.ts).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '—';} })()}</div>
+          <div class="ld-rail-last-preview">${escapeHtml((_lastComm.subject||_lastComm.body||'').slice(0,80))}${(_lastComm.subject||_lastComm.body||'').length>80?'…':''}</div>
+        ` : '<div class="ld-rail-empty">No contact logged yet</div>'}
+        <button class="ld-rail-btn" onclick="window._leadTab='comms';show('pipeline','${o.id}')">
+          Go to Communications →
+        </button>
+      </div>
+
+      <!-- Stage checklist preview -->
+      ${stageChecklist ? `<div class="ld-rail-card">
+        <div class="ld-rail-card-head">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7.5L5.5 11 12 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Stage ${stageGuess} Checklist
+        </div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:8px">${escapeHtml(stageChecklist.title)}</div>
+        ${renderChecklist(stageChecklist, true, o.id)}
+      </div>` : ''}
+
+      <!-- Pipeline stats card -->
+      <div class="ld-rail-card">
+        <div class="ld-rail-card-head">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 12V8M5.5 12V5M9 12V7M12.5 12V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Lead Snapshot
+        </div>
+        <div class="ld-rail-stats">
+          <div class="ld-rail-stat"><span>${_commsCnt}</span><label>Messages</label></div>
+          <div class="ld-rail-stat"><span>${_filesCnt}</span><label>Files</label></div>
+          <div class="ld-rail-stat"><span>${_notesCnt}</span><label>Notes</label></div>
+          <div class="ld-rail-stat"><span>${o.jobValue ? money(Number(o.jobValue)) : '—'}</span><label>Value</label></div>
+        </div>
+      </div>
+
+      <!-- Recent activity mini-feed -->
+      <div class="ld-rail-card">
+        <div class="ld-rail-card-head">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M7 4.5V7l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Recent Activity
+        </div>
+        ${railActivityHtml}
+        ${_commsCnt > 5 ? `<button class="ld-rail-btn" onclick="window._leadTab='activity';show('pipeline','${o.id}')">View all ${_commsCnt} →</button>` : ''}
+      </div>
+
+    </aside>
+
+  </div><!-- /ld-body -->
   `;
 
   // Wire up Communications compose after render
   if(_activeTab==='comms') wireCommsCompose(o.id, o);
+
+  // Sticky header scroll behavior
+  const stickyEl = document.getElementById('ldStickyHeader');
+  const heroEl   = view.querySelector('.ld-hero');
+  if(stickyEl && heroEl){
+    const obs = new IntersectionObserver(([e])=>{
+      stickyEl.classList.toggle('ld-sticky-visible', !e.isIntersecting);
+    }, { threshold:0, rootMargin:'-60px 0px 0px 0px' });
+    obs.observe(heroEl);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2546,6 +2796,18 @@ function saveOpportunity(id){
 function setOppField(id,field,value){ const o = state.opportunities.find(x=>x.id===id); if(!o) return; o[field]=value; o.updatedAt=new Date().toISOString(); saveState(); showToast('Updated'); show('pipeline', id); }
 function duplicateOpportunity(id){ const o = state.opportunities.find(x=>x.id===id); if(!o) return; const copy={...o,id:uid('opp'),client:`${o.client||'Lead'} Copy`,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; state.opportunities.unshift(copy); saveState(); showToast('Duplicated'); show('pipeline',copy.id); }
 function deleteOpportunity(id){ if(!confirm('Delete this opportunity?')) return; state.opportunities = state.opportunities.filter(o=>o.id!==id); state.notes = state.notes.filter(n=>n.oppId!==id); saveState(); showToast('Deleted'); show('pipeline'); }
+window.toggleLeadOverflow = function(btn){
+  // Close all open overflow menus first
+  document.querySelectorAll('.ld-overflow-menu').forEach(m=>{ if(m!=(btn&&btn.nextElementSibling)) m.style.display='none'; });
+  if(!btn) return;
+  const menu = btn.nextElementSibling;
+  if(menu) menu.style.display = menu.style.display==='none' ? 'block' : 'none';
+  // Click-outside to close
+  if(menu && menu.style.display==='block'){
+    const close = (e)=>{ if(!menu.contains(e.target)&&e.target!==btn){ menu.style.display='none'; document.removeEventListener('click',close,true); } };
+    setTimeout(()=>document.addEventListener('click',close,true),0);
+  }
+};
 function addNote(oppId){ const el = document.getElementById('newNote'); if(!el.value.trim()) return; state.notes.unshift({id:uid('note'),oppId,body:el.value.trim(),createdAt:new Date().toISOString()}); const o=state.opportunities.find(x=>x.id===oppId); if(o) o.updatedAt=new Date().toISOString(); saveState(); showToast('Note added'); show('pipeline', oppId); }
 function renderNotes(oppId) {
   const opp   = state.opportunities.find(x => x.id === oppId);
