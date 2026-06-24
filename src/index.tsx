@@ -166,13 +166,13 @@ function getHtml(): string {
 </div>
 <div id="toast" class="toast" hidden role="alert" aria-live="assertive"></div>
 
-<script src="/static/data.js"></script>
-<script src="/static/reps.js"></script>
-<script src="/static/academy.js"></script>
-<script src="/static/app_premium.js"></script>
-<script src="/static/integrations.js"></script>
-<script src="/static/import_clients_csv.js"></script>
-<script src="/static/user_management.js"></script>
+<script src="/static/data.js?v=20260624"></script>
+<script src="/static/reps.js?v=20260624"></script>
+<script src="/static/academy.js?v=20260624"></script>
+<script src="/static/app_premium.js?v=20260624"></script>
+<script src="/static/integrations.js?v=20260624"></script>
+<script src="/static/import_clients_csv.js?v=20260624"></script>
+<script src="/static/user_management.js?v=20260624"></script>
 <script>
   // Service Worker registration
   if ('serviceWorker' in navigator) {
