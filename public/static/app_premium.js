@@ -2985,34 +2985,27 @@ function renderChecklist(c, persist=false, scopeId=''){
     </div>` : '';
 
   const items = c.items.map((item,i)=>{
-    const key     = `${prefix}-${i}`;
+    const key = `${prefix}-${i}`;
     const checked = persist ? (localStorage.getItem(key) === '1') : false;
-    return `<label class="ld-cl-row${checked?' ld-cl-row--done':''}">
-      <span class="ld-cl-checkbox">
-        <input type="checkbox" ${persist?`data-key="${key}"`:''}${checked?' checked':''}>
-        <span class="ld-cl-check-icon">
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-      </span>
-      <span class="ld-cl-item-text">${escapeHtml(item)}</span>
+    return `<label class="check-item${checked?' check-item--done':''}">
+      <input type="checkbox" ${persist?`data-key="${key}"`:''}${checked?' checked':''}><span>${escapeHtml(item)}</span>
     </label>`;
   });
 
-  return `${progressBlock}<div class="ld-cl-list" id="clist-${prefix}">${items.join('')}</div>`;
+  return `${progressBlock}<div class="checklist" id="clist-${prefix}">${items.join('')}</div>`;
 }
 
 function wireChecks(){
-  document.querySelectorAll('.ld-cl-row input[data-key]').forEach(cb=>{
+  document.querySelectorAll('.check-item input[data-key]').forEach(cb=>{
     const key = cb.dataset.key;
     cb.checked = localStorage.getItem(key) === '1';
-    // sync done-class on initial paint
-    const rowEl = cb.closest('.ld-cl-row');
-    if(rowEl) rowEl.classList.toggle('ld-cl-row--done', cb.checked);
+    const rowEl = cb.closest('.check-item');
+    if(rowEl) rowEl.classList.toggle('check-item--done', cb.checked);
 
     cb.addEventListener('change', ()=>{
       localStorage.setItem(key, cb.checked ? '1' : '0');
-      if(rowEl) rowEl.classList.toggle('ld-cl-row--done', cb.checked);
-      // Live-update progress bar for this checklist
+      if(rowEl) rowEl.classList.toggle('check-item--done', cb.checked);
+      // Live-update progress bar
       const prefixMatch = key.match(/^(.+)-\d+$/);
       if (!prefixMatch) return;
       const prefix = prefixMatch[1];
@@ -3024,10 +3017,8 @@ function wireChecks(){
       const color = pct===100?'#10b981':pct>=50?'#f59e0b':'#3b82f6';
       const chipBg  = pct===100?'#d1fae5':pct>=50?'#fef3c7':'#dbeafe';
       const chipTxt = pct===100?'#065f46':pct>=50?'#92400e':'#1e40af';
-      const barEl  = document.getElementById('cpbar-'+prefix);
-      const lblEl  = document.getElementById('cplabel-'+prefix);
-      // find chip — it's a sibling of the bar-wrap inside ld-cl-progress
-      const barWrap = barEl ? barEl.closest('.ld-cl-bar-track') : null;
+      const barEl   = document.getElementById('cpbar-'+prefix);
+      const lblEl   = document.getElementById('cplabel-'+prefix);
       const progress = barEl ? barEl.closest('.ld-cl-progress') : null;
       const chipEl  = progress ? progress.querySelector('.ld-cl-chip') : null;
       if (barEl){ barEl.style.width = pct+'%'; barEl.style.background = color; }
