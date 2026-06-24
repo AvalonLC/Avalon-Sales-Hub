@@ -1733,6 +1733,30 @@ async function intSaveClientIdAndConnect() {
   }
 }
 
+// ── intComposeToLead — called from Quick Actions "Compose Email" on a lead ─────
+// Pre-fills the Gmail compose modal with the lead's email address, or falls back
+// to the Communications tab compose bar on that lead.
+function intComposeToLead(toEmail, clientName) {
+  if (isGoogleConnected()) {
+    // Open the in-app Gmail compose modal pre-filled
+    if (typeof gwOpenCompose === 'function') {
+      // Navigate to Integrations and open compose
+      if (typeof show === 'function') show('integrations');
+      setTimeout(() => {
+        if (typeof gwSwitchTab === 'function') gwSwitchTab('gmail');
+        setTimeout(() => {
+          if (typeof gwOpenCompose === 'function') gwOpenCompose(toEmail, '');
+        }, 300);
+      }, 400);
+    }
+  } else {
+    // Not connected — open mailto: as fallback
+    const url = 'mailto:' + encodeURIComponent(toEmail) + (clientName ? '?body=Hi ' + encodeURIComponent(clientName) + ',' : '');
+    window.open(url, '_blank');
+  }
+}
+window.intComposeToLead = intComposeToLead;
+
 // Expose integrations as a view route
 window.integrations = integrations;
 window.intSaveClientIdAndConnect = intSaveClientIdAndConnect;

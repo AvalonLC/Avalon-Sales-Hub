@@ -2089,6 +2089,7 @@ function commsBoardHtml(oppId, opp){
       '<div class="comm-bubble">' +
         '<div class="comm-meta-row">' +
           '<span class="comm-type-badge" style="background:'+meta.color+'22;color:'+meta.color+';border-color:'+meta.color+'44">'+meta.icon+' '+meta.label+'</span>' +
+          (m.gmailSent ? '<span class="comm-gmail-badge">✅ Sent via Gmail</span>' : (m.type==='email'&&m.direction==='out' ? '<span class="comm-gmail-badge comm-gmail-local">📋 Logged locally</span>' : '')) +
           (m.subject ? '<span class="comm-subject">'+escapeHtml(m.subject)+'</span>' : '') +
           '<span class="comm-time">'+fmt(m.ts)+'</span>' +
           '<button class="comm-delete-btn" title="Delete" onclick="deleteComm(\''+m.id+'\',\''+oppId+'\')">×</button>' +
@@ -2200,6 +2201,30 @@ function wireCommsCompose(oppId){
   const preview    = document.getElementById('attachPreview');
   let pendingFiles = [];
 
+  // Inject a Gmail status banner above the compose bar (email type only)
+  function updateGmailBanner(type){
+    let banner = document.getElementById('gmailStatusBanner');
+    if(type !== 'email'){
+      if(banner) banner.remove();
+      return;
+    }
+    if(!banner){
+      banner = document.createElement('div');
+      banner.id = 'gmailStatusBanner';
+      const compose = document.getElementById('commsCompose');
+      if(compose) compose.insertBefore(banner, compose.firstChild);
+    }
+    const googleConnected = (typeof isGoogleConnected === 'function') && isGoogleConnected();
+    const fromEmail = (typeof getGoogleUserEmail === 'function') ? getGoogleUserEmail() : '';
+    if(googleConnected && fromEmail){
+      banner.style.cssText = 'padding:8px 14px;background:#10b98118;border:1px solid #10b98144;border-radius:8px;font-size:12px;color:#34d399;display:flex;align-items:center;gap:8px;margin-bottom:2px';
+      banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 5l5.5 3.5L12.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Emails will be sent from <strong style="margin-left:4px;color:#6ee7b7">' + escapeHtml(fromEmail) + '</strong> via Gmail &nbsp;<span style="opacity:.6;font-size:11px">— to lead\'s email address on file</span>';
+    } else {
+      banner.style.cssText = 'padding:8px 14px;background:#f59e0b18;border:1px solid #f59e0b44;border-radius:8px;font-size:12px;color:#fbbf24;display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap';
+      banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2l5.5 10H1.5L7 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7 6v3M7 10.5h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Google not connected — email will be <strong style="margin:0 4px">logged locally only</strong> and not actually sent. <button onclick="show(\'integrations\')" style="background:#f59e0b30;border:1px solid #f59e0b66;border-radius:6px;color:#fbbf24;padding:2px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">Connect Google →</button>';
+    }
+  }
+
   typeTabs.forEach(btn=>{
     btn.addEventListener('click',()=>{
       typeTabs.forEach(b=>b.classList.remove('ctype-active'));
@@ -2207,6 +2232,7 @@ function wireCommsCompose(oppId){
       currentType = btn.dataset.ctype;
       if(subjectRow) subjectRow.style.display = currentType==='email'?'block':'none';
       if(callDurRow) callDurRow.style.display = currentType==='call'?'block':'none';
+      updateGmailBanner(currentType);
       const body = document.getElementById('composeBody');
       if(body){
         const placeholders = {
@@ -2253,17 +2279,51 @@ function wireCommsCompose(oppId){
   window._commsCurrentType  = function(){ return currentType; };
 }
 
-window.sendComm = function(oppId){
+window.sendComm = async function(oppId){
   const body      = (document.getElementById('composeBody')||{}).value||'';
   const subject   = (document.getElementById('composeSubject')||{}).value||'';
   const callDur   = (document.getElementById('composeCallDur')||{}).value||'';
   const direction = (document.getElementById('composeDirection')||{}).value||'out';
   const type      = window._commsCurrentType ? window._commsCurrentType() : 'note';
   const files     = window._commsPendingFiles || [];
+  const opp       = state.opportunities.find(x=>x.id===oppId);
 
   if(!body.trim() && !files.length){
     showToast('Type a message or attach a file first');
     return;
+  }
+
+  // ── Gmail send: attempt real send when type=email, Google connected, and outbound ──
+  if(type === 'email' && direction === 'out'){
+    const googleConnected = (typeof isGoogleConnected === 'function') && isGoogleConnected();
+    if(!googleConnected){
+      // Warn the user — email will be logged only, not sent
+      showToast('⚠️ Google not connected — email logged locally only. Connect in Integrations to send real emails.');
+    } else {
+      // Require a To address and subject
+      const toAddr = opp ? opp.email : '';
+      if(!toAddr){
+        showToast('No email address on this lead — add one in the lead form first');
+        return;
+      }
+      if(!subject.trim()){
+        showToast('Add a subject line before sending');
+        return;
+      }
+      // Disable send button while sending
+      const sendBtn = document.querySelector('.comms-compose .primary-btn');
+      if(sendBtn){ sendBtn.textContent = 'Sending…'; sendBtn.disabled = true; }
+      try {
+        const htmlBody = body.replace(/\n/g,'<br>');
+        await gmailSendEmail({ to: toAddr, subject: subject.trim(), body: htmlBody });
+        showToast('Email sent via Gmail ✅ — from ' + (getGoogleUserEmail ? getGoogleUserEmail() : 'your Google account'));
+      } catch(e){
+        showToast('Gmail error: ' + (e.message||'Send failed') + ' — email logged locally.');
+        if(sendBtn){ sendBtn.textContent = 'Send / Log'; sendBtn.disabled = false; }
+        // Still log locally even if send fails
+      }
+      if(sendBtn){ sendBtn.textContent = 'Send / Log'; sendBtn.disabled = false; }
+    }
   }
 
   const msg = {
@@ -2276,14 +2336,15 @@ window.sendComm = function(oppId){
     callDuration: callDur.trim()||null,
     files: files.map(f=>({name:f.name, size:f.size, dataUrl:f.dataUrl})),
     ts: new Date().toISOString(),
-    sentBy: (window.getCurrentRep ? window.getCurrentRep() : null)?.name || 'Rep'
+    sentBy: (window.getCurrentRep ? window.getCurrentRep() : null)?.name || 'Rep',
+    // Track whether this was actually sent via Gmail
+    gmailSent: (type==='email' && direction==='out' && typeof isGoogleConnected==='function' && isGoogleConnected() && !!(opp&&opp.email) && !!subject.trim())
   };
 
   if(!state.communications) state.communications = [];
   state.communications.push(msg);
 
-  // Also push a mirror note into opp.notes for timeline visibility
-  const opp = state.opportunities.find(x=>x.id===oppId);
+  // Mirror a short note into the lead's activity timeline
   if(opp){
     const notePrefix = { sms:'[SMS]', email:'[Email]', call:'[Call]', note:'[Note]', proposal:'[Proposal]' }[type]||'[Comm]';
     const shortBody  = (subject ? subject+': ' : '') + (body||'').slice(0,120);
@@ -2295,7 +2356,7 @@ window.sendComm = function(oppId){
   saveState();
 
   const typeLabels = { sms:'SMS sent', email:'Email logged', call:'Call logged', note:'Note saved', proposal:'Proposal logged' };
-  showToast((typeLabels[type]||'Logged') + (files.length?' + '+files.length+' file(s)':''));
+  if(type !== 'email') showToast((typeLabels[type]||'Logged') + (files.length?' + '+files.length+' file(s)':''));
 
   window._commsPendingFiles = [];
   window._leadTab = 'comms';

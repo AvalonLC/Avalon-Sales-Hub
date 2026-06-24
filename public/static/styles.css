@@ -38,6 +38,8 @@
 .comm-file-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .comm-file-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:#1e293b;border:1px solid #334155;border-radius:8px;font-size:11px;color:#94a3b8;max-width:180px;overflow:hidden}
 .comm-file-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.comm-gmail-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#10b98118;color:#34d399;border:1px solid #10b98140;white-space:nowrap}
+.comm-gmail-local{background:#f59e0b18;color:#fbbf24;border-color:#f59e0b40}
 
 /* ── Compose Bar ──────────────────────────────────────────────── */
 .comms-compose{border-top:1px solid #1e293b;background:#0d1424;padding:14px 16px;flex-shrink:0;display:flex;flex-direction:column;gap:10px}
