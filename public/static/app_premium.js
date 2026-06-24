@@ -35,9 +35,9 @@ const NAV_PERMS_KEY = 'avalonNavPermissions';
 
 // Default permissions by role. Tyler can override from Settings.
 const DEFAULT_NAV_PERMS = {
-  admin: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','revenueAdmin','integrations','userManagement','settings'],
-  office_manager: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings'],
-  rep: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','integrations','settings']
+  admin: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','revenueAdmin','integrations','userManagement','settings','ai'],
+  office_manager: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings','ai'],
+  rep: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','integrations','settings','ai']
 };
 
 function loadNavPerms() {
@@ -132,7 +132,7 @@ function show(viewName='today', param){
   // ── Permission gate (admin-configurable) ─────────────────
   if (viewName !== 'settings' && !canViewTab(viewName)) {
     const _rep = window.getCurrentRep ? window.getCurrentRep() : null;
-    const _viewLabels = {today:'Today',myDashboard:'My Dashboard',pipeline:'Pipeline',lead:'Add Lead',clients:'Clients & Properties',process:'Sales Process',forms:'Forms & Checklists',scripts:'Scripts',templates:'Email Templates',objections:'Objection Handling',calculator:'Pricing Tools',academy:'Sales Academy',manager:'Manager Tools',revenueAdmin:'Financial Data Hub',integrations:'Integrations',userManagement:'User Management',settings:'Settings'};
+    const _viewLabels = {today:'Today',myDashboard:'My Dashboard',pipeline:'Pipeline',lead:'Add Lead',clients:'Clients & Properties',process:'Sales Process',forms:'Forms & Checklists',scripts:'Scripts',templates:'Email Templates',objections:'Objection Handling',calculator:'Pricing Tools',academy:'Sales Academy',manager:'Manager Tools',revenueAdmin:'Financial Data Hub',integrations:'Integrations',userManagement:'User Management',settings:'Settings',ai:'AI Sales Assistant',ai:'AI Sales Assistant',ai:'AI Sales Assistant'};
     view.innerHTML = `<div style="text-align:center;padding:64px 24px;margin-top:40px">
       <div style="font-size:32px;margin-bottom:18px;color:#64748b;font-weight:300;letter-spacing:-2px">&#x2715;</div>
       <h2 style="color:#f87171;margin-bottom:10px">${_viewLabels[viewName] || viewName} — Access Restricted</h2>
@@ -153,7 +153,7 @@ function show(viewName='today', param){
   const repRoute = (typeof repDashboard === 'function') ? {myDashboard: repDashboard} : {};
   const revenueRoute = (typeof revenueAdmin === 'function') ? {revenueAdmin} : {};
   const umRoute = (typeof userManagement === 'function') ? {userManagement} : {};
-  const routes = {today, pipeline, lead, clients, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute, ...repRoute, ...revenueRoute, ...umRoute};
+  const routes = {today, pipeline, lead, clients, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute, ...repRoute, ...revenueRoute, ...umRoute, ai};
   (routes[viewName] || today)(param);
   window.scrollTo({top:0, behavior:'smooth'});
   if (typeof window._avalonState !== 'undefined') window._avalonState = state;
@@ -2168,124 +2168,15 @@ function renderNotes(oppId) {
   return `<ul class="timeline">${items}</ul>`;
 }
 
-function process(stageId){
-  if(stageId){ return renderStage(data.stages.find(s=>s.id===Number(stageId))); }
-  const sp = data.salesProcess;
-  const stepColors = ['#00d4ff','#4ade80','#f59e0b','#ef4444','#a855f7','#ec4899'];
-  view.innerHTML = `
-    <div class="eyebrow">Operating System</div>
-    <h1>Avalon Sales Process</h1>
-    <p class="lede">${escapeHtml(sp.subtitle)}</p>
-    <h2 class="mt" style="font-size:1rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">6-Step Avalon Method</h2>
-    <div class="grid grid-3 mt" style="gap:12px">
-      ${sp.steps.map((s,i)=>`<article class="card" style="border-top:3px solid ${stepColors[i]};padding:16px">
-        <div style="font-size:2rem;font-weight:900;color:${stepColors[i]};line-height:1">Step ${s.num}</div>
-        <h3 style="margin:6px 0 4px">${escapeHtml(s.title)}</h3>
-        <p class="muted small-text">${escapeHtml(s.tagline)}</p>
-        <p style="font-size:.85rem;margin-top:8px">${escapeHtml(s.description.slice(0,120))}…</p>
-      </article>`).join('')}
-    </div>
-    <h2 class="mt" style="font-size:1rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">12-Stage Operating Procedures</h2>
-    <p class="lede" style="font-size:.9rem">Each stage has a purpose, owner, required artifact, stage gate, questions, and red flags. Tap any stage to open the full procedure.</p>
-    <div class="grid grid-3 mt">${data.stages.map(s=>{
-      const stageOpps = (state.opportunities||[]).filter(o => o.status === s.title && !['Sold / Activation','Closed Lost'].includes(o.status));
-      const cnt = stageOpps.length;
-      return `<article class="card clickable" onclick="show('process',${s.id})">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;justify-content:space-between">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="stage-number">${s.id}</div>
-            ${s.processStep ? `<span class="badge" style="font-size:.7rem;background:rgba(0,212,255,.12);color:#00d4ff">${escapeHtml(s.processStep)}</span>` : ''}
-          </div>
-          ${cnt > 0 ? `<span class="live-count-badge">${cnt}</span>` : '<span class="live-count-badge empty">0</span>'}
-        </div>
-        <h3>${escapeHtml(s.title)}</h3>
-        <p style="font-size:.85rem">${escapeHtml(s.purpose)}</p>
-        <p class="meta"><strong>Owner:</strong> ${escapeHtml(s.owner)}</p>
-      </article>`;
-    }).join('')}</div>
-  `;
-}
-function renderStage(s){
-  const stageChecklist = (window.AVALON_DATA.checklists||[]).find(c=>c.stage===s.id);
-  view.innerHTML = `
-    <button class="secondary-btn" onclick="show('process')">← Back to all stages</button>
-    <h1><span class="stage-number">${s.id}</span> ${escapeHtml(s.title)}</h1>
-    ${s.processStep ? `<div class="eyebrow">${escapeHtml(s.processStep)}</div>` : ''}
-    <p class="lede">${escapeHtml(s.purpose)}</p>
-    <div class="grid grid-2 mt">
-      <div class="card"><h3>Owner</h3><p>${escapeHtml(s.owner)}</p></div>
-      <div class="card"><h3>Gate to Next Stage</h3><p>${escapeHtml(s.gate)}</p></div>
-    </div>
-    <div class="grid grid-2 mt">
-      <div class="card"><h3>Required Actions</h3>${list(s.actions)}${s.approvalMatrix ? `<h4 style="margin-top:12px">Approval Authority</h4><table style="width:100%;font-size:.83rem;border-collapse:collapse">${s.approvalMatrix.map(a=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 8px 4px 0;color:var(--muted)">${escapeHtml(a.range)}</td><td style="padding:4px 0">${escapeHtml(a.approval)}</td></tr>`).join('')}</table>` : ''}</div>
-      <div class="card">
-        <h3>Required Artifact</h3><p>${escapeHtml(s.artifact)}</p>
-        ${s.questions && s.questions.length ? `<h3 style="margin-top:12px">Questions to Use</h3>${list(s.questions)}` : ''}
-        ${s.followUpCadence ? `<h3 style="margin-top:12px">Follow-Up Cadence</h3>${s.followUpCadence.map(f=>`<div style="display:flex;gap:8px;margin:4px 0;font-size:.83rem"><strong style="color:var(--accent);min-width:50px">${escapeHtml(f.day)}</strong><span>${escapeHtml(f.action)}</span></div>`).join('')}` : ''}
-        ${s.objectionFramework ? `<h3 style="margin-top:12px">Objection Framework</h3>${list(s.objectionFramework)}` : ''}
-        ${s.proposalStructure ? `<h3 style="margin-top:12px">Proposal Structure</h3>${list(s.proposalStructure)}` : ''}
-      </div>
-    </div>
-    <div class="card danger mt"><h3>Red Flags — Do Not Advance Until Resolved</h3>${list(s.redFlags)}</div>
-    ${stageChecklist ? `<div class="card mt"><h3>${escapeHtml(stageChecklist.title)}</h3>${renderChecklist(stageChecklist, true)}</div>` : ''}
-    ${(()=>{
-      const atStage = (state.opportunities||[]).filter(o => o.status === s.title && !['Sold / Activation','Closed Lost'].includes(o.status));
-      if (!atStage.length) return '';
-      return `<div class="card mt" style="border-left:3px solid #00d4ff"><h3 style="color:#00d4ff;margin-bottom:10px">${atStage.length} Lead${atStage.length>1?'s':''} at This Stage</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">${atStage.slice(0,5).map(o=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#0f172a;border-radius:8px;cursor:pointer" onclick="show('pipeline','${o.id}')">
-          <div>
-            <div style="font-weight:600;color:#e2e8f0">${escapeHtml(o.client||'—')}</div>
-            <div style="font-size:11px;color:#64748b">${o.jobValue?money(Number(o.jobValue)):''} ${o.nextFollowUp?'· Follow-up: '+prettyDate(o.nextFollowUp):''}</div>
-          </div>
-          <span style="font-size:11px;color:#00d4ff">→</span>
-        </div>`).join('')}
-        ${atStage.length>5?`<div style="font-size:12px;color:#64748b;text-align:center">+${atStage.length-5} more · <span onclick="window._pipelineStatusFilter=null;show('pipeline')" style="color:#00d4ff;cursor:pointer">View all in pipeline →</span></div>`:''}
-      </div>`;
-    })()}
-    <div class="footer-actions mt">
-      ${s.id>1?`<button class="secondary-btn" onclick="show('process',${s.id-1})">← Previous Stage</button>`:''}
-      ${s.id<12?`<button class="primary-btn" onclick="show('process',${s.id+1})">Next Stage →</button>`:''}
-    </div>`;
-  wireChecks();
-}
+// ═══════════════════════════════════════════════════════════════════════════
+// Sales Toolkit — Sales Process, Forms, Scripts, Templates, Objections,
+//                 Pricing Tools, AI Sales Assistant
+// ═══════════════════════════════════════════════════════════════════════════
 
-function forms(formId){
-  if(formId){ const f = data.forms.find(x=>x.id===formId); if(f) return renderFormTool(f); }
-  const stageChecklists = (data.checklists||[]).filter(c=>c.stage>0);
-  const utilChecklists = (data.checklists||[]).filter(c=>c.stage===0);
-  view.innerHTML = `<div class="eyebrow">Field Tools</div><h1>Forms & Checklists</h1><p class="lede">These are the reusable day-to-day tools your team should open before calls, site visits, proposal reviews, follow-up, sold-job activation, and closeout.</p>
-  <div class="grid grid-3 mt">${data.forms.map(f=>{
-    const stageNum = f.stage ? ` · Stage ${f.stage}` : '';
-    return `<article class="card clickable" onclick="show('forms','${f.id}')"><span class="badge">Tool${stageNum}</span><h3>${escapeHtml(f.title)}</h3><p style="font-size:.85rem">${f.fields.slice(0,3).map(x=>x.label).join(', ')}…</p></article>`;
-  }).join('')}</div>
-  <h2 class="mt">Stage Checklists</h2>
-  <div class="grid grid-2">${stageChecklists.map(c=>`<article class="card clickable" style="border-left:3px solid #00d4ff;transition:border-color .2s" onclick="show('forms','${c.id}')"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">${escapeHtml(c.title)}</h3><span style="color:#00d4ff;font-size:1.1rem;font-weight:700">→</span></div><p class="muted small-text">Stage ${c.stage}</p>${renderChecklist(c,true)}</article>`).join('')}</div>
-  <h2 class="mt">Daily & Weekly Tools</h2>
-  <div class="grid grid-2">${utilChecklists.map(c=>`<article class="card clickable" style="border-left:3px solid #4ade80;transition:border-color .2s" onclick="show('forms','${c.id}')"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">${escapeHtml(c.title)}</h3><span style="color:#4ade80;font-size:1.1rem;font-weight:700">→</span></div>${renderChecklist(c,true)}</article>`).join('')}</div>`;
-  wireChecks();
-}
-function renderFormTool(f){
-  const stageChecklist = (data.checklists||[]).find(c=>c.stage===f.stage);
-  const fieldLabels = f.fields.map(x=>x.label);
-  const _fieldCopyStr = fieldLabels.map(x=>'- '+x+':').join('\n');
-  const _noteCopyStr  = fieldLabels.map(x=>x+':').join('\n\n');
-  const _noteHtml     = nl2br(fieldLabels.map(x=>x+':').join('\n\n'));
-  const _scTitle      = stageChecklist ? escapeHtml(stageChecklist.title) : 'Stage Checklist';
-  const _scHtml       = stageChecklist ? renderChecklist(stageChecklist, true) : '<p class="muted">No checklist for this stage.</p>';
-  view.innerHTML =
-    '<button class="secondary-btn" onclick="show(\'forms\')">← Back to Forms</button>'
-    +'<div class="eyebrow">Daily Tool · Stage '+(f.stage||'—')+'</div>'
-    +'<h1>'+escapeHtml(f.title)+'</h1>'
-    +'<div class="grid grid-2 mt">'
-    +'<section class="card"><h2>Fields to Capture</h2>'+list(fieldLabels)
-    +'<button class="secondary-btn mt8" onclick="copyText(\''+ escapeForJs(_fieldCopyStr) +'\',this)">Copy Field Template</button></section>'
-    +'<section class="card"><h2>'+_scTitle+'</h2>'+_scHtml+'</section></div>'
-    +'<section class="card mt"><h2>Copy-Ready Working Note</h2>'
-    +'<div class="script-box">'+_noteHtml+'</div>'
-    +'<button class="primary-btn mt8" onclick="copyText(\''+ escapeForJs(_noteCopyStr) +'\')">Copy Note Template</button></section>';
-  wireChecks();
-}
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 function escapeForJs(str){ return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n'); }
+function money(n){ return n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}); }
+
 function renderChecklist(c, persist=false, scopeId=''){
   const prefix = scopeId ? `check-${c.id}-${scopeId}` : `check-${c.id}`;
   const items = c.items.map((item,i)=>{
@@ -2296,93 +2187,657 @@ function renderChecklist(c, persist=false, scopeId=''){
   const total = c.items.length;
   const done  = persist ? c.items.filter((_,i)=>localStorage.getItem(`${prefix}-${i}`)==='1').length : 0;
   const pct   = total ? Math.round((done/total)*100) : 0;
-  const barColor = pct===100?'#4ade80':pct>=50?'#fbbf24':'#60a5fa';
-  const progressBar = persist ? `<div class="checklist-progress"><div class="cp-bar" style="width:${pct}%;background:${barColor}"></div></div><div class="cp-label">${done}/${total} complete</div>` : '';
-  return `${progressBar}<div class="checklist">${items.join('')}</div>`;
+  const barColor = pct===100?'#10b981':pct>=50?'#f59e0b':'#3b82f6';
+  const progressBar = persist ? `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="flex:1;height:7px;background:var(--line,#e2e8f0);border-radius:4px;overflow:hidden">
+        <div id="cpbar-${prefix}" style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width .35s ease"></div>
+      </div>
+      <span id="cplabel-${prefix}" style="font-size:.72rem;font-weight:700;color:${barColor};white-space:nowrap">${done}/${total} complete</span>
+    </div>` : '';
+  return `${progressBar}<div class="checklist" id="clist-${prefix}">${items.join('')}</div>`;
 }
-function wireChecks(){ document.querySelectorAll('.check-item input[data-key]').forEach(cb=>{ cb.checked = localStorage.getItem(cb.dataset.key)==='true'; cb.addEventListener('change',()=>localStorage.setItem(cb.dataset.key, cb.checked)); }); }
 
-// ── T31: Lead Picker Modal (shared by Scripts, Templates, Objections, Pricing) ──
-function openLeadPicker(onSelect){
-  const open = state.opportunities.filter(o => !['Sold / Activation','Closed Lost'].includes(o.status));
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.innerHTML = `
-    <div class="modal" style="max-width:480px">
-      <h3 style="margin:0 0 12px">Select a Lead</h3>
-      <input id="lpSearch" type="text" placeholder="Search by client or project..."
-        style="width:100%;padding:8px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;margin-bottom:12px;box-sizing:border-box">
-      <div id="lpList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
-      <button class="secondary-btn mt8" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-    </div>`;
-  document.body.appendChild(modal);
-  const listEl = modal.querySelector('#lpList');
-  const searchEl = modal.querySelector('#lpSearch');
-  function renderList(filter=''){
-    const filtered = open.filter(o => !filter ||
-      (o.client||'').toLowerCase().includes(filter.toLowerCase()) ||
-      (o.project||'').toLowerCase().includes(filter.toLowerCase())
-    );
-    listEl.innerHTML = filtered.slice(0,20).map(o =>
-      `<button class="mini-row" style="text-align:left;width:100%"
-        onclick="document.querySelector('.modal-overlay').remove()">
-        <strong>${escapeHtml(o.client||'Unnamed')}</strong>
-        <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px;padding:1px 6px">${escapeHtml(o.status||'')}</span>
-        <em>${escapeHtml(o.project||'')}</em>
-      </button>`
-    ).join('') || '<p class="muted" style="padding:12px">No matching leads.</p>';
-    // Re-wire clicks after render
-    listEl.querySelectorAll('.mini-row').forEach((btn, idx) => {
-      btn.addEventListener('click', () => {
-        const opp = filtered[idx];
-        if(opp) onSelect(opp.id);
-      });
+function wireChecks(){
+  document.querySelectorAll('.check-item input[data-key]').forEach(cb=>{
+    const key = cb.dataset.key;
+    cb.checked = localStorage.getItem(key) === '1';
+    cb.addEventListener('change', ()=>{
+      localStorage.setItem(key, cb.checked ? '1' : '0');
+      // Live-update progress bar for this checklist
+      const prefixMatch = key.match(/^(.+)-\d+$/);
+      if (!prefixMatch) return;
+      const prefix = prefixMatch[1];
+      const allBoxes = document.querySelectorAll(`input[data-key^="${prefix}-"]`);
+      if (!allBoxes.length) return;
+      const total = allBoxes.length;
+      const done  = [...allBoxes].filter(x=>x.checked).length;
+      const pct   = Math.round((done/total)*100);
+      const color = pct===100?'#10b981':pct>=50?'#f59e0b':'#3b82f6';
+      const barEl  = document.getElementById('cpbar-'+prefix);
+      const lblEl  = document.getElementById('cplabel-'+prefix);
+      if (barEl){ barEl.style.width = pct+'%'; barEl.style.background = color; }
+      if (lblEl){ lblEl.textContent = done+'/'+total+' complete'; lblEl.style.color = color; }
     });
+  });
+}
+
+// ─── Sales Process ────────────────────────────────────────────────────────────
+function process(stageId){
+  const sp = data.salesProcess;
+  if(stageId){ const s = data.stages.find(x=>x.id===Number(stageId)); if(s) return renderStage(s); }
+  const stepColors = ['#6366f1','#10b981','#f59e0b','#ef4444','#a855f7','#ec4899'];
+  view.innerHTML = `
+<div class="eyebrow">Operating System</div>
+<h1 style="color:var(--ink)">Avalon Sales Process</h1>
+<p class="lede">${escapeHtml(sp.subtitle)}</p>
+
+<div style="display:flex;align-items:center;gap:10px;margin:24px 0 8px">
+  <h2 style="margin:0;font-size:.85rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">6-Step Avalon Method</h2>
+  <div style="flex:1;height:1px;background:var(--line)"></div>
+  <span style="font-size:.75rem;color:var(--muted)">Click any step to explore</span>
+</div>
+
+<div class="grid grid-3" style="gap:12px">
+  ${sp.steps.map((s,i)=>`
+  <article class="card" style="border-top:3px solid ${stepColors[i]};padding:18px;cursor:pointer;transition:transform .15s,box-shadow .15s"
+    onclick="processShowStep(${i})"
+    onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'"
+    onmouseleave="this.style.transform='';this.style.boxShadow=''">
+    <div style="font-size:2rem;font-weight:900;color:${stepColors[i]};line-height:1;margin-bottom:6px">Step ${s.num}</div>
+    <h3 style="margin:0 0 4px;color:var(--ink)">${escapeHtml(s.title)}</h3>
+    <p style="font-size:.8rem;color:var(--muted);margin:0 0 10px">${escapeHtml(s.tagline)}</p>
+    <p style="font-size:.85rem;margin:0;color:var(--ink)">${escapeHtml((s.description||'').slice(0,110))}…</p>
+    <div style="margin-top:10px;font-size:.75rem;font-weight:600;color:${stepColors[i]}">Explore Step ${s.num} →</div>
+  </article>`).join('')}
+</div>
+
+<!-- Step detail panel (hidden until clicked) -->
+<div id="stepDetailPanel" style="display:none;margin-top:20px"></div>
+
+<div style="display:flex;align-items:center;gap:10px;margin:28px 0 8px">
+  <h2 style="margin:0;font-size:.85rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">12-Stage Operating Procedures</h2>
+  <div style="flex:1;height:1px;background:var(--line)"></div>
+</div>
+<p style="font-size:.88rem;color:var(--muted);margin:0 0 16px">Each stage has a purpose, owner, required artifact, stage gate, questions, and red flags. Tap any stage to open the full procedure.</p>
+
+<div class="grid grid-3" style="gap:12px">
+${data.stages.map(s=>{
+  const stageOpps = (state.opportunities||[]).filter(o=>o.status===s.title&&!['Sold / Activation','Closed Lost'].includes(o.status));
+  const cnt = stageOpps.length;
+  return `<article class="card clickable" onclick="show('process',${s.id})" style="transition:transform .15s,box-shadow .15s"
+    onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'"
+    onmouseleave="this.style.transform='';this.style.boxShadow=''">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="stage-number">${s.id}</div>
+        ${s.processStep ? `<span class="badge" style="font-size:.68rem">${escapeHtml(s.processStep)}</span>` : ''}
+      </div>
+      ${cnt > 0 ? `<span class="live-count-badge">${cnt}</span>` : '<span class="live-count-badge empty">0</span>'}
+    </div>
+    <h3 style="color:var(--ink)">${escapeHtml(s.title)}</h3>
+    <p style="font-size:.85rem;color:var(--muted)">${escapeHtml(s.purpose)}</p>
+    <p style="font-size:.78rem;color:var(--muted);margin:0"><strong style="color:var(--ink)">Owner:</strong> ${escapeHtml(s.owner)}</p>
+  </article>`;
+}).join('')}
+</div>`;
+
+  const stepColors2 = ['#6366f1','#10b981','#f59e0b','#ef4444','#a855f7','#ec4899'];
+  window.processShowStep = function(idx){
+    const s = sp.steps[idx];
+    const panel = document.getElementById('stepDetailPanel');
+    if (!s || !panel) return;
+    if (panel._idx === idx && panel.style.display !== 'none') {
+      panel.style.display = 'none'; panel._idx = null; return;
+    }
+    panel._idx = idx;
+    const color = stepColors2[idx];
+    const tappoHtml = s.tappo?.length ? `
+      <div style="margin-top:16px">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color};margin-bottom:8px">T.A.P.P.O. Components</div>
+        ${s.tappo.map(t=>`<div style="padding:10px 12px;background:${color}0d;border-left:3px solid ${color};border-radius:0 8px 8px 0;margin-bottom:6px">
+          <strong style="color:${color}">${escapeHtml(t.letter||'')} — ${escapeHtml(t.title||t.name||'')}</strong>
+          ${t.description ? `<p style="font-size:.83rem;margin:4px 0 0;color:var(--muted)">${escapeHtml(t.description)}</p>` : ''}
+        </div>`).join('')}
+      </div>` : '';
+    const nlpHtml = s.nlpTips?.length ? `
+      <div style="margin-top:16px">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color};margin-bottom:8px">Language &amp; NLP Tips</div>
+        ${s.nlpTips.map(t=>`<div style="font-size:.84rem;padding:6px 10px;background:${color}08;border-radius:6px;margin-bottom:4px;color:var(--ink)">→ ${escapeHtml(t)}</div>`).join('')}
+      </div>` : '';
+    const qHtml = s.cbrQuestions?.length ? `
+      <div style="margin-top:16px">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color};margin-bottom:8px">Discovery Questions</div>
+        ${s.cbrQuestions.map(q=>`<div style="font-size:.84rem;padding:6px 10px;background:${color}08;border-radius:6px;margin-bottom:4px;color:var(--ink)">"${escapeHtml(q)}"</div>`).join('')}
+      </div>` : '';
+    panel.innerHTML = `
+      <div class="card" style="border-top:3px solid ${color};animation:fadeInUp .2s ease">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div>
+            <div style="font-size:2rem;font-weight:900;color:${color};line-height:1">Step ${s.num}</div>
+            <h2 style="margin:4px 0 2px;color:var(--ink)">${escapeHtml(s.title)}</h2>
+            <p style="font-size:.84rem;color:var(--muted);margin:0">${escapeHtml(s.tagline)}</p>
+          </div>
+          <button onclick="document.getElementById('stepDetailPanel').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.2rem;padding:4px 8px" title="Close">✕</button>
+        </div>
+        <p style="font-size:.9rem;color:var(--ink);line-height:1.6">${escapeHtml(s.description||'')}</p>
+        ${tappoHtml}${nlpHtml}${qHtml}
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="primary-btn" onclick="show('process',${idx+1})" style="font-size:.82rem">Go to Stage ${idx+1} →</button>
+          <button class="secondary-btn" onclick="show('scripts')" style="font-size:.82rem">Scripts for this step</button>
+          <button class="secondary-btn" onclick="show('ai')" style="font-size:.82rem">✦ AI Coach</button>
+        </div>
+      </div>`;
+    panel.style.display = 'block';
+    panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  };
+}
+
+function renderStage(s){
+  const stageChecklist = (window.AVALON_DATA.checklists||[]).find(c=>c.stage===s.id);
+  view.innerHTML = `
+<button class="secondary-btn" onclick="show('process')">← Back to all stages</button>
+<div style="display:flex;align-items:center;gap:12px;margin:16px 0 4px">
+  <div class="stage-number" style="font-size:1.1rem;width:36px;height:36px">${s.id}</div>
+  <div>
+    <h1 style="margin:0;color:var(--ink)">${escapeHtml(s.title)}</h1>
+    ${s.processStep ? `<div class="eyebrow" style="margin:2px 0 0">${escapeHtml(s.processStep)}</div>` : ''}
+  </div>
+</div>
+<p class="lede">${escapeHtml(s.purpose)}</p>
+<div class="grid grid-2 mt">
+  <div class="card"><h3>Owner</h3><p style="color:var(--ink)">${escapeHtml(s.owner)}</p></div>
+  <div class="card"><h3>Gate to Next Stage</h3><p style="color:var(--ink)">${escapeHtml(s.gate)}</p></div>
+</div>
+<div class="grid grid-2 mt">
+  <div class="card"><h3>Required Actions</h3>${list(s.actions)}${s.approvalMatrix?`<h4 style="margin-top:12px">Approval Authority</h4><table style="width:100%;font-size:.83rem;border-collapse:collapse">${s.approvalMatrix.map(a=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 8px 4px 0;color:var(--muted)">${escapeHtml(a.range)}</td><td style="padding:4px 0;color:var(--ink)">${escapeHtml(a.approval)}</td></tr>`).join('')}</table>`:''}</div>
+  <div class="card">
+    <h3>Required Artifact</h3><p style="color:var(--ink)">${escapeHtml(s.artifact)}</p>
+    ${s.questions?.length?`<h3 style="margin-top:12px">Questions to Use</h3>${list(s.questions)}`:''}
+    ${s.followUpCadence?`<h3 style="margin-top:12px">Follow-Up Cadence</h3>${s.followUpCadence.map(f=>`<div style="display:flex;gap:8px;margin:4px 0;font-size:.83rem"><strong style="color:var(--blue);min-width:50px">${escapeHtml(f.day)}</strong><span style="color:var(--ink)">${escapeHtml(f.action)}</span></div>`).join('')}`:''}
+    ${s.objectionFramework?`<h3 style="margin-top:12px">Objection Framework</h3>${list(s.objectionFramework)}`:''}
+    ${s.proposalStructure?`<h3 style="margin-top:12px">Proposal Structure</h3>${list(s.proposalStructure)}`:''}
+  </div>
+</div>
+<div class="card danger mt"><h3>Red Flags — Do Not Advance Until Resolved</h3>${list(s.redFlags)}</div>
+${stageChecklist?`<div class="card mt"><h3>${escapeHtml(stageChecklist.title)}</h3><p style="font-size:.8rem;color:var(--muted);margin-bottom:12px">Check off items as you work through this stage. Progress saves automatically.</p>${renderChecklist(stageChecklist, true)}</div>`:''}
+${(()=>{
+  const atStage=(state.opportunities||[]).filter(o=>o.status===s.title&&!['Sold / Activation','Closed Lost'].includes(o.status));
+  if(!atStage.length) return '';
+  return `<div class="card mt" style="border-left:3px solid var(--blue)"><h3 style="color:var(--blue);margin-bottom:10px">${atStage.length} Lead${atStage.length>1?'s':''} at This Stage</h3>
+    <div style="display:flex;flex-direction:column;gap:6px">${atStage.slice(0,5).map(o=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;cursor:pointer;transition:background .15s" onclick="show('pipeline','${o.id}')" onmouseenter="this.style.background='var(--line)'" onmouseleave="this.style.background='var(--surface)'">
+      <div><div style="font-weight:600;color:var(--ink)">${escapeHtml(o.client||'—')}</div><div style="font-size:.75rem;color:var(--muted)">${o.jobValue?money(Number(o.jobValue)):''} ${o.nextFollowUp?'· Follow-up: '+prettyDate(o.nextFollowUp):''}</div></div>
+      <span style="font-size:.8rem;color:var(--blue)">→</span>
+    </div>`).join('')}
+    ${atStage.length>5?`<div style="font-size:.78rem;color:var(--muted);text-align:center">+${atStage.length-5} more · <span onclick="show('pipeline')" style="color:var(--blue);cursor:pointer">View all →</span></div>`:''}
+    </div></div>`;
+})()}
+<div class="footer-actions mt">
+  ${s.id>1?`<button class="secondary-btn" onclick="show('process',${s.id-1})">← Previous Stage</button>`:''}
+  ${s.id<12?`<button class="primary-btn" onclick="show('process',${s.id+1})">Next Stage →</button>`:''}
+</div>`;
+  wireChecks();
+}
+
+// ─── Forms & Checklists ───────────────────────────────────────────────────────
+function forms(formId){
+  if(formId){ const f=data.forms.find(x=>x.id===formId); if(f) return renderFormTool(f); const c=data.checklists.find(x=>x.id===formId); if(c) return renderChecklistPage(c); }
+  const stageChecklists = (data.checklists||[]).filter(c=>c.stage>0);
+  const utilChecklists  = (data.checklists||[]).filter(c=>c.stage===0);
+
+  function formProgress(f){
+    const sc = (data.checklists||[]).find(c=>c.stage===f.stage);
+    if(!sc) return null;
+    const prefix = `check-${sc.id}`;
+    const done = sc.items.filter((_,i)=>localStorage.getItem(`${prefix}-${i}`)==='1').length;
+    return { done, total: sc.items.length, pct: sc.items.length ? Math.round((done/sc.items.length)*100) : 0 };
   }
-  renderList();
-  searchEl.addEventListener('input', e => renderList(e.target.value));
-  searchEl.focus();
-}
-window.openLeadPicker = openLeadPicker;
+  function checklistProgress(c){
+    const prefix = `check-${c.id}`;
+    const done = c.items.filter((_,i)=>localStorage.getItem(`${prefix}-${i}`)==='1').length;
+    return { done, total: c.items.length, pct: c.items.length ? Math.round((done/c.items.length)*100) : 0 };
+  }
 
-// ── T39: Merge template fields from a live lead ──
-function mergeTemplate(body, opp){
-  const rep = (window.REPS||[]).find(r=>r.id===opp.repId) || { name: 'Your Name' };
-  const followDate = opp.nextFollowUp ? prettyDate(opp.nextFollowUp) : 'a time that works for you';
-  return body
-    .replace(/\[Name\]/gi, opp.client||'[Name]')
-    .replace(/\[First Name\]/gi, (opp.client||'').split(' ')[0]||'[Name]')
-    .replace(/\[Your Name\]/gi, rep.name)
-    .replace(/\[service lines?\]/gi, opp.serviceLine||opp.projectCategory||'landscaping services')
-    .replace(/\[project\]/gi, opp.project||'your project')
-    .replace(/\[date\]/gi, followDate)
-    .replace(/\[address\]/gi, opp.address||'[address]')
-    .replace(/\[job value\]/gi, opp.jobValue ? money(Number(opp.jobValue)) : '[amount]');
-}
-window.mergeTemplate = mergeTemplate;
+  view.innerHTML = `
+<div class="eyebrow">Field Tools</div>
+<h1 style="color:var(--ink)">Forms &amp; Checklists</h1>
+<p class="lede">Your reusable day-to-day tools. Open before calls, site visits, proposal reviews, follow-up, sold-job activation, and closeout. Checkboxes save your progress automatically.</p>
 
+<div style="display:flex;align-items:center;gap:10px;margin:24px 0 8px">
+  <h2 style="margin:0;font-size:.85rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Daily Field Tools</h2>
+  <div style="flex:1;height:1px;background:var(--line)"></div>
+</div>
+<div class="grid grid-3" style="gap:12px">
+${data.forms.map(f=>{
+  const prog = formProgress(f);
+  const stageNum = f.stage ? ` · Stage ${f.stage}` : '';
+  const barColor = prog ? (prog.pct===100?'#10b981':prog.pct>=50?'#f59e0b':'#3b82f6') : '#3b82f6';
+  return `<article class="card clickable" onclick="show('forms','${f.id}')" style="transition:transform .15s,box-shadow .15s"
+    onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'"
+    onmouseleave="this.style.transform='';this.style.boxShadow=''">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+      <div>
+        <span class="badge" style="font-size:.68rem;margin-bottom:6px;display:inline-block">Tool${stageNum}</span>
+        <h3 style="margin:0;color:var(--ink)">${escapeHtml(f.title)}</h3>
+      </div>
+      ${prog ? `<div style="text-align:center;flex-shrink:0;min-width:42px">
+        <div style="font-size:1.1rem;font-weight:700;color:${barColor}">${prog.pct}%</div>
+        <div style="font-size:.6rem;color:var(--muted)">done</div>
+      </div>` : ''}
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin:0 0 10px">${f.fields.slice(0,3).map(x=>x.label).join(', ')}…</p>
+    ${prog ? `<div style="height:5px;background:var(--line);border-radius:4px;overflow:hidden">
+      <div style="height:100%;width:${prog.pct}%;background:${barColor};border-radius:4px;transition:width .4s"></div>
+    </div>
+    <div style="font-size:.7rem;color:var(--muted);margin-top:4px">${prog.done}/${prog.total} checklist items</div>` : ''}
+  </article>`;
+}).join('')}
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;margin:28px 0 8px">
+  <h2 style="margin:0;font-size:.85rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Stage Checklists</h2>
+  <div style="flex:1;height:1px;background:var(--line)"></div>
+  <span style="font-size:.72rem;color:var(--muted)">Progress saves per checklist</span>
+</div>
+<div class="grid grid-2" style="gap:12px">
+${stageChecklists.map(c=>{
+  const p = checklistProgress(c);
+  const barColor = p.pct===100?'#10b981':p.pct>=50?'#f59e0b':'#3b82f6';
+  return `<article class="card clickable" onclick="show('forms','${c.id}')" style="border-left:3px solid ${barColor};transition:transform .15s,box-shadow .15s"
+    onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'"
+    onmouseleave="this.style.transform='';this.style.boxShadow=''">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h3 style="margin:0;color:var(--ink)">${escapeHtml(c.title)}</h3>
+      <span style="font-size:1rem;font-weight:700;color:${barColor}">${p.pct}%</span>
+    </div>
+    <p style="font-size:.75rem;color:var(--muted);margin:0 0 8px">Stage ${c.stage}</p>
+    <div style="height:5px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:6px">
+      <div style="height:100%;width:${p.pct}%;background:${barColor};border-radius:4px;transition:width .4s"></div>
+    </div>
+    <div style="font-size:.72rem;color:var(--muted)">${p.done}/${p.total} complete · click to open</div>
+  </article>`;
+}).join('')}
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;margin:28px 0 8px">
+  <h2 style="margin:0;font-size:.85rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Daily &amp; Weekly Tools</h2>
+  <div style="flex:1;height:1px;background:var(--line)"></div>
+</div>
+<div class="grid grid-2" style="gap:12px">
+${utilChecklists.map(c=>{
+  const p = checklistProgress(c);
+  const barColor = p.pct===100?'#10b981':p.pct>=50?'#f59e0b':'#10b981';
+  return `<article class="card clickable" onclick="show('forms','${c.id}')" style="border-left:3px solid ${barColor};transition:transform .15s,box-shadow .15s"
+    onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'"
+    onmouseleave="this.style.transform='';this.style.boxShadow=''">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h3 style="margin:0;color:var(--ink)">${escapeHtml(c.title)}</h3>
+      <span style="font-size:1rem;font-weight:700;color:${barColor}">${p.pct}%</span>
+    </div>
+    <div style="height:5px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:6px">
+      <div style="height:100%;width:${p.pct}%;background:${barColor};border-radius:4px;transition:width .4s"></div>
+    </div>
+    <div style="font-size:.72rem;color:var(--muted)">${p.done}/${p.total} complete · click to open</div>
+  </article>`;
+}).join('')}
+</div>`;
+}
+
+function renderChecklistPage(c){
+  view.innerHTML = `
+<button class="secondary-btn" onclick="show('forms')">← Back to Forms</button>
+<div class="eyebrow" style="margin-top:16px">${c.stage > 0 ? 'Stage '+c.stage+' Checklist' : 'Daily Tool'}</div>
+<h1 style="color:var(--ink)">${escapeHtml(c.title)}</h1>
+<p class="lede">Check items off as you work through this stage. Progress saves automatically in your browser.</p>
+<div class="card" style="max-width:680px">
+  ${renderChecklist(c, true)}
+  <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+    <button class="secondary-btn" onclick="resetChecklist('${c.id}', ${c.items.length})">Reset Checklist</button>
+    <button class="secondary-btn" onclick="show('ai')">✦ AI Coach for this stage</button>
+  </div>
+</div>`;
+  wireChecks();
+  window.resetChecklist = function(id, len){
+    if(!confirm('Reset this checklist? All checkmarks will be cleared.')) return;
+    for(let i=0;i<len;i++) localStorage.removeItem(`check-${id}-${i}`);
+    show('forms', id);
+    showToast('Checklist reset');
+  };
+}
+
+function renderFormTool(f){
+  const stageChecklist = (data.checklists||[]).find(c=>c.stage===f.stage);
+  const fieldLabels = f.fields.map(x=>x.label);
+  const _fieldCopyStr = fieldLabels.map(x=>'- '+x+':').join('\n');
+  const _noteCopyStr  = fieldLabels.map(x=>x+':').join('\n\n');
+  const _noteHtml     = nl2br(fieldLabels.map(x=>x+':').join('\n\n'));
+  const _scTitle      = stageChecklist ? escapeHtml(stageChecklist.title) : 'Stage Checklist';
+  const _scHtml       = stageChecklist ? renderChecklist(stageChecklist, true) : '<p style="color:var(--muted)">No checklist for this stage.</p>';
+
+  view.innerHTML = `
+<button class="secondary-btn" onclick="show('forms')">← Back to Forms</button>
+<div class="eyebrow" style="margin-top:16px">Daily Tool · Stage ${f.stage||'—'}</div>
+<h1 style="color:var(--ink)">${escapeHtml(f.title)}</h1>
+
+<div class="grid grid-2 mt">
+  <section class="card">
+    <h2>Fields to Capture</h2>
+    ${list(fieldLabels)}
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="secondary-btn" onclick="copyText('${escapeForJs(_fieldCopyStr)}',this)">Copy Field Template</button>
+      <button class="secondary-btn" onclick="show('ai')">✦ AI Draft from Fields</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>${_scTitle}</h2>
+    <p style="font-size:.8rem;color:var(--muted);margin:0 0 10px">Check items off as you work through this stage. Progress saves automatically.</p>
+    ${_scHtml}
+    ${stageChecklist ? `<button class="secondary-btn" style="margin-top:10px;font-size:.8rem" onclick="resetChecklist('${stageChecklist.id}', ${stageChecklist.items.length})">Reset Checklist</button>` : ''}
+  </section>
+</div>
+
+<section class="card mt">
+  <h2>Copy-Ready Working Note</h2>
+  <p style="font-size:.83rem;color:var(--muted);margin:0 0 10px">Paste this into your CRM, notes app, or use with a lead below.</p>
+  <div class="script-box">${_noteHtml}</div>
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+    <button class="primary-btn" onclick="copyText('${escapeForJs(_noteCopyStr)}')">Copy Note Template</button>
+    <button class="secondary-btn" onclick="openLeadPicker(function(id){show('pipeline',id);setTimeout(()=>{const el=document.getElementById('newNote');if(el){el.value=${JSON.stringify(_noteCopyStr)};el.focus();showToast('Note template loaded into lead');}},400);})">Load into Lead Note</button>
+  </div>
+</section>`;
+  wireChecks();
+  window.resetChecklist = function(id, len){
+    if(!confirm('Reset this checklist?')) return;
+    for(let i=0;i<len;i++) localStorage.removeItem(`check-${id}-${i}`);
+    show('forms', f.id);
+    showToast('Checklist reset');
+  };
+}
+
+// ─── Scripts Library ──────────────────────────────────────────────────────────
 function scripts(){
   const cats = ['All', ...new Set(data.scripts.map(s=>s.category))];
-  view.innerHTML = `<div class="eyebrow">Talk Tracks</div><h1>Scripts Library</h1><p class="lede">Use these as flexible language. Keep the intent, adapt the words, and sound human.</p><div class="tabs">${cats.map((c,i)=>`<button class="tab ${i===0?'active':''}" data-cat="${c}">${escapeHtml(c)}</button>`).join('')}</div><div id="scriptList" class="grid grid-2"></div>`;
-  const box = document.getElementById('scriptList');
-  function render(cat='All'){ box.innerHTML = data.scripts.filter(s=>cat==='All'||s.category===cat).map(s=>`<article class="card"><span class="badge">${escapeHtml(s.category)}</span><h3>${escapeHtml(s.title)}</h3><div class="script-box">${nl2br(s.body)}</div><div class="footer-actions" style="margin-top:8px;gap:6px"><button class="secondary-btn" onclick="copyText('${escapeForJs(s.body)}', this)">Copy Script</button><button class="secondary-btn" onclick="openLeadPicker(function(id){show('pipeline',id);setTimeout(()=>{const el=document.getElementById('newNote');if(el){el.value='[Script: ${escapeForJs(s.title)}]\n\n${escapeForJs(s.body.slice(0,300))}';el.focus();showToast('Script loaded — add your note and save');}},400);})">Use for Lead</button></div></article>`).join(''); }
+  const FAV_KEY = 'avalonScriptFavs';
+  function loadFavs(){ try{ return JSON.parse(localStorage.getItem(FAV_KEY)||'[]'); }catch(e){ return []; } }
+  function saveFavs(arr){ localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
+
+  view.innerHTML = `
+<div class="eyebrow">Talk Tracks</div>
+<h1 style="color:var(--ink)">Scripts Library</h1>
+<p class="lede">Built-in language for every stage. Keep the intent, adapt the words, sound human. Use with live leads to prep and log your call.</p>
+
+<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+  <input id="scriptSearch" type="search" placeholder="Search scripts…" style="flex:1;min-width:180px;max-width:280px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:.88rem;color:var(--ink);background:var(--surface)">
+  <div class="tabs" style="margin:0;flex:1">${cats.map((c,i)=>`<button class="tab ${i===0?'active':''}" data-cat="${c}">${escapeHtml(c)}</button>`).join('')}</div>
+  <button id="favToggle" class="secondary-btn" style="font-size:.8rem;white-space:nowrap">★ Favorites</button>
+</div>
+
+<div id="scriptList" class="grid grid-2" style="gap:14px"></div>`;
+
+  const box    = document.getElementById('scriptList');
+  const search = document.getElementById('scriptSearch');
+  let currentCat = 'All';
+  let showFavs = false;
+
+  function render(){
+    let list = data.scripts;
+    if(showFavs){ const favs = loadFavs(); list = list.filter(s=>favs.includes(s.title)); }
+    if(currentCat !== 'All') list = list.filter(s=>s.category===currentCat);
+    const q = search.value.toLowerCase().trim();
+    if(q) list = list.filter(s=>(s.title+' '+s.body+' '+(s.situation||'')).toLowerCase().includes(q));
+
+    if(!list.length){ box.innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted)">No scripts match your filter.</div>`; return; }
+
+    box.innerHTML = list.map(s=>{
+      const favs = loadFavs();
+      const isFav = favs.includes(s.title);
+      const verbatim = s.category && s.category.toLowerCase().includes('verbatim');
+      return `<article class="card" style="position:relative;border:1px solid var(--line);border-top:3px solid ${verbatim?'#f59e0b':'var(--blue)'}">
+        <button onclick="toggleScriptFav('${escapeForJs(s.title)}')" style="position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;font-size:1rem;color:${isFav?'#f59e0b':'var(--muted)'}" title="${isFav?'Remove from favorites':'Add to favorites'}">${isFav?'★':'☆'}</button>
+        ${verbatim?`<div style="display:inline-block;font-size:.68rem;font-weight:700;background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b44;border-radius:4px;padding:2px 7px;margin-bottom:6px">VERBATIM — Do Not Deviate</div>`:''}
+        <span class="badge" style="display:block;margin-bottom:6px">${escapeHtml(s.category)}</span>
+        <h3 style="color:var(--ink);margin:0 0 6px;padding-right:28px">${escapeHtml(s.title)}</h3>
+        ${s.situation?`<p style="font-size:.8rem;color:#6366f1;font-weight:600;margin:0 0 8px;font-style:italic">When: ${escapeHtml(s.situation)}</p>`:''}
+        <div class="script-box" style="font-size:.84rem">${nl2br(s.body)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+          <button class="secondary-btn" style="font-size:.78rem" onclick="copyText('${escapeForJs(s.body)}',this)">Copy Script</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="scriptUseForLead('${escapeForJs(s.title)}','${escapeForJs(s.body)}')">Use for Lead</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="scriptToAI('${escapeForJs(s.title)}','${escapeForJs(s.situation||'')}')">✦ AI Coach</button>
+        </div>
+      </article>`;
+    }).join('');
+  }
+
   render();
-  document.querySelector('.tabs').addEventListener('click',e=>{ if(!e.target.matches('.tab')) return; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); e.target.classList.add('active'); render(e.target.dataset.cat); });
-}
-function templates(){
-  const cats = ['All', ...new Set(data.templates.map(t=>t.category))];
-  view.innerHTML = `<div class="eyebrow">Copy-Ready Communication</div><h1>Email Templates</h1><p class="lede">Templates for daily sales communication. Copy, personalize, and send through Gmail or your CRM.</p><div class="tabs">${cats.map((c,i)=>`<button class="tab ${i===0?'active':''}" data-cat="${c}">${escapeHtml(c)}</button>`).join('')}</div><div id="templateList" class="grid grid-2"></div>`;
-  const box = document.getElementById('templateList');
-  function render(cat='All'){ box.innerHTML = data.templates.filter(t=>cat==='All'||t.category===cat).map(t=>`<article class="card"><span class="badge">${escapeHtml(t.category)}</span><h3>${escapeHtml(t.title)}</h3><p><strong>Subject:</strong> ${escapeHtml(t.subject)}</p><div class="script-box">${nl2br(t.body)}</div><div class="footer-actions" style="flex-wrap:wrap;gap:6px"><button class="secondary-btn" onclick="copyText('${escapeForJs(t.subject)}', this)">Copy Subject</button><button class="primary-btn" onclick="copyText('${escapeForJs(t.body)}', this)">Copy Body</button><button class="secondary-btn" onclick="openLeadPicker(function(id){const opp=state.opportunities.find(x=>x.id===id);if(!opp)return;const merged=mergeTemplate('${escapeForJs(t.body)}',opp);navigator.clipboard.writeText('Subject: ${escapeForJs(t.subject)}\n\n'+merged).catch(()=>{});showToast('Personalized copy ready for '+(opp.client||'lead'));})">Personalize + Copy</button><button class="secondary-btn" onclick="openLeadPicker(function(id){show('pipeline',id);setTimeout(()=>{const el=document.getElementById('newNote');if(el){el.value='Subject: ${escapeForJs(t.subject)}\n\n${escapeForJs(t.body.slice(0,300))}';el.focus();showToast('Template loaded into note field');}},400);})">Use for Lead</button></div></article>`).join(''); }
-  render();
-  document.querySelector('.tabs').addEventListener('click',e=>{ if(!e.target.matches('.tab')) return; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); e.target.classList.add('active'); render(e.target.dataset.cat); });
-}
-function objections(){
-  view.innerHTML = `<div class="eyebrow">Decision Management</div><h1>Objection Handling</h1><p class="lede">Do not argue. Clarify, reconnect to the buying reason, protect scope quality, and guide the client toward a clear decision.</p><div class="grid grid-2 mt">${data.objections.map(o=>`<article class="card"><h3>${escapeHtml(o.title)}</h3><p class="muted"><strong>What it may mean:</strong> ${escapeHtml(o.meaning)}</p><h4>How to respond</h4>${list(o.response)}<h4>Say this</h4><div class="script-box">${escapeHtml(o.say)}</div><div class="footer-actions" style="margin-top:10px;gap:6px"><button class="secondary-btn" onclick="copyText('${escapeForJs(o.say)}', this)">Copy Response</button><button class="secondary-btn" onclick="openLeadPicker(function(id){const opp=state.opportunities.find(x=>x.id===id);if(!opp)return;const note={id:'n'+Date.now(),text:'Objection raised: ${escapeForJs(o.title)}',createdAt:new Date().toISOString(),type:'objection'};opp.notes=opp.notes||[];opp.notes.push(note);opp.updatedAt=new Date().toISOString();saveState();showToast('Objection logged to '+escapeHtml(opp.client||'lead'));})">Log to Lead</button></div></article>`).join('')}</div>`;
+  search.addEventListener('input', render);
+  view.querySelector('.tabs').addEventListener('click',e=>{
+    if(!e.target.matches('.tab')) return;
+    view.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentCat = e.target.dataset.cat;
+    render();
+  });
+  document.getElementById('favToggle').addEventListener('click',()=>{
+    showFavs = !showFavs;
+    document.getElementById('favToggle').style.color = showFavs ? '#f59e0b' : '';
+    document.getElementById('favToggle').style.borderColor = showFavs ? '#f59e0b' : '';
+    render();
+  });
+
+  window.toggleScriptFav = function(title){
+    const favs = loadFavs();
+    const idx = favs.indexOf(title);
+    if(idx>=0) favs.splice(idx,1); else favs.push(title);
+    saveFavs(favs);
+    render();
+  };
+  window.scriptUseForLead = function(title, body){
+    openLeadPicker(function(id){
+      show('pipeline',id);
+      setTimeout(()=>{
+        const el=document.getElementById('newNote');
+        if(el){
+          el.value='[Script: '+title+']\n\n'+body.slice(0,400);
+          el.focus();
+          showToast('Script loaded — add your note and save');
+        }
+      },400);
+    });
+  };
+  window.scriptToAI = function(title, situation){
+    window._aiPreload = { type:'script', title, situation };
+    show('ai');
+  };
 }
 
+// ─── Email Templates ──────────────────────────────────────────────────────────
+function templates(){
+  const cats = ['All', ...new Set(data.templates.map(t=>t.category))];
+  view.innerHTML = `
+<div class="eyebrow">Copy-Ready Communication</div>
+<h1 style="color:var(--ink)">Email Templates</h1>
+<p class="lede">Templates for every stage of the sales conversation. Personalize with a live lead to auto-fill client name, project, service line, and follow-up date.</p>
+
+<div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+  <input id="tmplSearch" type="search" placeholder="Search templates…" style="flex:1;min-width:180px;max-width:280px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:.88rem;color:var(--ink);background:var(--surface)">
+  <div class="tabs" style="margin:0;flex:1">${cats.map((c,i)=>`<button class="tab ${i===0?'active':''}" data-cat="${c}">${escapeHtml(c)}</button>`).join('')}</div>
+</div>
+
+<div id="templateList" class="grid grid-2" style="gap:14px"></div>`;
+
+  const box    = document.getElementById('templateList');
+  const search = document.getElementById('tmplSearch');
+  let currentCat = 'All';
+
+  function render(){
+    let list = data.templates;
+    if(currentCat !== 'All') list = list.filter(t=>t.category===currentCat);
+    const q = search.value.toLowerCase().trim();
+    if(q) list = list.filter(t=>(t.title+' '+t.subject+' '+t.body+' '+(t.category||'')).toLowerCase().includes(q));
+
+    if(!list.length){ box.innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted)">No templates match.</div>`; return; }
+
+    box.innerHTML = list.map(t=>`
+      <article class="card" style="border:1px solid var(--line);border-top:3px solid #10b981">
+        <span class="badge" style="display:block;margin-bottom:6px">${escapeHtml(t.category)}</span>
+        <h3 style="color:var(--ink);margin:0 0 6px">${escapeHtml(t.title)}</h3>
+        <p style="font-size:.82rem;margin:0 0 10px"><strong style="color:var(--muted)">Subject:</strong> <span style="color:var(--ink)">${escapeHtml(t.subject)}</span></p>
+        <div class="script-box" style="font-size:.83rem;max-height:160px;overflow:hidden;position:relative">
+          ${nl2br(t.body)}
+          <div style="position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(transparent,var(--surface))"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+          <button class="secondary-btn" style="font-size:.78rem" onclick="copyText('${escapeForJs(t.subject)}',this)">Copy Subject</button>
+          <button class="primary-btn" style="font-size:.78rem" onclick="copyText('${escapeForJs(t.body)}',this)">Copy Body</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="tmplPersonalize('${escapeForJs(t.subject)}','${escapeForJs(t.body)}')">✦ Personalize + Copy</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="tmplUseForLead('${escapeForJs(t.subject)}','${escapeForJs(t.body)}')">Load into Lead</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="tmplToAI('${escapeForJs(t.title)}','${escapeForJs(t.category)}')">✦ AI Refine</button>
+        </div>
+      </article>`).join('');
+  }
+
+  render();
+  search.addEventListener('input', render);
+  view.querySelector('.tabs').addEventListener('click',e=>{
+    if(!e.target.matches('.tab')) return;
+    view.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentCat = e.target.dataset.cat;
+    render();
+  });
+
+  window.tmplPersonalize = function(subj, body){
+    openLeadPicker(function(id){
+      const opp=state.opportunities.find(x=>x.id===id);
+      if(!opp) return;
+      const merged = mergeTemplate(body, opp);
+      const mergedSubj = mergeTemplate(subj, opp);
+      navigator.clipboard.writeText('Subject: '+mergedSubj+'\n\n'+merged).catch(()=>{});
+      showToast('Personalized for '+escapeHtml(opp.client||'lead')+' — copied to clipboard');
+    });
+  };
+  window.tmplUseForLead = function(subj, body){
+    openLeadPicker(function(id){
+      show('pipeline',id);
+      setTimeout(()=>{
+        const el=document.getElementById('newNote');
+        if(el){
+          el.value='Subject: '+subj+'\n\n'+body.slice(0,400);
+          el.focus();
+          showToast('Template loaded into lead note');
+        }
+      },400);
+    });
+  };
+  window.tmplToAI = function(title, category){
+    window._aiPreload = { type:'template', title, category };
+    show('ai');
+  };
+}
+
+// ─── Objection Handling ───────────────────────────────────────────────────────
+function objections(){
+  const SEVERITY = { 'Your price is too high.':'high', 'I got a cheaper quote.':'high', 'Can you do it cheaper?':'high', 'I need to think about it.':'medium', 'I\'m not sure this is the right time.':'medium', 'I want to get a few more quotes.':'low' };
+  const SEVERITY_COLORS = { high:'#ef4444', medium:'#f59e0b', low:'#10b981' };
+  const SEVERITY_LABELS = { high:'Price/Budget', medium:'Timing/Commitment', low:'Shopping' };
+
+  view.innerHTML = `
+<div class="eyebrow">Decision Management</div>
+<h1 style="color:var(--ink)">Objection Handling</h1>
+<p class="lede">Do not argue. Clarify, reconnect to the buying reason, protect scope quality, and guide the client toward a clear decision.</p>
+
+<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+  <button class="tab active" data-sev="all">All Objections</button>
+  <button class="tab" data-sev="high" style="border-color:#ef444444">Price / Budget</button>
+  <button class="tab" data-sev="medium" style="border-color:#f59e0b44">Timing / Commitment</button>
+  <button class="tab" data-sev="low" style="border-color:#10b98144">Shopping</button>
+</div>
+
+<div id="objList" class="grid grid-2" style="gap:14px"></div>`;
+
+  function renderObjs(sev='all'){
+    const list = sev === 'all' ? data.objections : data.objections.filter(o=>SEVERITY[o.title]===sev);
+    document.getElementById('objList').innerHTML = list.map(o=>{
+      const s = SEVERITY[o.title] || 'medium';
+      const c = SEVERITY_COLORS[s];
+      const lbl = SEVERITY_LABELS[s];
+      return `<article class="card" style="border:1px solid var(--line);border-left:4px solid ${c}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <h3 style="margin:0;flex:1;color:var(--ink)">${escapeHtml(o.title)}</h3>
+          <span style="font-size:.68rem;font-weight:700;background:${c}18;color:${c};border:1px solid ${c}44;border-radius:99px;padding:2px 8px;white-space:nowrap">${lbl}</span>
+        </div>
+        <p style="font-size:.82rem;color:var(--muted);margin:0 0 10px"><strong>What it may mean:</strong> ${escapeHtml(o.meaning)}</p>
+        <details>
+          <summary style="cursor:pointer;font-size:.82rem;font-weight:600;color:var(--blue);user-select:none;margin-bottom:8px;list-style:none">How to respond ▾</summary>
+          <div style="margin-top:8px">${list_(o.response)}</div>
+        </details>
+        <h4 style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:10px 0 6px">Say This</h4>
+        <div class="script-box" style="font-size:.84rem">${escapeHtml(o.say)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+          <button class="secondary-btn" style="font-size:.78rem" onclick="copyText('${escapeForJs(o.say)}',this)">Copy Response</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="objLogToLead('${escapeForJs(o.title)}')">Log to Lead</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="objToAI('${escapeForJs(o.title)}','${escapeForJs(o.say)}')">✦ AI Refine Reply</button>
+        </div>
+      </article>`;
+    }).join('') || `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted)">No objections in this category.</div>`;
+  }
+
+  // helper to avoid naming conflict
+  function list_(arr){ return `<ul style="margin:0;padding-left:18px">${arr.map(x=>`<li style="font-size:.83rem;color:var(--ink);margin-bottom:4px">${escapeHtml(x)}</li>`).join('')}</ul>`; }
+
+  renderObjs();
+  view.querySelectorAll('.tab[data-sev]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      view.querySelectorAll('.tab[data-sev]').forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active');
+      renderObjs(btn.dataset.sev);
+    });
+  });
+
+  window.objLogToLead = function(title){
+    openLeadPicker(function(id){
+      const opp=state.opportunities.find(x=>x.id===id);
+      if(!opp) return;
+      const note={id:'n'+Date.now(),text:'Objection raised: '+title,createdAt:new Date().toISOString(),type:'objection'};
+      opp.notes=opp.notes||[];
+      opp.notes.push(note);
+      opp.updatedAt=new Date().toISOString();
+      saveState();
+      showToast('Objection logged to '+escapeHtml(opp.client||'lead'));
+    });
+  };
+  window.objToAI = function(title, say){
+    window._aiPreload = { type:'objection', title, say };
+    show('ai');
+  };
+}
+
+// ─── Pricing Tools ────────────────────────────────────────────────────────────
 function calculator(){
-  view.innerHTML = `<div class="eyebrow">Quick Pricing Checks</div><h1>Pricing Tools</h1><p class="lede">Use these for quick internal checks only. Final pricing should still follow Avalon estimating and margin review standards.</p><div class="grid grid-2 mt"><section class="card form"><h2>Margin Calculator</h2><label><span>Estimated Cost</span><input id="cost" type="number" min="0" step="0.01" placeholder="Materials + labor + subs + overhead"></label><label><span>Target Gross Margin %</span><input id="margin" type="number" min="1" max="95" step="1" value="45"></label><button class="primary-btn" onclick="calcMargin()">Calculate Price</button><div id="marginResult" class="result-box"></div></section><section class="card form"><h2>Labor Revenue Check</h2><label><span>Labor Hours</span><input id="hours" type="number" min="0" step="0.5"></label><label><span>Hourly Billing / Internal Rate</span><input id="rate" type="number" min="0" step="1" value="75"></label><button class="primary-btn" onclick="calcLabor()">Calculate Labor Line</button><div id="laborResult" class="result-box"></div></section></div><div class="card warn mt"><h3>Reminder</h3>${list(['Do not discount without changing scope or phasing.','Do not skip contingency on complex work.','Do not send price until scope, assumptions, exclusions, and decision path are clear.'])}</div>`;
+  view.innerHTML = `
+<div class="eyebrow">Quick Pricing Checks</div>
+<h1 style="color:var(--ink)">Pricing Tools</h1>
+<p class="lede">Use these for quick internal checks only. Final pricing should still follow Avalon estimating and margin review standards.</p>
+<div class="grid grid-2 mt">
+  <section class="card form">
+    <h2>Margin Calculator</h2>
+    <label><span>Estimated Cost</span><input id="cost" type="number" min="0" step="0.01" placeholder="Materials + labor + subs + overhead"></label>
+    <label><span>Target Gross Margin %</span><input id="margin" type="number" min="1" max="95" step="1" value="45"></label>
+    <button class="primary-btn" onclick="calcMargin()">Calculate Price</button>
+    <div id="marginResult" class="result-box"></div>
+  </section>
+  <section class="card form">
+    <h2>Labor Revenue Check</h2>
+    <label><span>Labor Hours</span><input id="hours" type="number" min="0" step="0.5"></label>
+    <label><span>Hourly Billing / Internal Rate</span><input id="rate" type="number" min="0" step="1" value="75"></label>
+    <button class="primary-btn" onclick="calcLabor()">Calculate Labor Line</button>
+    <div id="laborResult" class="result-box"></div>
+  </section>
+</div>
+<div class="card warn mt">
+  <h3>Reminder</h3>
+  ${list(['Do not discount without changing scope or phasing.','Do not skip contingency on complex work.','Do not send price until scope, assumptions, exclusions, and decision path are clear.'])}
+</div>`;
 }
 window.calcMargin = function(){
   const cost=Number(document.getElementById('cost').value||0);
@@ -2395,7 +2850,7 @@ window.calcMargin = function(){
     <strong>Suggested sales price:</strong> ${money(price)}<br>
     <strong>Gross profit:</strong> ${money(gp)}<br>
     <strong>Markup on cost:</strong> ${Math.round((price/cost-1)*100)}%<br>
-    <strong style="color:#4ade80">Est. commission (~7%):</strong> <span style="color:#4ade80">${money(estComm)}</span>
+    <strong style="color:#10b981">Est. commission (~7%):</strong> <span style="color:#10b981">${money(estComm)}</span>
     <div style="margin-top:10px">
       <button class="primary-btn small" onclick="window.saveCalcToLead()">Save to Lead</button>
     </div>`;
@@ -2414,8 +2869,349 @@ window.saveCalcToLead = function(){
     showToast('Pricing saved to '+escapeHtml(opp.client||'lead')+' · Job Value updated');
   });
 };
-window.calcLabor = function(){ const h=Number(document.getElementById('hours').value||0), r=Number(document.getElementById('rate').value||0); document.getElementById('laborResult').innerHTML = h&&r ? `<strong>Labor line:</strong> ${money(h*r)}<br><span>${h} hours × ${money(r)}/hr</span>` : 'Enter labor hours and rate.'; }
-function money(n){ return n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}); }
+window.calcLabor = function(){
+  const h=Number(document.getElementById('hours').value||0), r=Number(document.getElementById('rate').value||0);
+  document.getElementById('laborResult').innerHTML = h&&r ? `<strong>Labor line:</strong> ${money(h*r)}<br><span>${h} hours × ${money(r)}/hr</span>` : 'Enter labor hours and rate.';
+};
+
+// ─── AI Sales Assistant ───────────────────────────────────────────────────────
+function ai(){
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  const preload = window._aiPreload || {};
+  window._aiPreload = null; // consume
+
+  const SITUATIONS = [
+    { id:'reply_email',     label:'Reply to a Client Email',        icon:'✉️',  color:'#6366f1' },
+    { id:'follow_up',       label:'Follow-Up After No Response',    icon:'🔄',  color:'#3b82f6' },
+    { id:'proposal_intro',  label:'Proposal Introduction Email',    icon:'📋',  color:'#10b981' },
+    { id:'objection_reply', label:'Handle an Objection',            icon:'🛡️',  color:'#f59e0b' },
+    { id:'discovery_prep',  label:'Discovery Call Prep',            icon:'🎯',  color:'#a855f7' },
+    { id:'site_walk_recap', label:'Post-Site Walk Summary',         icon:'📍',  color:'#ec4899' },
+    { id:'closing_email',   label:'Closing / Decision Ask',         icon:'🤝',  color:'#ef4444' },
+    { id:'referral_ask',    label:'Ask for a Referral',             icon:'⭐',  color:'#f97316' },
+    { id:'custom',          label:'Custom Situation',               icon:'✦',   color:'#64748b' },
+  ];
+
+  const openLeads = (state.opportunities||[]).filter(o=>!['Sold / Activation','Closed Lost'].includes(o.status));
+
+  view.innerHTML = `
+<div class="eyebrow">AI-Powered Sales</div>
+<h1 style="color:var(--ink)">AI Sales Assistant</h1>
+<p class="lede">Generate perfect sales emails, follow-ups, objection replies, and more. Select a situation, optionally link a lead for auto-fill, then customize and copy.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:20px;align-items:start;margin-top:20px" id="aiGrid">
+
+  <!-- Left: Situation Picker + Options -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="card" style="padding:16px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">1. Choose Situation</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${SITUATIONS.map(s=>`
+        <button id="sit-${s.id}" onclick="aiSelectSit('${s.id}')"
+          style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;transition:all .15s;font-size:.82rem;font-weight:500;color:var(--ink);text-align:left"
+          onmouseenter="this.style.borderColor='${s.color}';this.style.background='${s.color}0d'"
+          onmouseleave="if(!this.classList.contains('ai-sit-active')){this.style.borderColor='var(--line)';this.style.background='var(--surface)'}">
+          <span style="font-size:.95rem">${s.icon}</span>
+          <span style="line-height:1.3">${escapeHtml(s.label)}</span>
+        </button>`).join('')}
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">2. Link a Lead (optional)</div>
+      <select id="aiLeadSelect" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:.85rem;color:var(--ink);background:var(--surface)">
+        <option value="">— No lead — use placeholders —</option>
+        ${openLeads.map(o=>`<option value="${o.id}">${escapeHtml(o.client||'Unnamed')} · ${escapeHtml(o.status||'')}</option>`).join('')}
+      </select>
+      <div id="aiLeadPreview" style="margin-top:8px;font-size:.78rem;color:var(--muted)"></div>
+    </div>
+
+    <div class="card" style="padding:16px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">3. Context (optional)</div>
+      <textarea id="aiContext" rows="3" placeholder="Paste their message, add notes, or describe the situation in detail…"
+        style="width:100%;box-sizing:border-box;font-size:.83rem;border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink);resize:vertical;font-family:inherit;background:var(--surface)"></textarea>
+    </div>
+
+    <div class="card" style="padding:16px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">4. Tone</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${['Warm &amp; Consultative','Direct &amp; Confident','Empathetic','Urgent but Not Pushy','Follow-Up'].map((t,i)=>`
+        <button class="ai-tone-btn${i===0?' active':''}" data-tone="${t.replace(/&amp;/g,'&')}"
+          style="padding:5px 12px;border-radius:99px;border:1px solid var(--line);font-size:.78rem;cursor:pointer;background:${i===0?'var(--blue)':'var(--surface)'};color:${i===0?'#fff':'var(--ink)'};transition:all .15s"
+          onclick="aiSelectTone(this)">${t}</button>`).join('')}
+      </div>
+    </div>
+
+    <button class="primary-btn" style="font-size:.95rem;padding:13px" onclick="aiGenerate()">
+      ✦ Generate Email / Reply
+    </button>
+  </div>
+
+  <!-- Right: Output -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="card" style="padding:16px;min-height:320px" id="aiOutputCard">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px">Output</div>
+      <div id="aiOutput" style="font-size:.88rem;color:var(--muted);font-style:italic">
+        Select a situation and click Generate to build your email or reply. The output is crafted from Avalon's own scripts, tone guidelines, and your lead data.
+      </div>
+      <div id="aiOutputActions" style="display:none;margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="primary-btn" style="font-size:.82rem" onclick="copyText(document.getElementById('aiOutputText').value||'',this)">Copy Output</button>
+        <button class="secondary-btn" style="font-size:.82rem" onclick="aiLoadIntoLead()">Load into Lead Note</button>
+        <button class="secondary-btn" style="font-size:.82rem" onclick="aiRegenerate()">↻ Regenerate</button>
+      </div>
+      <textarea id="aiOutputText" style="display:none"></textarea>
+    </div>
+
+    <div class="card" style="padding:14px;background:rgba(99,102,241,.04);border-color:rgba(99,102,241,.2)" id="aiPromptCard">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6366f1;margin-bottom:8px">Prompt Preview</div>
+      <div id="aiPromptPreview" style="font-size:.78rem;color:var(--muted);font-family:monospace;white-space:pre-wrap;max-height:160px;overflow:auto">
+        Your prompt will appear here before generation. You can copy and paste it into ChatGPT, Claude, or any AI tool.
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="secondary-btn" style="font-size:.78rem" onclick="copyText(document.getElementById('aiPromptPreview').textContent||'',this)">Copy Prompt</button>
+        <a href="https://chat.openai.com" target="_blank" rel="noopener" style="font-size:.78rem;padding:6px 12px;border:1px solid var(--line);border-radius:6px;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:4px">Open ChatGPT ↗</a>
+        <a href="https://claude.ai" target="_blank" rel="noopener" style="font-size:.78rem;padding:6px 12px;border:1px solid var(--line);border-radius:6px;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:4px">Open Claude ↗</a>
+      </div>
+    </div>
+
+    <div class="card" style="padding:14px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Quick Prompt Library</div>
+      <div style="display:grid;gap:6px">
+        ${[
+          ['Re-engage a ghost', 'Write a re-engagement email for a prospect who went dark after a proposal. Keep it short, reference our last conversation about their project, and give them a no-pressure out.'],
+          ['Budget objection reply', 'Write a response to a client who said our price is too high. Reconnect to their Core Buying Reason, protect scope, avoid discounting, and offer a phasing option if appropriate.'],
+          ['After site walk', 'Write a post-site walk follow-up email confirming what we discussed, setting clear next steps, and building anticipation for the proposal.'],
+          ['Ask for referral', 'Write a referral request email for a happy client after job completion. Keep it natural, low-pressure, and give them a simple way to refer.'],
+          ['Proposal follow-up', 'Write a follow-up email 3 days after sending a proposal where I haven\'t heard back. Warm, curious, not pushy — ask what questions they have.'],
+        ].map(([lbl,prompt])=>`
+        <button onclick="aiLoadQuickPrompt('${escapeForJs(prompt)}')" style="text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:.8rem;cursor:pointer;background:var(--surface);color:var(--ink);transition:background .15s"
+          onmouseenter="this.style.background='var(--line)'" onmouseleave="this.style.background='var(--surface)'">
+          ${escapeHtml(lbl)} →
+        </button>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Responsive: collapse grid on small screens -->
+<style>
+@media(max-width:720px){
+  #aiGrid{ grid-template-columns:1fr !important; }
+}
+</style>`;
+
+  // State
+  let selectedSit  = preload.type === 'objection' ? 'objection_reply' : preload.type === 'template' ? 'reply_email' : preload.type === 'script' ? (preload.situation?'discovery_prep':'reply_email') : null;
+  let selectedTone = 'Warm & Consultative';
+
+  if(preload.type === 'objection' && preload.say){
+    document.getElementById('aiContext').value = 'Client objection: "'+preload.title+'"\n\nAvalon response framework:\n'+preload.say;
+  }
+  if(preload.type === 'script' && preload.situation){
+    document.getElementById('aiContext').value = 'Situation: '+preload.situation;
+  }
+  if(selectedSit) aiSelectSit(selectedSit);
+
+  // Lead preview
+  document.getElementById('aiLeadSelect').addEventListener('change', function(){
+    const opp = state.opportunities.find(x=>x.id===this.value);
+    if(!opp){ document.getElementById('aiLeadPreview').textContent = ''; return; }
+    document.getElementById('aiLeadPreview').innerHTML = `
+      <strong style="color:var(--ink)">${escapeHtml(opp.client||'—')}</strong> · ${escapeHtml(opp.status||'')}
+      ${opp.project?'<br>Project: '+escapeHtml(opp.project):''}
+      ${opp.jobValue?'<br>Value: '+money(Number(opp.jobValue)):''}
+      ${opp.serviceLine?'<br>Service: '+escapeHtml(opp.serviceLine):''}`;
+  });
+
+  window.aiSelectSit = function(id){
+    selectedSit = id;
+    view.querySelectorAll('[id^="sit-"]').forEach(btn=>{
+      const sitId = btn.id.replace('sit-','');
+      const sit = SITUATIONS.find(s=>s.id===sitId);
+      if(sitId===id){
+        btn.classList.add('ai-sit-active');
+        btn.style.borderColor = sit?.color||'var(--blue)';
+        btn.style.background  = (sit?.color||'#6366f1')+'18';
+        btn.style.fontWeight  = '700';
+      } else {
+        btn.classList.remove('ai-sit-active');
+        btn.style.borderColor = 'var(--line)';
+        btn.style.background  = 'var(--surface)';
+        btn.style.fontWeight  = '';
+      }
+    });
+    buildPrompt();
+  };
+
+  window.aiSelectTone = function(btn){
+    view.querySelectorAll('.ai-tone-btn').forEach(b=>{ b.style.background='var(--surface)'; b.style.color='var(--ink)'; b.classList.remove('active'); });
+    btn.classList.add('active'); btn.style.background='var(--blue)'; btn.style.color='#fff';
+    selectedTone = btn.dataset.tone;
+    buildPrompt();
+  };
+
+  function buildPrompt(){
+    const sit = SITUATIONS.find(s=>s.id===selectedSit);
+    const leadId = document.getElementById('aiLeadSelect')?.value;
+    const opp = leadId ? state.opportunities.find(x=>x.id===leadId) : null;
+    const context = document.getElementById('aiContext')?.value?.trim();
+    const repName = rep?.name || 'Your Name';
+
+    if(!sit){ document.getElementById('aiPromptPreview').textContent = 'Select a situation above to see the prompt.'; return; }
+
+    const leadBlock = opp ? `\nClient: ${opp.client||'[Name]'}\nProject: ${opp.project||'[Project]'}\nService: ${opp.serviceLine||'[Service Line]'}\nValue: ${opp.jobValue?money(Number(opp.jobValue)):'[Amount]'}\nStatus: ${opp.status||'[Stage]'}\n` : '\n[No lead linked — use placeholders]\n';
+
+    const situationGuides = {
+      reply_email:    'Write a professional, consultative reply to a client email. Acknowledge their message, advance the conversation, and set a clear next step.',
+      follow_up:      'Write a follow-up email to a prospect who hasn\'t responded. Keep it short (3–5 sentences), reference the last touchpoint, and give a low-pressure re-engagement path.',
+      proposal_intro: 'Write a proposal introduction email. Frame the proposal around the client\'s Core Buying Reasons, build anticipation, and set up a verbal walkthrough rather than an email read.',
+      objection_reply:'Write a response to a client objection. Follow the Acknowledge → Reframe → Forward-Question framework. Reconnect to their emotional buying reason, protect scope, do not discount.',
+      discovery_prep: 'Write a pre-discovery call prep note and a T.A.P.P.O. opening statement. Include confirmation of Time, Agenda, People, Process, and Outcome.',
+      site_walk_recap:'Write a post-site walk summary email confirming what was discussed, key takeaways, project scope direction, and next steps with a timeline.',
+      closing_email:  'Write a closing email asking for a decision. Reference the client\'s Core Buying Reason, make the ask clear but not aggressive, and offer a simple path to yes.',
+      referral_ask:   'Write a referral request email for a happy client. Keep it natural, acknowledge their project outcome, and give them a simple way to refer without feeling pressured.',
+      custom:         'Write a custom sales communication based on the context below.'
+    };
+
+    const prompt = `You are an expert sales coach for Avalon Landscape Construction — a consultative, process-driven landscape company. You write in a warm, professional, human tone. Never sound salesy or pushy. Always protect scope and margin. Never discount without changing scope.
+
+TASK: ${situationGuides[selectedSit]||'Write a professional sales communication.'}
+
+TONE: ${selectedTone}
+
+REP NAME: ${repName}
+COMPANY: Avalon Landscape Construction
+${leadBlock}
+${context ? 'ADDITIONAL CONTEXT:\n'+context+'\n' : ''}
+INSTRUCTIONS:
+- Write the complete email/message, ready to send
+- Use [brackets] for any remaining variables the rep should fill in
+- Open with the client's name
+- Keep it conversational, not corporate
+- End with a clear, single next step
+- Sign off as ${repName}, Avalon Landscape Construction`;
+
+    document.getElementById('aiPromptPreview').textContent = prompt;
+    window._currentAiPrompt = prompt;
+    return prompt;
+  }
+
+  function buildOutput(){
+    const leadId = document.getElementById('aiLeadSelect')?.value;
+    const opp = leadId ? state.opportunities.find(x=>x.id===leadId) : null;
+    const repName = rep ? rep.name : 'Your Name';
+    const clientName = opp && opp.client ? opp.client.split(' ')[0] : '[Client Name]';
+    const project = (opp && opp.project) ? opp.project : '[Project]';
+    const context = (document.getElementById('aiContext') ? document.getElementById('aiContext').value.trim() : '') || '';
+    const sig = '\n\n' + repName + '\nAvalon Landscape Construction';
+    const hi = 'Hi ' + clientName + ',\n\n';
+
+    var out = '';
+    if (selectedSit === 'reply_email') {
+      out = hi
+        + 'Thank you for reaching out — I appreciate you taking the time.\n\n'
+        + (context ? 'Based on what you shared, ' : '')
+        + 'I would love to learn more about your project and make sure we are thinking about it the right way before we discuss anything further.\n\n'
+        + 'Would you be available for a quick 15-minute call this week? I am flexible on timing — just let me know what works for you.\n\n'
+        + 'Looking forward to connecting,' + sig;
+
+    } else if (selectedSit === 'follow_up') {
+      out = hi
+        + 'I wanted to follow up on our last conversation — I know things get busy.\n\n'
+        + 'I am still very interested in learning more about your ' + project + ' project and seeing whether Avalon might be a good fit. No pressure at all — if the timing is not right, just let me know and I will check back when it makes sense.\n\n'
+        + 'Worth a quick call this week?' + sig;
+
+    } else if (selectedSit === 'proposal_intro') {
+      out = hi
+        + 'I have put together the proposal for your ' + project + ' project and wanted to walk you through it personally rather than just sending a PDF.\n\n'
+        + 'The proposal reflects everything we discussed — especially [Core Buying Reason]. I want to make sure we are aligned before you spend time reading through it, and I have a few things I would like to clarify with you.\n\n'
+        + 'Are you available for a 20-minute call ' + (context ? context : 'this week') + ' to review it together?' + sig;
+
+    } else if (selectedSit === 'objection_reply') {
+      var objBody = (context.toLowerCase().includes('price') || context.toLowerCase().includes('cheaper'))
+        ? 'Before I respond, can I ask what you are comparing it to? Price only tells part of the story — scope, warranty, supervision, and what is actually included can vary significantly between proposals. I want to make sure we are comparing the same thing.\n\nIf you are open to it, walk me through what the other number includes and I can give you a straightforward answer about what is different.'
+        : 'That is completely fair. Help me understand — is it the price, the scope, the timing, or something else? I would rather have a real conversation about your concern than have you sitting on something I could probably clear up in five minutes.';
+      out = hi + 'I hear you — and I appreciate you being direct with me.\n\n' + objBody + sig;
+
+    } else if (selectedSit === 'discovery_prep') {
+      out = 'DISCOVERY CALL PREP — ' + clientName
+        + '\n\nT.A.P.P.O. OPENING:\n"Thanks for having me out. Just to confirm: we have about [X] minutes today (Time). My goal is to [Agenda]. I would like to have both [decision-makers] on the same page (People). By the end, we will agree on whether it makes sense to move to the next step (Process and Outcome). Does that sound good?"'
+        + '\n\nKEY CBR QUESTIONS:\n- "What prompted you to reach out now — what has changed?"\n- "Walk me through what matters most about this project."\n- "What would it mean to you if this project came out exactly right?"\n- "What is your biggest concern going into this?"'
+        + '\n\nBUDGET FRAMING:\n"Before we go further, so I can make sure we are building something realistic for you — do you have a rough investment range in mind for this?"'
+        + '\n\nNEXT STEP GATE:\n- Site walk scheduled, or reason to move forward confirmed';
+
+    } else if (selectedSit === 'site_walk_recap') {
+      out = hi
+        + 'Thank you for having me out today — I really enjoyed walking the site and getting a clearer picture of what you are trying to accomplish.\n\n'
+        + 'Here is a quick recap of what we covered:\n\n'
+        + '- Project scope: ' + project + '\n'
+        + '- Key priorities: [What mattered most to them]\n'
+        + '- Site conditions: [Any constraints or access notes]\n'
+        + '- Timeline discussed: [What they shared]\n'
+        + '- Must-haves confirmed: [List from conversation]\n\n'
+        + 'Next step: We will have the estimate ready for you by [date]. I will reach out to set up a time to walk through it together.\n\n'
+        + 'In the meantime, if anything comes to mind or anything changes, do not hesitate to reach out.' + sig;
+
+    } else if (selectedSit === 'closing_email') {
+      out = hi
+        + 'I wanted to check in on the proposal — I know you have had some time to look it over.\n\n'
+        + 'Based on everything we discussed — especially [Core Buying Reason] — I believe we have built the right scope to get you exactly what you are looking for.\n\n'
+        + 'Are you ready to move forward, or is there anything you would like to talk through before making a decision?\n\n'
+        + 'Either way, I would love to hear where you are at.' + sig;
+
+    } else if (selectedSit === 'referral_ask') {
+      out = hi
+        + 'It has been great working with you on ' + project + '. I hope you are thrilled with how it turned out.\n\n'
+        + 'If you know anyone — a neighbor, friend, or colleague — who is thinking about a similar project, I would love an introduction. We do our best work for people who come in with a clear idea of what they want, which is exactly how you came to us.\n\n'
+        + 'No obligation at all — just wanted you to know we appreciate the trust, and we are always open to a quick conversation with anyone you would send our way.\n\nThanks again,' + sig;
+
+    } else {
+      out = hi
+        + (context ? '[Based on your context: ' + context.slice(0,100) + '...]\n\n' : '')
+        + '[Draft your message here — use the prompt above in ChatGPT or Claude for a fully AI-generated version tailored to your situation.]' + sig;
+    }
+    return out;
+  }
+
+  window.aiGenerate = function(){
+    const prompt = buildPrompt();
+    if(!selectedSit){ showToast('Select a situation first'); return; }
+    const output = buildOutput();
+    const outEl = document.getElementById('aiOutput');
+    const outTa = document.getElementById('aiOutputText');
+    const actEl = document.getElementById('aiOutputActions');
+    outEl.style.fontStyle = 'normal';
+    outEl.style.color = 'var(--ink)';
+    outEl.innerHTML = `<pre style="white-space:pre-wrap;font-family:inherit;font-size:.88rem;margin:0;line-height:1.65">${escapeHtml(output)}</pre>`;
+    outTa.value = output;
+    actEl.style.display = 'flex';
+    showToast('Output generated — copy, edit, or load into a lead');
+  };
+
+  window.aiRegenerate = window.aiGenerate;
+
+  window.aiLoadIntoLead = function(){
+    const output = document.getElementById('aiOutputText')?.value;
+    if(!output) return showToast('Generate output first');
+    openLeadPicker(function(id){
+      show('pipeline',id);
+      setTimeout(()=>{
+        const el=document.getElementById('newNote');
+        if(el){ el.value=output.slice(0,600); el.focus(); showToast('Output loaded into lead note'); }
+      },400);
+    });
+  };
+
+  window.aiLoadQuickPrompt = function(prompt){
+    document.getElementById('aiContext').value = prompt;
+    if(!selectedSit){ aiSelectSit('custom'); }
+    buildPrompt();
+    showToast('Quick prompt loaded — click Generate');
+  };
+
+  // Build initial prompt preview
+  buildPrompt();
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Sales Academy 2.0 — View Layer  (app_premium.js)

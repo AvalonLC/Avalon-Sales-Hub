@@ -102,6 +102,7 @@ function getHtml(): string {
           <button class="nav-item" data-view="templates" onclick="show('templates')">Email Templates</button>
           <button class="nav-item" data-view="objections" onclick="show('objections')">Objection Handling</button>
           <button class="nav-item" data-view="calculator" onclick="show('calculator')">Pricing Tools</button>
+          <button class="nav-item" data-view="ai" onclick="show('ai')" style="color:#6366f1;font-weight:600">✦ AI Sales Assistant</button>
         </div>
       </details>
 
