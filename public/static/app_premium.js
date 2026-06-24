@@ -2088,11 +2088,51 @@ function opportunityDetail(id){
           <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v9a.5.5 0 01-.5.5h-9A.5.5 0 012 11.5v-9z" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           Qualification Notes
         </div>
-        <form class="ld-card ld-form">
-          ${textarea('prompt','What prompted the inquiry?',o.prompt)}
-          ${textarea('desiredOutcome','Desired outcome / what good looks like',o.desiredOutcome)}
-          ${textarea('fitConcerns','Fit concerns / risk flags',o.fitConcerns)}
-        </form>
+        <div class="ld-card ld-qual-notes-card">
+          ${[
+            {field:'prompt',       label:'What prompted the inquiry?',             icon:'M7 1l.9 2.6H11L8.5 5.2l.9 2.7L7 6.5l-2.4 1.4.9-2.7L3 3.6h3.1z'},
+            {field:'desiredOutcome',label:'Desired outcome / what good looks like', icon:'M2 11l3.5-3.5 2.5 2.5L12 4'},
+            {field:'fitConcerns',  label:'Fit concerns / risk flags',               icon:'M7 2v5M7 9.5v.5'}
+          ].map(({field,label,icon})=>{
+            const val = escapeHtml(o[field]||'');
+            const placeholder = {
+              prompt:'e.g. Referred by a neighbour, saw an ad, urgent project deadline…',
+              desiredOutcome:'e.g. Full kitchen renovation complete before the holidays, budget under $30k…',
+              fitConcerns:'e.g. Budget may be tight, decision-maker not confirmed, competing quotes…'
+            }[field];
+            return `<div class="ld-qual-field" id="qf-${field}-${o.id}">
+              <div class="ld-qual-view" id="qfview-${field}-${o.id}">
+                <div class="ld-qual-header">
+                  <span class="ld-qual-label">
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="${icon}" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    ${label}
+                  </span>
+                  <button class="ld-qual-edit-btn" onclick="ldQualEdit('${field}','${o.id}')" title="Edit">
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5l2 2-7 7H2.5v-2l7-7z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                    Edit
+                  </button>
+                </div>
+                <div class="ld-qual-content" id="qfcontent-${field}-${o.id}">${val || `<span class="ld-qual-empty">${placeholder}</span>`}</div>
+              </div>
+              <div class="ld-qual-edit" id="qfedit-${field}-${o.id}" style="display:none">
+                <div class="ld-qual-header">
+                  <span class="ld-qual-label">
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="${icon}" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    ${label}
+                  </span>
+                  <div style="display:flex;gap:6px">
+                    <button class="ld-qual-save-btn" onclick="ldQualSave('${field}','${o.id}')">
+                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7.5L5.5 11 12 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      Save
+                    </button>
+                    <button class="ld-qual-cancel-btn" onclick="ldQualCancel('${field}','${o.id}')">Cancel</button>
+                  </div>
+                </div>
+                <textarea id="qfta-${field}-${o.id}" rows="4" placeholder="${placeholder}" class="ld-qual-textarea">${o[field]||''}</textarea>
+              </div>
+            </div>`;
+          }).join('<div class="ld-qual-divider"></div>')}
+        </div>
 
         <!-- Quick Actions -->
         <div class="ld-section-head" style="margin-top:20px">
@@ -2111,6 +2151,14 @@ function opportunityDetail(id){
           <button class="ld-qa-btn" id="qa_gmail_${o.id}" onclick="qaAction('gmail','${o.id}',this)">
             <svg width="18" height="18" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 5l5.5 3.5L12.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
             <div><div class="ld-qa-title">Compose Email</div><div class="ld-qa-sub">Gmail draft</div></div>
+          </button>
+          <button class="ld-qa-btn" onclick="window._leadTab='comms';show('pipeline','${o.id}')">
+            <svg width="18" height="18" viewBox="0 0 14 14" fill="none"><path d="M7 1a5.5 5.5 0 110 11 5.5 5.5 0 010-11z" stroke="currentColor" stroke-width="1.3"/><path d="M7 4.5V7l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <div><div class="ld-qa-title">Log Call</div><div class="ld-qa-sub">Record outcome</div></div>
+          </button>
+          <button class="ld-qa-btn" onclick="window._leadTab='notes';show('pipeline','${o.id}')">
+            <svg width="18" height="18" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5h5M4.5 7.5h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <div><div class="ld-qa-title">Add Note</div><div class="ld-qa-sub">Save observation</div></div>
           </button>
         </div>
 
@@ -2809,6 +2857,41 @@ window.toggleLeadOverflow = function(btn){
   }
 };
 function addNote(oppId){ const el = document.getElementById('newNote'); if(!el.value.trim()) return; state.notes.unshift({id:uid('note'),oppId,body:el.value.trim(),createdAt:new Date().toISOString()}); const o=state.opportunities.find(x=>x.id===oppId); if(o) o.updatedAt=new Date().toISOString(); saveState(); showToast('Note added'); show('pipeline', oppId); }
+
+// ── Qualification Notes view/edit helpers ─────────────────────────────────────
+function ldQualEdit(field, oppId){
+  document.getElementById('qfview-'+field+'-'+oppId).style.display = 'none';
+  const editEl = document.getElementById('qfedit-'+field+'-'+oppId);
+  editEl.style.display = 'block';
+  const ta = document.getElementById('qfta-'+field+'-'+oppId);
+  if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+function ldQualCancel(field, oppId){
+  document.getElementById('qfedit-'+field+'-'+oppId).style.display = 'none';
+  document.getElementById('qfview-'+field+'-'+oppId).style.display = 'block';
+  // restore textarea to saved value
+  const o = state.opportunities.find(x=>x.id===oppId);
+  const ta = document.getElementById('qfta-'+field+'-'+oppId);
+  if(ta && o) ta.value = o[field]||'';
+}
+function ldQualSave(field, oppId){
+  const ta = document.getElementById('qfta-'+field+'-'+oppId);
+  if(!ta) return;
+  const val = ta.value.trim();
+  const o = state.opportunities.find(x=>x.id===oppId);
+  if(o){ o[field]=val; o.updatedAt=new Date().toISOString(); saveState(); }
+  // update view content without full re-render
+  const contentEl = document.getElementById('qfcontent-'+field+'-'+oppId);
+  const placeholders = {
+    prompt:'e.g. Referred by a neighbour, saw an ad, urgent project deadline…',
+    desiredOutcome:'e.g. Full kitchen renovation complete before the holidays, budget under $30k…',
+    fitConcerns:'e.g. Budget may be tight, decision-maker not confirmed, competing quotes…'
+  };
+  if(contentEl) contentEl.innerHTML = val ? escapeHtml(val) : `<span class="ld-qual-empty">${placeholders[field]||''}</span>`;
+  document.getElementById('qfedit-'+field+'-'+oppId).style.display = 'none';
+  document.getElementById('qfview-'+field+'-'+oppId).style.display = 'block';
+  showToast('Qualification note saved');
+}
 function renderNotes(oppId) {
   const opp   = state.opportunities.find(x => x.id === oppId);
   const notes = state.notes.filter(n => n.oppId === oppId);
@@ -2883,31 +2966,52 @@ function money(n){ return n.toLocaleString(undefined,{style:'currency',currency:
 
 function renderChecklist(c, persist=false, scopeId=''){
   const prefix = scopeId ? `check-${c.id}-${scopeId}` : `check-${c.id}`;
-  const items = c.items.map((item,i)=>{
-    const key = `${prefix}-${i}`;
-    const checked = persist ? (localStorage.getItem(key) === '1') : false;
-    return `<label class="check-item"><input type="checkbox" ${persist?`data-key="${key}"`:''}${checked?' checked':''}><span>${escapeHtml(item)}</span></label>`;
-  });
   const total = c.items.length;
   const done  = persist ? c.items.filter((_,i)=>localStorage.getItem(`${prefix}-${i}`)==='1').length : 0;
   const pct   = total ? Math.round((done/total)*100) : 0;
   const barColor = pct===100?'#10b981':pct>=50?'#f59e0b':'#3b82f6';
-  const progressBar = persist ? `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div style="flex:1;height:7px;background:var(--line,#e2e8f0);border-radius:4px;overflow:hidden">
-        <div id="cpbar-${prefix}" style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width .35s ease"></div>
+  const chipBg   = pct===100?'#d1fae5':pct>=50?'#fef3c7':'#dbeafe';
+  const chipTxt  = pct===100?'#065f46':pct>=50?'#92400e':'#1e40af';
+
+  const progressBlock = persist ? `
+    <div class="ld-cl-progress">
+      <div class="ld-cl-bar-wrap">
+        <div class="ld-cl-bar-track">
+          <div id="cpbar-${prefix}" class="ld-cl-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+        </div>
+        <span id="cplabel-${prefix}" class="ld-cl-count" style="color:${barColor}">${done}/${total}</span>
       </div>
-      <span id="cplabel-${prefix}" style="font-size:.72rem;font-weight:700;color:${barColor};white-space:nowrap">${done}/${total} complete</span>
+      <span class="ld-cl-chip" style="background:${chipBg};color:${chipTxt}">${pct===100?'Complete':pct+'% done'}</span>
     </div>` : '';
-  return `${progressBar}<div class="checklist" id="clist-${prefix}">${items.join('')}</div>`;
+
+  const items = c.items.map((item,i)=>{
+    const key     = `${prefix}-${i}`;
+    const checked = persist ? (localStorage.getItem(key) === '1') : false;
+    return `<label class="ld-cl-row${checked?' ld-cl-row--done':''}">
+      <span class="ld-cl-checkbox">
+        <input type="checkbox" ${persist?`data-key="${key}"`:''}${checked?' checked':''}>
+        <span class="ld-cl-check-icon">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </span>
+      <span class="ld-cl-item-text">${escapeHtml(item)}</span>
+    </label>`;
+  });
+
+  return `${progressBlock}<div class="ld-cl-list" id="clist-${prefix}">${items.join('')}</div>`;
 }
 
 function wireChecks(){
-  document.querySelectorAll('.check-item input[data-key]').forEach(cb=>{
+  document.querySelectorAll('.ld-cl-row input[data-key]').forEach(cb=>{
     const key = cb.dataset.key;
     cb.checked = localStorage.getItem(key) === '1';
+    // sync done-class on initial paint
+    const rowEl = cb.closest('.ld-cl-row');
+    if(rowEl) rowEl.classList.toggle('ld-cl-row--done', cb.checked);
+
     cb.addEventListener('change', ()=>{
       localStorage.setItem(key, cb.checked ? '1' : '0');
+      if(rowEl) rowEl.classList.toggle('ld-cl-row--done', cb.checked);
       // Live-update progress bar for this checklist
       const prefixMatch = key.match(/^(.+)-\d+$/);
       if (!prefixMatch) return;
@@ -2918,10 +3022,17 @@ function wireChecks(){
       const done  = [...allBoxes].filter(x=>x.checked).length;
       const pct   = Math.round((done/total)*100);
       const color = pct===100?'#10b981':pct>=50?'#f59e0b':'#3b82f6';
+      const chipBg  = pct===100?'#d1fae5':pct>=50?'#fef3c7':'#dbeafe';
+      const chipTxt = pct===100?'#065f46':pct>=50?'#92400e':'#1e40af';
       const barEl  = document.getElementById('cpbar-'+prefix);
       const lblEl  = document.getElementById('cplabel-'+prefix);
+      // find chip — it's a sibling of the bar-wrap inside ld-cl-progress
+      const barWrap = barEl ? barEl.closest('.ld-cl-bar-track') : null;
+      const progress = barEl ? barEl.closest('.ld-cl-progress') : null;
+      const chipEl  = progress ? progress.querySelector('.ld-cl-chip') : null;
       if (barEl){ barEl.style.width = pct+'%'; barEl.style.background = color; }
-      if (lblEl){ lblEl.textContent = done+'/'+total+' complete'; lblEl.style.color = color; }
+      if (lblEl){ lblEl.textContent = done+'/'+total; lblEl.style.color = color; }
+      if (chipEl){ chipEl.textContent = pct===100?'Complete':pct+'% done'; chipEl.style.background=chipBg; chipEl.style.color=chipTxt; }
     });
   });
 }

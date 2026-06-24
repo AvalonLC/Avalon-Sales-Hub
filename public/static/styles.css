@@ -715,3 +715,124 @@
 
 /* ── Responsive: rail below main on tablet ──────────────────────────────── */
 @media(max-width:900px){.ld-rail{order:2}}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LDR — QUALIFICATION NOTES VIEW/EDIT CARDS  (LDR-005)
+   ══════════════════════════════════════════════════════════════════════════ */
+.ld-qual-notes-card{padding:0;overflow:hidden}
+.ld-qual-field{padding:0}
+.ld-qual-divider{height:1px;background:var(--line)}
+.ld-qual-view,.ld-qual-edit{padding:16px 20px}
+.ld-qual-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;gap:8px;
+}
+.ld-qual-label{
+  display:flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:700;color:#475569;
+  text-transform:uppercase;letter-spacing:.06em;
+}
+.ld-qual-label svg{color:#94a3b8;flex-shrink:0}
+.ld-qual-edit-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  border:1px solid var(--line);background:#f8fafc;border-radius:7px;
+  padding:5px 10px;font-size:11.5px;font-weight:600;color:#64748b;
+  transition:all .12s;white-space:nowrap;
+}
+.ld-qual-edit-btn:hover{border-color:#6366f160;background:#ede9fe;color:#4f46e5;transform:translateY(-1px)}
+.ld-qual-edit-btn:active{transform:translateY(0)}
+.ld-qual-edit-btn svg{color:#94a3b8}
+.ld-qual-edit-btn:hover svg{color:#6366f1}
+.ld-qual-content{
+  font-size:13.5px;line-height:1.65;color:var(--ink);
+  white-space:pre-wrap;word-break:break-word;min-height:24px;
+}
+.ld-qual-empty{color:#94a3b8;font-style:italic;font-size:13px}
+.ld-qual-save-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#2563eb;border:none;border-radius:7px;
+  padding:6px 12px;font-size:11.5px;font-weight:700;color:#fff;
+  transition:all .14s;
+}
+.ld-qual-save-btn:hover{background:#1d4ed8;transform:translateY(-1px);box-shadow:0 3px 10px rgba(37,99,235,.25)}
+.ld-qual-save-btn:active{transform:translateY(0)}
+.ld-qual-cancel-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#f1f5f9;border:1px solid var(--line);border-radius:7px;
+  padding:6px 10px;font-size:11.5px;font-weight:600;color:#64748b;
+  transition:all .12s;
+}
+.ld-qual-cancel-btn:hover{background:#e2e8f0;color:#374151}
+.ld-qual-textarea{
+  width:100%;border:1.5px solid #6366f160;border-radius:10px;
+  padding:11px 13px;font-size:13.5px;line-height:1.6;resize:vertical;
+  min-height:90px;outline:none;background:#fafafa;box-sizing:border-box;
+  transition:border-color .14s,box-shadow .14s;
+}
+.ld-qual-textarea:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.12);background:#fff}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LDR — CHECKLIST COMPONENT  (LDR-008)
+   ══════════════════════════════════════════════════════════════════════════ */
+.ld-cl-progress{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:12px;
+  padding-bottom:12px;border-bottom:1px solid var(--line);
+}
+.ld-cl-bar-wrap{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.ld-cl-bar-track{
+  flex:1;height:7px;background:var(--line,#e2e8f0);
+  border-radius:4px;overflow:hidden;
+}
+.ld-cl-bar-fill{height:100%;border-radius:4px;transition:width .35s ease,background .25s}
+.ld-cl-count{
+  font-size:.72rem;font-weight:700;white-space:nowrap;flex-shrink:0;
+  transition:color .25s;
+}
+.ld-cl-chip{
+  display:inline-flex;align-items:center;border-radius:99px;
+  padding:3px 9px;font-size:10.5px;font-weight:700;
+  white-space:nowrap;flex-shrink:0;transition:background .25s,color .25s;
+}
+.ld-cl-list{display:flex;flex-direction:column;gap:0}
+.ld-cl-row{
+  display:flex;align-items:flex-start;gap:11px;
+  padding:10px 4px;border-bottom:1px solid #f1f5f9;
+  cursor:pointer;transition:background .1s;border-radius:6px;
+}
+.ld-cl-row:last-child{border-bottom:none}
+.ld-cl-row:hover{background:#f8fafc}
+.ld-cl-checkbox{position:relative;flex-shrink:0;width:20px;height:20px;margin-top:1px}
+.ld-cl-checkbox input{
+  position:absolute;inset:0;opacity:0;width:100%;height:100%;
+  cursor:pointer;margin:0;z-index:1;
+}
+.ld-cl-check-icon{
+  position:absolute;inset:0;border-radius:6px;
+  border:2px solid #cbd5e1;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.ld-cl-check-icon svg{opacity:0;color:#fff;transition:opacity .12s}
+.ld-cl-checkbox input:checked ~ .ld-cl-check-icon{background:#2563eb;border-color:#2563eb}
+.ld-cl-checkbox input:checked ~ .ld-cl-check-icon svg{opacity:1}
+.ld-cl-checkbox input:focus ~ .ld-cl-check-icon{box-shadow:0 0 0 3px rgba(37,99,235,.2)}
+.ld-cl-item-text{
+  font-size:13px;line-height:1.55;color:var(--ink);flex:1;padding-top:1px;
+  transition:color .15s,text-decoration .15s;
+}
+.ld-cl-row--done .ld-cl-item-text{
+  color:#94a3b8;text-decoration:line-through;text-decoration-color:#cbd5e1;
+}
+.ld-cl-row--done .ld-cl-check-icon{background:#10b981;border-color:#10b981}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LDR — QA GRID: 5-up layout  (LDR-006 / LDR-013)
+   ══════════════════════════════════════════════════════════════════════════ */
+.ld-qa-grid{grid-template-columns:repeat(3,1fr)}
+@media(min-width:900px){.ld-qa-grid{grid-template-columns:repeat(5,1fr)}}
+.ld-qa-btn:focus-visible{outline:3px solid #6366f1;outline-offset:2px}
+.ld-qa-btn:active{transform:translateY(0);box-shadow:none}
+.ld-qa-btn.ld-qa-loading{pointer-events:none;opacity:.7}
+.ld-qa-btn.ld-qa-success svg{color:#10b981}
+.ld-qa-btn.ld-qa-success{border-color:#10b98140;background:#f0fdf4}
