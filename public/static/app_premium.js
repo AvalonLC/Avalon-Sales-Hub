@@ -9011,12 +9011,11 @@ async function superAdmin() {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ company_id: companyId })
+          body: JSON.stringify({ companyId })
         });
-        if (!res.ok) throw new Error((await res.json()).error || 'Failed');
         const data = await res.json();
-        // Swap session cookie to impersonation token, reload cleanly
-        document.cookie = `avalon_session=${data.token};path=/;max-age=86400;samesite=lax`;
+        if (!res.ok) throw new Error(data.error || 'Failed');
+        // Server already set the httpOnly session cookie — just reload
         window._d1Ready       = false;
         window._d1SessionRep  = null;
         window._companyId     = companyId;
