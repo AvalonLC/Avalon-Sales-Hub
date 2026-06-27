@@ -28,7 +28,31 @@ function loadState(){
   try { return {...DEFAULT_STATE, ...(JSON.parse(localStorage.getItem(STORAGE_KEY)) || {})}; }
   catch(e){ return structuredClone(DEFAULT_STATE); }
 }
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function saveState(){
+  // Always save to localStorage (instant, works offline)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  // Expose state for integrations module
+  window._avalonState = state;
+}
+
+// ── D1 Write-Through helpers (async, fire-and-forget unless awaited) ──────────
+// These are called after saveState() to replicate changes to D1
+async function _d1SaveOpp(opp) {
+  if (!window.DB || !window._d1Ready) return;
+  try {
+    await window.DB.opportunities.save(opp);
+  } catch(e) { console.warn('[D1] save opp failed:', e.message); }
+}
+
+async function _d1DeleteOpp(id) {
+  if (!window.DB || !window._d1Ready) return;
+  try {
+    await window.DB.opportunities.delete(id);
+  } catch(e) { console.warn('[D1] delete opp failed:', e.message); }
+}
+
+window._d1SaveOpp   = _d1SaveOpp;
+window._d1DeleteOpp = _d1DeleteOpp;
 // ── Nav Permission System ──────────────────────────────────────────────────
 // All views always visible in sidebar. Tyler controls access per role here.
 const NAV_PERMS_KEY = 'avalonNavPermissions';
@@ -691,6 +715,12 @@ function loadClients() {
 }
 function saveClients(list) {
   localStorage.setItem(CLIENTS_KEY, JSON.stringify(list));
+  // Write-through to D1 (fire-and-forget)
+  if (window.DB && window._d1Ready) {
+    list.forEach(client => {
+      window.DB.clients.save(client).catch(e => console.warn('[D1] save client failed:', e.message));
+    });
+  }
 }
 function clientId() { return 'cl_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
 function propId()   { return 'pr_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
@@ -1646,7 +1676,10 @@ function lead(){
     }
     // clientId already set by autocomplete selection if existing client was picked
 
-    state.opportunities.unshift(opp); saveState(); showToast('Lead saved'); show('pipeline', opp.id);
+    state.opportunities.unshift(opp); saveState();
+    // Write-through to D1
+    _d1SaveOpp(opp);
+    showToast('Lead saved'); show('pipeline', opp.id);
   });
 
   // ── Client name autocomplete + prefill ─────────────────────────────────────
@@ -2841,9 +2874,36 @@ function saveOpportunity(id){
 
   saveState(); showToast('Opportunity saved'); show('pipeline', id);
 }
-function setOppField(id,field,value){ const o = state.opportunities.find(x=>x.id===id); if(!o) return; o[field]=value; o.updatedAt=new Date().toISOString(); saveState(); showToast('Updated'); show('pipeline', id); }
-function duplicateOpportunity(id){ const o = state.opportunities.find(x=>x.id===id); if(!o) return; const copy={...o,id:uid('opp'),client:`${o.client||'Lead'} Copy`,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; state.opportunities.unshift(copy); saveState(); showToast('Duplicated'); show('pipeline',copy.id); }
-function deleteOpportunity(id){ if(!confirm('Delete this opportunity?')) return; state.opportunities = state.opportunities.filter(o=>o.id!==id); state.notes = state.notes.filter(n=>n.oppId!==id); saveState(); showToast('Deleted'); show('pipeline'); }
+function setOppField(id,field,value){
+  const o = state.opportunities.find(x=>x.id===id);
+  if(!o) return;
+  o[field]=value;
+  o.updatedAt=new Date().toISOString();
+  saveState();
+  // Write-through to D1
+  _d1SaveOpp(o);
+  showToast('Updated');
+  show('pipeline', id);
+}
+function duplicateOpportunity(id){
+  const o = state.opportunities.find(x=>x.id===id);
+  if(!o) return;
+  const copy={...o,id:uid('opp'),client:`${o.client||'Lead'} Copy`,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  state.opportunities.unshift(copy);
+  saveState();
+  _d1SaveOpp(copy);
+  showToast('Duplicated');
+  show('pipeline',copy.id);
+}
+function deleteOpportunity(id){
+  if(!confirm('Delete this opportunity?')) return;
+  state.opportunities = state.opportunities.filter(o=>o.id!==id);
+  state.notes = state.notes.filter(n=>n.oppId!==id);
+  saveState();
+  _d1DeleteOpp(id);
+  showToast('Deleted');
+  show('pipeline');
+}
 window.toggleLeadOverflow = function(btn){
   // Close all open overflow menus first
   document.querySelectorAll('.ld-overflow-menu').forEach(m=>{ if(m!=(btn&&btn.nextElementSibling)) m.style.display='none'; });
@@ -2856,7 +2916,23 @@ window.toggleLeadOverflow = function(btn){
     setTimeout(()=>document.addEventListener('click',close,true),0);
   }
 };
-function addNote(oppId){ const el = document.getElementById('newNote'); if(!el.value.trim()) return; state.notes.unshift({id:uid('note'),oppId,body:el.value.trim(),createdAt:new Date().toISOString()}); const o=state.opportunities.find(x=>x.id===oppId); if(o) o.updatedAt=new Date().toISOString(); saveState(); showToast('Note added'); show('pipeline', oppId); }
+function addNote(oppId){
+  const el = document.getElementById('newNote');
+  if(!el || !el.value.trim()) return;
+  const noteBody = el.value.trim();
+  const repId = window.getCurrentRep ? window.getCurrentRep()?.id : null;
+  const note = {id:uid('note'),oppId,body:noteBody,createdAt:new Date().toISOString()};
+  state.notes.unshift(note);
+  const o=state.opportunities.find(x=>x.id===oppId);
+  if(o) o.updatedAt=new Date().toISOString();
+  saveState();
+  // Write-through to D1
+  if (window.DB && window._d1Ready) {
+    window.DB.notes.add(oppId, noteBody, repId).catch(e => console.warn('[D1] add note failed:', e.message));
+  }
+  showToast('Note added');
+  show('pipeline', oppId);
+}
 
 // ── Qualification Notes view/edit helpers ─────────────────────────────────────
 function ldQualEdit(field, oppId){
@@ -2879,7 +2955,7 @@ function ldQualSave(field, oppId){
   if(!ta) return;
   const val = ta.value.trim();
   const o = state.opportunities.find(x=>x.id===oppId);
-  if(o){ o[field]=val; o.updatedAt=new Date().toISOString(); saveState(); }
+  if(o){ o[field]=val; o.updatedAt=new Date().toISOString(); saveState(); _d1SaveOpp(o); }
   // update view content without full re-render
   const contentEl = document.getElementById('qfcontent-'+field+'-'+oppId);
   const placeholders = {
@@ -3005,6 +3081,13 @@ function wireChecks(){
     cb.addEventListener('change', ()=>{
       localStorage.setItem(key, cb.checked ? '1' : '0');
       if(rowEl) rowEl.classList.toggle('check-item--done', cb.checked);
+      // Write-through to D1 checklist
+      if (window.DB && window._d1Ready && cb.dataset.oppId && cb.dataset.checklistId) {
+        window.DB.checklist.set(
+          cb.dataset.oppId, cb.dataset.checklistId,
+          parseInt(cb.dataset.itemIndex || '0'), cb.checked
+        ).catch(e => console.warn('[D1] checklist update failed:', e.message));
+      }
       // Live-update progress bar
       const prefixMatch = key.match(/^(.+)-\d+$/);
       if (!prefixMatch) return;

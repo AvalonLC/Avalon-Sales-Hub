@@ -284,6 +284,10 @@ function loginRep(repId) {
 
 function logoutRep() {
   localStorage.removeItem(AUTH_KEY);
+  window._d1SessionRep = null;
+  window._d1Ready = false;
+  // Also clear D1 session cookie (fire-and-forget, don't await)
+  if (window.DB) window.DB.auth.logout().catch(() => {});
 }
 
 function isAdmin() {
@@ -637,11 +641,55 @@ function renderLoginScreen() {
     }
   }
 
-  function attemptLogin(repId, pin) {
+  async function attemptLogin(repId, pin) {
+    // Try D1 API first (cloud auth), fall back to local REPS check
+    if (window.DB) {
+      try {
+        const d1Rep = await window.DB.auth.login(repId, pin);
+        // D1 login success — sets session cookie
+        window._d1SessionRep = d1Rep;
+        window._d1Ready = true;
+        loginRep(repId); // also set localStorage for getCurrentRep()
+        // Reload opps from D1 before showing app
+        try {
+          const opps = await window.DB.opportunities.list({
+            repId: (d1Rep.role === 'admin' || d1Rep.role === 'office_manager') ? undefined : repId
+          });
+          if (opps && opps.length > 0 && window.state) {
+            const d1Ids = new Set(opps.map(o => o.id));
+            window.state.opportunities = [
+              ...opps.map(o => ({
+                id: o.id, repId: o.rep_id, client: o.client,
+                phone: o.phone, email: o.email, address: o.address,
+                serviceLine: o.service_line, source: o.source,
+                status: o.status, jobValue: o.job_value,
+                project: o.project, urgency: o.urgency,
+                decisionMaker: o.decision_maker, budgetRange: o.budget_range,
+                nextFollowUp: o.next_follow_up, pipelineStage: o.pipeline_stage,
+                estimateAmount: o.estimate_amount, estimateSentDate: o.estimate_sent_date,
+                estimateCount: o.estimate_count, workType: o.work_type,
+                clientType: o.client_type, prompt: o.prompt,
+                desiredOutcome: o.desired_outcome, fitConcerns: o.fit_concerns,
+                commissionApproved: !!o.commission_approved, collected: !!o.collected,
+                soldDate: o.sold_date, soldAmount: o.sold_amount,
+                createdAt: o.created_at, updatedAt: o.updated_at
+              })),
+              ...(window.state.opportunities || []).filter(o => !d1Ids.has(o.id))
+            ];
+          }
+        } catch(e) { console.warn('[Login] D1 opps load failed:', e.message); }
+        initApp();
+        return;
+      } catch(e) {
+        // D1 auth failed — fall through to local check (offline fallback)
+        console.warn('[Login] D1 auth failed, trying local:', e.message);
+      }
+    }
+    // Local fallback (offline or D1 unavailable)
     const rep = REPS.find(r => r.id === repId);
     if (rep && rep.pin === pin) {
       loginRep(repId);
-      initApp(); // Go to main app
+      initApp();
     } else {
       pinBuffer = '';
       updatePinDisplay();
