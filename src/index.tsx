@@ -1271,19 +1271,23 @@ function getHtml(): string {
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="brand-mark" onclick="show('today')" style="cursor:pointer" title="Go to Today">
-        <img src="/static/avalon-logo.png" alt="Groundwork CRM" style="width:42px;height:42px;object-fit:contain;">
+      <div class="brand-mark" onclick="show('today')" style="cursor:pointer;width:34px;height:34px;" title="Go to Today">
+        <!-- Groundwork Contour Mark SVG -->
+        <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11 1L20 6.5L11 12L2 6.5L11 1Z" stroke="rgba(255,255,255,0.9)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <path d="M2 9.5L11 15L20 9.5" stroke="rgba(255,255,255,0.65)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M2 12.5L11 18L20 12.5" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
       </div>
       <div>
         <div class="brand-name">Groundwork</div>
-        <div class="brand-subtitle">CRM</div>
-        <div class="brand-kicker" id="brandKicker"></div>
+        <div class="brand-subtitle">Sales CRM</div>
       </div>
     </div>
     <nav class="nav" id="mainNav" role="navigation">
 
       <details class="nav-group" open>
-        <summary class="nav-summary">🏠 Home</summary>
+        <summary class="nav-summary">Home</summary>
         <div class="nav-items">
           <button class="nav-item active" data-view="today" onclick="show('today')">Today</button>
           <button class="nav-item" data-view="myDashboard" onclick="show('myDashboard')">My Dashboard</button>
@@ -1291,7 +1295,7 @@ function getHtml(): string {
       </details>
 
       <details class="nav-group" open>
-        <summary class="nav-summary">📊 Pipeline</summary>
+        <summary class="nav-summary">Pipeline</summary>
         <div class="nav-items">
           <button class="nav-item" data-view="pipeline" onclick="show('pipeline')">Pipeline</button>
           <button class="nav-item" data-view="lead" onclick="show('lead')">Add Lead</button>
@@ -1300,7 +1304,7 @@ function getHtml(): string {
       </details>
 
       <details class="nav-group">
-        <summary class="nav-summary">🛠️ Sales Toolkit</summary>
+        <summary class="nav-summary">Sales Toolkit</summary>
         <div class="nav-items">
           <button class="nav-item" data-view="process" onclick="show('process')">Sales Process</button>
           <button class="nav-item" data-view="forms" onclick="show('forms')">Forms &amp; Checklists</button>
@@ -1313,14 +1317,14 @@ function getHtml(): string {
       </details>
 
       <details class="nav-group">
-        <summary class="nav-summary">🎓 Learning</summary>
+        <summary class="nav-summary">Learning</summary>
         <div class="nav-items">
           <button class="nav-item" data-view="academy" onclick="show('academy')">Sales Academy</button>
         </div>
       </details>
 
       <details class="nav-group">
-        <summary class="nav-summary">⚙️ Admin</summary>
+        <summary class="nav-summary">Admin</summary>
         <div class="nav-items">
           <button class="nav-item" data-view="manager" onclick="show('manager')">Manager Tools</button>
           <button class="nav-item" data-view="revenueAdmin" onclick="show('revenueAdmin')">Financial Data Hub</button>
@@ -1332,9 +1336,12 @@ function getHtml(): string {
       </details>
 
     </nav>
-    <div class="sidebar-footer">
-      <strong>Groundwork CRM</strong><br>
-      Built for field sales teams.<br>Every lead. Every follow-up.
+    <div class="sidebar-footer" id="sidebarUserFooter">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--gw-pine);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0" id="sidebarAvatarInitials">TJ</div>
+      <div style="min-width:0">
+        <strong id="sidebarUserName" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">Tyler Jones</strong>
+        <span id="sidebarUserRole">Operations Director</span>
+      </div>
     </div>
   </aside>
   <main class="main" role="main">

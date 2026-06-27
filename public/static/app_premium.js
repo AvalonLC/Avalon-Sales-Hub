@@ -264,12 +264,14 @@ window.show = show;
       // Footer: show rep identity + role badge
       const footer = document.querySelector('.sidebar-footer');
       if (footer) {
-        const roleBadge = isAdmin
-          ? `<span style="display:inline-block;background:#00d4ff;color:#0a0f1a;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;letter-spacing:.05em;vertical-align:middle;margin-left:4px">OWNER</span>`
-          : isOM
-          ? `<span style="display:inline-block;background:#f59e0b;color:#0a0f1a;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;letter-spacing:.05em;vertical-align:middle;margin-left:4px">OFFICE MGR</span>`
-          : '';
-        footer.innerHTML = `<span style="color:${rep.color};font-weight:700">${rep.name}${roleBadge}</span><br><span style="font-size:11px;color:#64748b">${rep.title}</span><br><button onclick="logoutRep();renderLoginScreen()" style="margin-top:6px;background:none;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;padding:4px 10px;cursor:pointer;width:100%">Switch Account</button>`;
+        const initials = (rep.name || 'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        const roleLabel = isAdmin ? 'Owner / Admin' : isOM ? 'Office Manager' : (rep.title || 'Sales Rep');
+        footer.innerHTML = `
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--gw-pine);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;cursor:pointer" onclick="logoutRep();renderLoginScreen()" title="Switch account">${initials}</div>
+          <div style="min-width:0;flex:1">
+            <strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;font-size:13px;color:var(--gw-ink)">${rep.name}</strong>
+            <span style="font-size:11px;color:var(--gw-muted)">${roleLabel}</span>
+          </div>`;
       }
       // Nav items: always fully visible — access controlled by Permission Matrix in Settings
     }
