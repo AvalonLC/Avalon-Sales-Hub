@@ -4,6 +4,9 @@
  * This module replaces direct localStorage reads/writes with async
  * fetch() calls to the Hono API layer backed by Cloudflare D1.
  *
+ * Multi-tenant: all requests include companyId (default 'avalon').
+ * Set window._companyId before calling any method to scope to a tenant.
+ *
  * Usage:
  *   const opps = await DB.opportunities.list({ repId: 'tyler' });
  *   await DB.opportunities.save(opp);  // create or update
@@ -19,6 +22,13 @@
  */
 
 const DB = (() => {
+
+  // ── Company context ──────────────────────────────────────────────────────────
+  // window._companyId is set by app_premium.js after login resolves.
+  // Fall back to 'avalon' so existing code works without changes.
+  function cid() {
+    return (window._companyId && window._companyId !== '') ? window._companyId : 'avalon';
+  }
 
   // ── Base fetch helper ────────────────────────────────────────────────────────
   async function api(method, path, body) {
@@ -41,9 +51,9 @@ const DB = (() => {
 
   // ── AUTH ─────────────────────────────────────────────────────────────────────
   const auth = {
-    /** Login with repId + PIN. Returns rep object (no pin) on success. */
-    login(repId, pin) {
-      return post('/auth/login', { repId, pin });
+    /** Login with repId + PIN + optional companyId. Returns rep object (no pin) on success. */
+    login(repId, pin, companyId) {
+      return post('/auth/login', { repId, pin, companyId: companyId || cid() });
     },
     /** Logout — clears session cookie. */
     logout() {
@@ -57,9 +67,9 @@ const DB = (() => {
 
   // ── REPS ─────────────────────────────────────────────────────────────────────
   const reps = {
-    list()     { return get('/reps'); },
-    get(id)    { return get(`/reps/${id}`); },
-    update(id, data) { return put(`/reps/${id}`, data); }
+    list()     { return get(`/reps?companyId=${encodeURIComponent(cid())}`); },
+    get(id)    { return get(`/reps/${id}?companyId=${encodeURIComponent(cid())}`); },
+    update(id, data) { return put(`/reps/${id}`, { ...data, companyId: cid() }); }
   };
 
   // ── OPPORTUNITIES ────────────────────────────────────────────────────────────
@@ -67,15 +77,15 @@ const DB = (() => {
     /** List all opportunities, optionally filtered by repId and/or status. */
     list({ repId, status } = {}) {
       const params = new URLSearchParams();
+      params.set('companyId', cid());
       if (repId)  params.set('repId', repId);
       if (status) params.set('status', status);
-      const qs = params.toString();
-      return get('/opportunities' + (qs ? '?' + qs : ''));
+      return get('/opportunities?' + params.toString());
     },
 
     /** Get single opportunity by id. */
     get(id) {
-      return get(`/opportunities/${id}`);
+      return get(`/opportunities/${id}?companyId=${encodeURIComponent(cid())}`);
     },
 
     /**
@@ -84,16 +94,17 @@ const DB = (() => {
      * Returns { id } on success.
      */
     async save(opp) {
+      const payload = { ...opp, companyId: opp.companyId || cid() };
       if (opp.id) {
-        return put(`/opportunities/${opp.id}`, opp);
+        return put(`/opportunities/${opp.id}`, payload);
       } else {
-        return post('/opportunities', opp);
+        return post('/opportunities', payload);
       }
     },
 
     /** Delete an opportunity and all child records. */
     delete(id) {
-      return del(`/opportunities/${id}`);
+      return del(`/opportunities/${id}?companyId=${encodeURIComponent(cid())}`);
     }
   };
 
@@ -101,17 +112,17 @@ const DB = (() => {
   const notes = {
     /** Get all notes for an opportunity. */
     list(oppId) {
-      return get(`/opportunities/${oppId}/notes`);
+      return get(`/opportunities/${oppId}/notes?companyId=${encodeURIComponent(cid())}`);
     },
 
     /** Add a new note to an opportunity. */
     add(oppId, body, repId) {
-      return post(`/opportunities/${oppId}/notes`, { body, repId });
+      return post(`/opportunities/${oppId}/notes`, { body, repId, companyId: cid() });
     },
 
     /** Delete a note by id. */
     delete(noteId) {
-      return del(`/notes/${noteId}`);
+      return del(`/notes/${noteId}?companyId=${encodeURIComponent(cid())}`);
     }
   };
 
@@ -119,18 +130,19 @@ const DB = (() => {
   const comms = {
     /** Get communications for an opportunity. */
     list(oppId) {
-      return get(`/opportunities/${oppId}/comms`);
+      return get(`/opportunities/${oppId}/comms?companyId=${encodeURIComponent(cid())}`);
     },
 
     /** Log a communication (call, email, SMS, proposal). */
     add(oppId, { type, direction, subject, body, repId }) {
-      return post(`/opportunities/${oppId}/comms`, { type, direction, subject, body, repId });
+      return post(`/opportunities/${oppId}/comms`, { type, direction, subject, body, repId, companyId: cid() });
     },
 
     /** Get all communications (global activity log), optionally filtered by repId. */
     all(repId) {
-      const qs = repId ? `?repId=${encodeURIComponent(repId)}` : '';
-      return get('/comms' + qs);
+      const params = new URLSearchParams({ companyId: cid() });
+      if (repId) params.set('repId', repId);
+      return get('/comms?' + params.toString());
     }
   };
 
@@ -138,7 +150,7 @@ const DB = (() => {
   const checklist = {
     /** Get all checklist progress rows for an opportunity. */
     list(oppId) {
-      return get(`/checklist/${oppId}`);
+      return get(`/checklist/${oppId}?companyId=${encodeURIComponent(cid())}`);
     },
 
     /**
@@ -149,58 +161,69 @@ const DB = (() => {
      * @param {boolean} checked
      */
     set(oppId, checklistId, itemIndex, checked) {
-      return put('/checklist', { oppId, checklistId, itemIndex, checked });
+      return put('/checklist', { oppId, checklistId, itemIndex, checked, companyId: cid() });
     }
   };
 
   // ── CLIENTS ──────────────────────────────────────────────────────────────────
   const clients = {
-    list()          { return get('/clients'); },
-    save(client)    {
-      if (client.id) return put(`/clients/${client.id}`, client);
-      return post('/clients', client);
+    list() { return get(`/clients?companyId=${encodeURIComponent(cid())}`); },
+    save(client) {
+      const payload = { ...client, companyId: client.companyId || cid() };
+      if (client.id) return put(`/clients/${client.id}`, payload);
+      return post('/clients', payload);
     },
-    delete(id)      { return del(`/clients/${id}`); }
+    delete(id) { return del(`/clients/${id}?companyId=${encodeURIComponent(cid())}`); }
   };
 
   // ── SETTINGS ─────────────────────────────────────────────────────────────────
   const settings = {
-    getAll()         { return get('/settings'); },
-    set(key, value)  { return put('/settings', { key, value }); }
+    getAll()         { return get(`/settings?companyId=${encodeURIComponent(cid())}`); },
+    set(key, value)  { return put('/settings', { key, value, companyId: cid() }); }
   };
 
   // ── REVENUE ACTUALS ──────────────────────────────────────────────────────────
   const revenue = {
-    list()                                           { return get('/revenue'); },
+    list()                                           {
+      return get(`/revenue?companyId=${encodeURIComponent(cid())}`);
+    },
     set(month, year, rev, note, division = 'total')  {
-      return put('/revenue', { month, year, revenue: rev, note, division });
+      return put('/revenue', { month, year, revenue: rev, note, division, companyId: cid() });
     }
   };
 
   // ── ACADEMY ──────────────────────────────────────────────────────────────────
   const academy = {
     progress: {
-      list(repId)    { return get(`/academy/progress/${repId}`); },
+      list(repId) {
+        return get(`/academy/progress/${repId}?companyId=${encodeURIComponent(cid())}`);
+      },
       set(repId, moduleId, sectionId, completed, score) {
-        return put('/academy/progress', { repId, moduleId, sectionId, completed, score });
+        return put('/academy/progress', { repId, moduleId, sectionId, completed, score, companyId: cid() });
       }
     },
     quiz: {
-      list(repId)    { return get(`/academy/quiz/${repId}`); },
+      list(repId) {
+        return get(`/academy/quiz/${repId}?companyId=${encodeURIComponent(cid())}`);
+      },
       submit(repId, moduleId, score, total, passed, answers) {
-        return post('/academy/quiz', { repId, moduleId, score, total, passed, answers });
+        return post('/academy/quiz', { repId, moduleId, score, total, passed, answers, companyId: cid() });
       }
     },
     badges: {
-      list(repId)    { return get(`/academy/badges/${repId}`); },
+      list(repId) {
+        return get(`/academy/badges/${repId}?companyId=${encodeURIComponent(cid())}`);
+      },
       award(repId, badgeId) {
-        return post('/academy/badges', { repId, badgeId });
+        return post('/academy/badges', { repId, badgeId, companyId: cid() });
       }
     },
     certs: {
-      list(repId)    { return get(`/academy/certs/${repId}`); },
+      list(repId) {
+        return get(`/academy/certs/${repId}?companyId=${encodeURIComponent(cid())}`);
+      },
       set(repId, phaseId, status) {
-        return put('/academy/certs', { repId, phaseId, status });
+        return put('/academy/certs', { repId, phaseId, status, companyId: cid() });
       }
     }
   };
@@ -214,6 +237,7 @@ const DB = (() => {
    */
   async function sync(state) {
     return post('/sync', {
+      companyId:      cid(),
       opportunities:  state.opportunities  || [],
       notes:          state.notes          || [],
       communications: state.communications || [],
@@ -279,7 +303,7 @@ const DB = (() => {
 
     console.log(`[DB] Migrating ${localData.opportunities?.length || 0} opps, ` +
       `${localData.notes?.length || 0} notes, ${localData.communications?.length || 0} comms, ` +
-      `${localClients.length} clients from localStorage → D1`);
+      `${localClients.length} clients from localStorage → D1 (companyId: ${cid()})`);
 
     try {
       const result = await sync({
@@ -300,11 +324,16 @@ const DB = (() => {
   // ── SESSION MANAGEMENT ───────────────────────────────────────────────────────
   /**
    * Check if user is currently logged in.
-   * Returns rep object or null.
+   * Returns rep object (including company_id) or null.
+   * Also sets window._companyId from the rep's company_id for subsequent calls.
    */
   async function getSession() {
     try {
-      return await auth.me();
+      const rep = await auth.me();
+      if (rep && rep.company_id) {
+        window._companyId = rep.company_id;
+      }
+      return rep;
     } catch(e) {
       return null;
     }
@@ -324,7 +353,9 @@ const DB = (() => {
     academy,
     sync,
     migrateFromLocalStorage,
-    getSession
+    getSession,
+    /** Expose cid() for debugging: DB.companyId() */
+    companyId: cid
   };
 
 })();

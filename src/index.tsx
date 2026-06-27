@@ -4,10 +4,11 @@ import { cors } from 'hono/cors'
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 
 type Bindings = { DB: D1Database }
+type Variables = { repId: string; companyId: string; role: string }
 
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
-// ── CORS + JSON middleware for API ────────────────────────────────────────────
+// ── CORS + middleware ─────────────────────────────────────────────────────────
 app.use('/api/*', cors())
 
 // ── Static files ──────────────────────────────────────────────────────────────
@@ -20,43 +21,65 @@ app.use('/sw.js', serveStatic({ root: './public', path: 'sw.js' }))
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }
-
 function json(c: any, data: any, status = 200) {
   return c.json({ ok: true, data }, status)
 }
-
 function err(c: any, msg: string, status = 400) {
   return c.json({ ok: false, error: msg }, status)
 }
 
-// Auth middleware — checks session cookie
+// ── requireAuth middleware ────────────────────────────────────────────────────
+// Resolves session cookie → rep → company_id, sets c.var.{repId,companyId,role}
 async function requireAuth(c: any, next: any) {
   const token = getCookie(c, 'avalon_session')
   if (!token) return err(c, 'Unauthorized', 401)
-  const row = await c.env.DB.prepare(
-    'SELECT r.* FROM settings s JOIN reps r ON r.id = s.value WHERE s.key = ? LIMIT 1'
-  ).bind(`session_${token}`).first()
+  // Session key stores repId; rep row has company_id
+  const row = await c.env.DB.prepare(`
+    SELECT r.id as rep_id, r.company_id, r.role
+    FROM settings s
+    JOIN reps r ON r.id = s.value AND r.company_id = (
+      SELECT company_id FROM reps WHERE id = s.value LIMIT 1
+    )
+    WHERE s.key = ? LIMIT 1
+  `).bind(`session_${token}`).first<{ rep_id: string; company_id: string; role: string }>()
   if (!row) return err(c, 'Session expired', 401)
-  c.set('rep', row)
+  c.set('repId',     row.rep_id)
+  c.set('companyId', row.company_id)
+  c.set('role',      row.role)
   await next()
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// AUTH ROUTES
+// AUTH ROUTES  (no requireAuth — these establish identity)
 // ══════════════════════════════════════════════════════════════════════════════
 
-// POST /api/auth/login  { repId, pin }
+// POST /api/auth/login  { repId, pin, companyId? }
 app.post('/api/auth/login', async (c) => {
-  const { repId, pin } = await c.req.json()
+  const { repId, pin, companyId } = await c.req.json()
   if (!repId || !pin) return err(c, 'repId and pin required')
-  const rep = await c.env.DB.prepare(
-    'SELECT * FROM reps WHERE id = ? AND pin = ? AND active = 1 LIMIT 1'
-  ).bind(repId, String(pin)).first()
+  // companyId is optional — if omitted, look up by repId alone (single-tenant mode)
+  let rep: any
+  if (companyId) {
+    rep = await c.env.DB.prepare(
+      'SELECT * FROM reps WHERE id = ? AND pin = ? AND company_id = ? AND active = 1 LIMIT 1'
+    ).bind(repId, String(pin), companyId).first()
+  } else {
+    rep = await c.env.DB.prepare(
+      'SELECT * FROM reps WHERE id = ? AND pin = ? AND active = 1 LIMIT 1'
+    ).bind(repId, String(pin)).first()
+  }
   if (!rep) return err(c, 'Invalid credentials', 401)
   const token = uid() + uid()
-  await c.env.DB.prepare(
-    'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, datetime(\'now\'))'
-  ).bind(`session_${token}`, repId).run()
+  // Store session: key = session_{token}, value = repId
+  // We also store company_id in a second key for fast lookup
+  await c.env.DB.batch([
+    c.env.DB.prepare(
+      "INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))"
+    ).bind(`session_${token}`, rep.id),
+    c.env.DB.prepare(
+      "INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))"
+    ).bind(`session_company_${token}`, rep.company_id)
+  ])
   setCookie(c, 'avalon_session', token, {
     httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 60 * 60 * 24 * 30
   })
@@ -68,7 +91,10 @@ app.post('/api/auth/login', async (c) => {
 app.post('/api/auth/logout', async (c) => {
   const token = getCookie(c, 'avalon_session')
   if (token) {
-    await c.env.DB.prepare('DELETE FROM settings WHERE key = ?').bind(`session_${token}`).run()
+    await c.env.DB.batch([
+      c.env.DB.prepare('DELETE FROM settings WHERE key = ?').bind(`session_${token}`),
+      c.env.DB.prepare('DELETE FROM settings WHERE key = ?').bind(`session_company_${token}`)
+    ])
   }
   deleteCookie(c, 'avalon_session')
   return json(c, { loggedOut: true })
@@ -78,63 +104,121 @@ app.post('/api/auth/logout', async (c) => {
 app.get('/api/auth/me', async (c) => {
   const token = getCookie(c, 'avalon_session')
   if (!token) return err(c, 'Not logged in', 401)
-  const repId = await c.env.DB.prepare(
+  const sess = await c.env.DB.prepare(
     'SELECT value FROM settings WHERE key = ? LIMIT 1'
   ).bind(`session_${token}`).first<{ value: string }>()
-  if (!repId) return err(c, 'Session expired', 401)
+  if (!sess) return err(c, 'Session expired', 401)
   const rep = await c.env.DB.prepare(
-    'SELECT id, name, title, role, color, commission_plan FROM reps WHERE id = ? LIMIT 1'
-  ).bind(repId.value).first()
+    'SELECT id, name, title, role, color, commission_plan, company_id FROM reps WHERE id = ? LIMIT 1'
+  ).bind(sess.value).first()
   if (!rep) return err(c, 'Rep not found', 404)
   return json(c, rep)
 })
 
 // ══════════════════════════════════════════════════════════════════════════════
-// REPS
+// COMPANIES  (super-admin only in future; open for now to bootstrap)
 // ══════════════════════════════════════════════════════════════════════════════
 
-// GET /api/reps
+// GET /api/companies/:id  — read own company info
+app.get('/api/companies/:id', async (c) => {
+  const row = await c.env.DB.prepare(
+    'SELECT id, name, slug, plan, phone, website, logo_url, timezone, trial_ends_at, active, created_at FROM companies WHERE id = ? LIMIT 1'
+  ).bind(c.req.param('id')).first()
+  if (!row) return err(c, 'Company not found', 404)
+  return json(c, row)
+})
+
+// PUT /api/companies/:id  — update own company (admin only, enforced in middleware later)
+app.put('/api/companies/:id', async (c) => {
+  const id = c.req.param('id')
+  const b  = await c.req.json()
+  const fields = ['name','phone','website','logo_url','timezone','owner_email']
+  const updates = fields.filter(f => b[f] !== undefined)
+  if (!updates.length) return err(c, 'Nothing to update')
+  const set = updates.map(f => `${f} = ?`).join(', ')
+  const vals = updates.map(f => b[f])
+  await c.env.DB.prepare(
+    `UPDATE companies SET ${set}, updated_at = datetime('now') WHERE id = ?`
+  ).bind(...vals, id).run()
+  return json(c, { updated: id })
+})
+
+// POST /api/companies  — onboard a new company (public endpoint for signup flow)
+app.post('/api/companies', async (c) => {
+  const b = await c.req.json()
+  if (!b.name || !b.slug) return err(c, 'name and slug required')
+  // Check slug uniqueness
+  const existing = await c.env.DB.prepare('SELECT id FROM companies WHERE slug = ? LIMIT 1').bind(b.slug).first()
+  if (existing) return err(c, 'That company URL is already taken', 409)
+  const id = b.slug // use slug as id for readability
+  await c.env.DB.prepare(`
+    INSERT INTO companies (id, name, slug, plan, owner_email, phone, website, timezone, active)
+    VALUES (?, ?, ?, 'trial', ?, ?, ?, ?, 1)
+  `).bind(id, b.name, b.slug, b.ownerEmail||'', b.phone||'', b.website||'', b.timezone||'America/New_York').run()
+  return json(c, { id, slug: b.slug }, 201)
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REPS  — all scoped to company_id
+// ══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/reps?companyId=
 app.get('/api/reps', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT id, name, title, role, color, commission_plan, active FROM reps WHERE active = 1 ORDER BY name'
-  ).all()
+    'SELECT id, name, title, role, color, commission_plan, active, company_id FROM reps WHERE company_id = ? AND active = 1 ORDER BY name'
+  ).bind(companyId).all()
   return json(c, rows.results)
 })
 
 // GET /api/reps/:id
 app.get('/api/reps/:id', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const row = await c.env.DB.prepare(
-    'SELECT id, name, title, role, color, commission_plan, active FROM reps WHERE id = ? LIMIT 1'
-  ).bind(c.req.param('id')).first()
+    'SELECT id, name, title, role, color, commission_plan, active, company_id FROM reps WHERE id = ? AND company_id = ? LIMIT 1'
+  ).bind(c.req.param('id'), companyId).first()
   if (!row) return err(c, 'Rep not found', 404)
   return json(c, row)
 })
 
-// PUT /api/reps/:id  (admin only in future)
+// POST /api/reps  — add a rep to a company
+app.post('/api/reps', async (c) => {
+  const b = await c.req.json()
+  if (!b.id || !b.name || !b.pin || !b.companyId) return err(c, 'id, name, pin, companyId required')
+  await c.env.DB.prepare(`
+    INSERT INTO reps (id, name, title, role, pin, color, commission_plan, company_id, active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+  `).bind(b.id, b.name, b.title||'', b.role||'rep', b.pin, b.color||'#6366f1', b.commissionPlan||'standard', b.companyId).run()
+  return json(c, { id: b.id }, 201)
+})
+
+// PUT /api/reps/:id
 app.put('/api/reps/:id', async (c) => {
   const id = c.req.param('id')
-  const body = await c.req.json()
+  const b  = await c.req.json()
+  const companyId = b.companyId || 'avalon'
   const fields = ['name','title','role','color','pin','commission_plan','active']
-  const updates = fields.filter(f => body[f] !== undefined)
+  const updates = fields.filter(f => b[f] !== undefined)
   if (!updates.length) return err(c, 'Nothing to update')
   const set = updates.map(f => `${f} = ?`).join(', ')
-  const vals = updates.map(f => body[f])
+  const vals = updates.map(f => b[f])
   await c.env.DB.prepare(
-    `UPDATE reps SET ${set}, updated_at = datetime('now') WHERE id = ?`
-  ).bind(...vals, id).run()
+    `UPDATE reps SET ${set}, updated_at = datetime('now') WHERE id = ? AND company_id = ?`
+  ).bind(...vals, id, companyId).run()
   return json(c, { updated: id })
 })
 
 // ══════════════════════════════════════════════════════════════════════════════
-// OPPORTUNITIES
+// OPPORTUNITIES  — all scoped to company_id
 // ══════════════════════════════════════════════════════════════════════════════
 
-// GET /api/opportunities  ?repId=&status=
+// GET /api/opportunities?companyId=&repId=&status=
 app.get('/api/opportunities', async (c) => {
-  const repId  = c.req.query('repId')
-  const status = c.req.query('status')
-  let q = 'SELECT * FROM opportunities WHERE 1=1'
-  const params: any[] = []
+  const companyId = c.req.query('companyId') || 'avalon'
+  const repId     = c.req.query('repId')
+  const status    = c.req.query('status')
+  let q = 'SELECT * FROM opportunities WHERE company_id = ?'
+  const params: any[] = [companyId]
   if (repId)  { q += ' AND rep_id = ?';  params.push(repId) }
   if (status) { q += ' AND status = ?';  params.push(status) }
   q += ' ORDER BY updated_at DESC'
@@ -142,11 +226,12 @@ app.get('/api/opportunities', async (c) => {
   return json(c, rows.results)
 })
 
-// GET /api/opportunities/:id
+// GET /api/opportunities/:id?companyId=
 app.get('/api/opportunities/:id', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const row = await c.env.DB.prepare(
-    'SELECT * FROM opportunities WHERE id = ? LIMIT 1'
-  ).bind(c.req.param('id')).first()
+    'SELECT * FROM opportunities WHERE id = ? AND company_id = ? LIMIT 1'
+  ).bind(c.req.param('id'), companyId).first()
   if (!row) return err(c, 'Not found', 404)
   return json(c, row)
 })
@@ -154,19 +239,18 @@ app.get('/api/opportunities/:id', async (c) => {
 // POST /api/opportunities
 app.post('/api/opportunities', async (c) => {
   const b = await c.req.json()
-  const id = b.id || ('opp_' + uid())
+  const id        = b.id || ('opp_' + uid())
+  const companyId = b.companyId || b.company_id || 'avalon'
   await c.env.DB.prepare(`
     INSERT INTO opportunities (
-      id, rep_id, client, phone, email, address, service_line, source, status,
+      id, company_id, rep_id, client, phone, email, address, service_line, source, status,
       job_value, project, urgency, decision_maker, budget_range, next_follow_up,
       pipeline_stage, estimate_amount, estimate_sent_date, estimate_count,
       work_type, client_type, prompt, desired_outcome, fit_concerns,
       commission_approved, collected, sold_date, sold_amount, created_at, updated_at
-    ) VALUES (
-      ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now')
-    )
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
   `).bind(
-    id, b.repId||b.rep_id||null, b.client||'', b.phone||'', b.email||'',
+    id, companyId, b.repId||b.rep_id||null, b.client||'', b.phone||'', b.email||'',
     b.address||'', b.serviceLine||b.service_line||'', b.source||'',
     b.status||'New Lead', Number(b.jobValue||b.job_value||0),
     b.project||'', b.urgency||'', b.decisionMaker||b.decision_maker||'',
@@ -187,8 +271,9 @@ app.post('/api/opportunities', async (c) => {
 
 // PUT /api/opportunities/:id
 app.put('/api/opportunities/:id', async (c) => {
-  const id = c.req.param('id')
-  const b  = await c.req.json()
+  const id        = c.req.param('id')
+  const b         = await c.req.json()
+  const companyId = b.companyId || b.company_id || 'avalon'
   const fieldMap: Record<string,string> = {
     repId:'rep_id', client:'client', phone:'phone', email:'email',
     address:'address', serviceLine:'service_line', source:'source',
@@ -200,7 +285,6 @@ app.put('/api/opportunities/:id', async (c) => {
     prompt:'prompt', desiredOutcome:'desired_outcome', fitConcerns:'fit_concerns',
     commissionApproved:'commission_approved', collected:'collected',
     soldDate:'sold_date', soldAmount:'sold_amount',
-    // Also accept snake_case keys directly
     rep_id:'rep_id', service_line:'service_line', job_value:'job_value',
     decision_maker:'decision_maker', budget_range:'budget_range',
     next_follow_up:'next_follow_up', pipeline_stage:'pipeline_stage',
@@ -219,76 +303,83 @@ app.put('/api/opportunities/:id', async (c) => {
   }
   if (!updates.length) return err(c, 'Nothing to update')
   await c.env.DB.prepare(
-    `UPDATE opportunities SET ${updates.join(', ')}, updated_at = datetime('now') WHERE id = ?`
-  ).bind(...vals, id).run()
+    `UPDATE opportunities SET ${updates.join(', ')}, updated_at = datetime('now') WHERE id = ? AND company_id = ?`
+  ).bind(...vals, id, companyId).run()
   return json(c, { updated: id })
 })
 
-// DELETE /api/opportunities/:id
+// DELETE /api/opportunities/:id?companyId=
 app.delete('/api/opportunities/:id', async (c) => {
-  const id = c.req.param('id')
-  await c.env.DB.prepare('DELETE FROM opportunities WHERE id = ?').bind(id).run()
+  const id        = c.req.param('id')
+  const companyId = c.req.query('companyId') || 'avalon'
+  await c.env.DB.prepare('DELETE FROM opportunities WHERE id = ? AND company_id = ?').bind(id, companyId).run()
   return json(c, { deleted: id })
 })
 
 // ══════════════════════════════════════════════════════════════════════════════
-// NOTES
+// NOTES  — scoped via opp_id (opp already scoped to company)
 // ══════════════════════════════════════════════════════════════════════════════
 
 // GET /api/opportunities/:oppId/notes
 app.get('/api/opportunities/:oppId/notes', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT * FROM notes WHERE opp_id = ? ORDER BY created_at DESC'
-  ).bind(c.req.param('oppId')).all()
+    'SELECT * FROM notes WHERE opp_id = ? AND company_id = ? ORDER BY created_at DESC'
+  ).bind(c.req.param('oppId'), companyId).all()
   return json(c, rows.results)
 })
 
 // POST /api/opportunities/:oppId/notes
 app.post('/api/opportunities/:oppId/notes', async (c) => {
-  const oppId = c.req.param('oppId')
-  const { body, repId } = await c.req.json()
-  if (!body?.trim()) return err(c, 'body required')
+  const oppId     = c.req.param('oppId')
+  const b         = await c.req.json()
+  const companyId = b.companyId || 'avalon'
+  if (!b.body?.trim()) return err(c, 'body required')
   const id = 'note_' + uid()
   await c.env.DB.prepare(
-    'INSERT INTO notes (id, opp_id, rep_id, body) VALUES (?, ?, ?, ?)'
-  ).bind(id, oppId, repId||null, body.trim()).run()
+    'INSERT INTO notes (id, opp_id, rep_id, body, company_id) VALUES (?, ?, ?, ?, ?)'
+  ).bind(id, oppId, b.repId||null, b.body.trim(), companyId).run()
   return json(c, { id }, 201)
 })
 
-// DELETE /api/notes/:id
+// DELETE /api/notes/:id?companyId=
 app.delete('/api/notes/:id', async (c) => {
-  await c.env.DB.prepare('DELETE FROM notes WHERE id = ?').bind(c.req.param('id')).run()
+  const companyId = c.req.query('companyId') || 'avalon'
+  await c.env.DB.prepare('DELETE FROM notes WHERE id = ? AND company_id = ?').bind(c.req.param('id'), companyId).run()
   return json(c, { deleted: c.req.param('id') })
 })
 
 // ══════════════════════════════════════════════════════════════════════════════
-// COMMUNICATIONS
+// COMMUNICATIONS  — scoped by company_id
 // ══════════════════════════════════════════════════════════════════════════════
 
 // GET /api/opportunities/:oppId/comms
 app.get('/api/opportunities/:oppId/comms', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT * FROM communications WHERE opp_id = ? ORDER BY ts DESC'
-  ).bind(c.req.param('oppId')).all()
+    'SELECT * FROM communications WHERE opp_id = ? AND company_id = ? ORDER BY ts DESC'
+  ).bind(c.req.param('oppId'), companyId).all()
   return json(c, rows.results)
 })
 
 // POST /api/opportunities/:oppId/comms
 app.post('/api/opportunities/:oppId/comms', async (c) => {
-  const oppId = c.req.param('oppId')
-  const b = await c.req.json()
+  const oppId     = c.req.param('oppId')
+  const b         = await c.req.json()
+  const companyId = b.companyId || 'avalon'
   const id = 'comm_' + uid()
   await c.env.DB.prepare(
-    'INSERT INTO communications (id, opp_id, rep_id, type, direction, subject, body, ts) VALUES (?,?,?,?,?,?,?,datetime(\'now\'))'
-  ).bind(id, oppId, b.repId||null, b.type||'note', b.direction||'out', b.subject||'', b.body||'').run()
+    "INSERT INTO communications (id, opp_id, rep_id, type, direction, subject, body, ts, company_id) VALUES (?,?,?,?,?,?,?,datetime('now'),?)"
+  ).bind(id, oppId, b.repId||null, b.type||'note', b.direction||'out', b.subject||'', b.body||'', companyId).run()
   return json(c, { id }, 201)
 })
 
-// GET /api/comms  (all, for full-page activity log)
+// GET /api/comms?companyId=&repId=  (activity log)
 app.get('/api/comms', async (c) => {
-  const repId = c.req.query('repId')
-  let q = 'SELECT * FROM communications WHERE 1=1'
-  const params: any[] = []
+  const companyId = c.req.query('companyId') || 'avalon'
+  const repId     = c.req.query('repId')
+  let q = 'SELECT * FROM communications WHERE company_id = ?'
+  const params: any[] = [companyId]
   if (repId) { q += ' AND rep_id = ?'; params.push(repId) }
   q += ' ORDER BY ts DESC LIMIT 200'
   const rows = await c.env.DB.prepare(q).bind(...params).all()
@@ -299,22 +390,22 @@ app.get('/api/comms', async (c) => {
 // FILES
 // ══════════════════════════════════════════════════════════════════════════════
 
-// GET /api/opportunities/:oppId/files
 app.get('/api/opportunities/:oppId/files', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT * FROM files WHERE opp_id = ? ORDER BY created_at DESC'
-  ).bind(c.req.param('oppId')).all()
+    'SELECT * FROM files WHERE opp_id = ? AND company_id = ? ORDER BY created_at DESC'
+  ).bind(c.req.param('oppId'), companyId).all()
   return json(c, rows.results)
 })
 
-// POST /api/opportunities/:oppId/files
 app.post('/api/opportunities/:oppId/files', async (c) => {
-  const oppId = c.req.param('oppId')
-  const b = await c.req.json()
+  const oppId     = c.req.param('oppId')
+  const b         = await c.req.json()
+  const companyId = b.companyId || 'avalon'
   const id = 'file_' + uid()
   await c.env.DB.prepare(
-    'INSERT INTO files (id, opp_id, rep_id, name, size, mime_type, url) VALUES (?,?,?,?,?,?,?)'
-  ).bind(id, oppId, b.repId||null, b.name||'', b.size||0, b.mimeType||'', b.url||'').run()
+    'INSERT INTO files (id, opp_id, rep_id, name, size, mime_type, url, company_id) VALUES (?,?,?,?,?,?,?,?)'
+  ).bind(id, oppId, b.repId||null, b.name||'', b.size||0, b.mimeType||'', b.url||'', companyId).run()
   return json(c, { id }, 201)
 })
 
@@ -322,190 +413,233 @@ app.post('/api/opportunities/:oppId/files', async (c) => {
 // CHECKLIST PROGRESS
 // ══════════════════════════════════════════════════════════════════════════════
 
-// GET /api/checklist/:oppId
 app.get('/api/checklist/:oppId', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT * FROM checklist_progress WHERE opp_id = ?'
-  ).bind(c.req.param('oppId')).all()
+    'SELECT * FROM checklist_progress WHERE opp_id = ? AND company_id = ?'
+  ).bind(c.req.param('oppId'), companyId).all()
   return json(c, rows.results)
 })
 
-// PUT /api/checklist  { oppId, checklistId, itemIndex, checked }
 app.put('/api/checklist', async (c) => {
-  const { oppId, checklistId, itemIndex, checked } = await c.req.json()
+  const b = await c.req.json()
+  const { oppId, checklistId, itemIndex, checked } = b
+  const companyId = b.companyId || 'avalon'
   const id = `check-${checklistId}-${oppId}-${itemIndex}`
   await c.env.DB.prepare(`
-    INSERT INTO checklist_progress (id, opp_id, checklist_id, item_index, checked, updated_at)
-    VALUES (?, ?, ?, ?, ?, datetime('now'))
-    ON CONFLICT(opp_id, checklist_id, item_index) DO UPDATE SET checked = excluded.checked, updated_at = datetime('now')
-  `).bind(id, oppId, checklistId, itemIndex, checked ? 1 : 0).run()
+    INSERT INTO checklist_progress (id, opp_id, checklist_id, item_index, checked, company_id, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(opp_id, checklist_id, item_index) DO UPDATE SET
+      checked = excluded.checked, updated_at = datetime('now')
+  `).bind(id, oppId, checklistId, itemIndex, checked ? 1 : 0, companyId).run()
   return json(c, { id })
 })
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ACADEMY PROGRESS
+// ACADEMY PROGRESS  — scoped by company_id
 // ══════════════════════════════════════════════════════════════════════════════
 
-// GET /api/academy/progress/:repId
 app.get('/api/academy/progress/:repId', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT * FROM academy_progress WHERE rep_id = ?'
-  ).bind(c.req.param('repId')).all()
+    'SELECT * FROM academy_progress WHERE rep_id = ? AND company_id = ?'
+  ).bind(c.req.param('repId'), companyId).all()
   return json(c, rows.results)
 })
 
-// PUT /api/academy/progress  { repId, moduleId, sectionId, completed, score }
 app.put('/api/academy/progress', async (c) => {
-  const { repId, moduleId, sectionId, completed, score } = await c.req.json()
-  const id = `acad-${repId}-${moduleId}-${sectionId||'_'}`
+  const b = await c.req.json()
+  const { repId, moduleId, sectionId, completed, score } = b
+  const companyId = b.companyId || 'avalon'
+  const id = `acad-${companyId}-${repId}-${moduleId}-${sectionId||'_'}`
   await c.env.DB.prepare(`
-    INSERT INTO academy_progress (id, rep_id, module_id, section_id, completed, score, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+    INSERT INTO academy_progress (id, rep_id, module_id, section_id, completed, score, company_id, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
     ON CONFLICT(rep_id, module_id, section_id) DO UPDATE SET
       completed = excluded.completed, score = excluded.score, updated_at = datetime('now')
-  `).bind(id, repId, moduleId, sectionId||null, completed?1:0, score||0).run()
+  `).bind(id, repId, moduleId, sectionId||null, completed?1:0, score||0, companyId).run()
   return json(c, { id })
 })
 
-// GET /api/academy/quiz/:repId
 app.get('/api/academy/quiz/:repId', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT * FROM quiz_attempts WHERE rep_id = ? ORDER BY attempted_at DESC'
-  ).bind(c.req.param('repId')).all()
+    'SELECT * FROM quiz_attempts WHERE rep_id = ? AND company_id = ? ORDER BY attempted_at DESC'
+  ).bind(c.req.param('repId'), companyId).all()
   return json(c, rows.results)
 })
 
-// POST /api/academy/quiz  { repId, moduleId, score, total, passed, answers }
 app.post('/api/academy/quiz', async (c) => {
   const b = await c.req.json()
+  const companyId = b.companyId || 'avalon'
   const id = 'quiz_' + uid()
   await c.env.DB.prepare(
-    'INSERT INTO quiz_attempts (id, rep_id, module_id, score, total, passed, answers) VALUES (?,?,?,?,?,?,?)'
-  ).bind(id, b.repId, b.moduleId, b.score||0, b.total||0, b.passed?1:0, JSON.stringify(b.answers||[])).run()
+    'INSERT INTO quiz_attempts (id, rep_id, module_id, score, total, passed, answers, company_id) VALUES (?,?,?,?,?,?,?,?)'
+  ).bind(id, b.repId, b.moduleId, b.score||0, b.total||0, b.passed?1:0, JSON.stringify(b.answers||[]), companyId).run()
   return json(c, { id }, 201)
 })
 
-// GET /api/academy/badges/:repId
 app.get('/api/academy/badges/:repId', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT * FROM badges WHERE rep_id = ?'
-  ).bind(c.req.param('repId')).all()
+    'SELECT * FROM badges WHERE rep_id = ? AND company_id = ?'
+  ).bind(c.req.param('repId'), companyId).all()
   return json(c, rows.results)
 })
 
-// POST /api/academy/badges  { repId, badgeId }
 app.post('/api/academy/badges', async (c) => {
-  const { repId, badgeId } = await c.req.json()
-  const id = `badge-${repId}-${badgeId}`
+  const b = await c.req.json()
+  const { repId, badgeId } = b
+  const companyId = b.companyId || 'avalon'
+  const id = `badge-${companyId}-${repId}-${badgeId}`
   await c.env.DB.prepare(
-    'INSERT OR IGNORE INTO badges (id, rep_id, badge_id) VALUES (?,?,?)'
-  ).bind(id, repId, badgeId).run()
+    'INSERT OR IGNORE INTO badges (id, rep_id, badge_id, company_id) VALUES (?,?,?,?)'
+  ).bind(id, repId, badgeId, companyId).run()
   return json(c, { id }, 201)
 })
 
-// ══════════════════════════════════════════════════════════════════════════════
-// CLIENTS
-// ══════════════════════════════════════════════════════════════════════════════
-
-// GET /api/clients
-app.get('/api/clients', async (c) => {
+app.get('/api/academy/certs/:repId', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT * FROM clients ORDER BY name ASC'
-  ).all()
+    'SELECT * FROM certifications WHERE rep_id = ? AND company_id = ?'
+  ).bind(c.req.param('repId'), companyId).all()
   return json(c, rows.results)
 })
 
-// POST /api/clients
+app.put('/api/academy/certs', async (c) => {
+  const b = await c.req.json()
+  const { repId, phaseId, status } = b
+  const companyId = b.companyId || 'avalon'
+  const id = `cert-${companyId}-${repId}-${phaseId}`
+  await c.env.DB.prepare(`
+    INSERT INTO certifications (id, rep_id, phase_id, status, company_id, updated_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(rep_id, phase_id) DO UPDATE SET status = excluded.status, updated_at = datetime('now')
+  `).bind(id, repId, phaseId, status||'not_started', companyId).run()
+  return json(c, { id })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CLIENTS  — scoped by company_id
+// ══════════════════════════════════════════════════════════════════════════════
+
+app.get('/api/clients', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
+  const rows = await c.env.DB.prepare(
+    'SELECT * FROM clients WHERE company_id = ? ORDER BY name ASC'
+  ).bind(companyId).all()
+  return json(c, rows.results)
+})
+
 app.post('/api/clients', async (c) => {
   const b = await c.req.json()
-  const id = b.id || ('client_' + uid())
+  const id        = b.id || ('client_' + uid())
+  const companyId = b.companyId || b.company_id || 'avalon'
   await c.env.DB.prepare(
-    'INSERT OR REPLACE INTO clients (id, name, phone, email, address, type, notes, created_at, updated_at) VALUES (?,?,?,?,?,?,?,datetime(\'now\'),datetime(\'now\'))'
-  ).bind(id, b.name||'', b.phone||'', b.email||'', b.address||'', b.type||'Residential', b.notes||'').run()
+    "INSERT OR REPLACE INTO clients (id, name, phone, email, address, type, notes, company_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))"
+  ).bind(id, b.name||'', b.phone||'', b.email||'', b.address||'', b.type||'Residential', b.notes||'', companyId).run()
   return json(c, { id }, 201)
 })
 
-// PUT /api/clients/:id
 app.put('/api/clients/:id', async (c) => {
-  const id = c.req.param('id')
-  const b  = await c.req.json()
+  const id        = c.req.param('id')
+  const b         = await c.req.json()
+  const companyId = b.companyId || b.company_id || 'avalon'
   await c.env.DB.prepare(
-    'UPDATE clients SET name=?, phone=?, email=?, address=?, type=?, notes=?, updated_at=datetime(\'now\') WHERE id=?'
-  ).bind(b.name||'', b.phone||'', b.email||'', b.address||'', b.type||'Residential', b.notes||'', id).run()
+    "UPDATE clients SET name=?, phone=?, email=?, address=?, type=?, notes=?, updated_at=datetime('now') WHERE id=? AND company_id=?"
+  ).bind(b.name||'', b.phone||'', b.email||'', b.address||'', b.type||'Residential', b.notes||'', id, companyId).run()
   return json(c, { updated: id })
 })
 
-// DELETE /api/clients/:id
 app.delete('/api/clients/:id', async (c) => {
-  await c.env.DB.prepare('DELETE FROM clients WHERE id = ?').bind(c.req.param('id')).run()
+  const companyId = c.req.query('companyId') || 'avalon'
+  await c.env.DB.prepare('DELETE FROM clients WHERE id = ? AND company_id = ?').bind(c.req.param('id'), companyId).run()
   return json(c, { deleted: c.req.param('id') })
 })
 
 // ══════════════════════════════════════════════════════════════════════════════
-// SETTINGS / REVENUE ACTUALS
+// SETTINGS  — namespaced per company: key stored as "{companyId}:{key}"
 // ══════════════════════════════════════════════════════════════════════════════
 
-// GET /api/settings
 app.get('/api/settings', async (c) => {
+  const companyId = c.req.query('companyId') || 'avalon'
+  const prefix    = `${companyId}:`
   const rows = await c.env.DB.prepare(
-    "SELECT key, value FROM settings WHERE key NOT LIKE 'session_%'"
-  ).all()
+    "SELECT key, value FROM settings WHERE key LIKE ? AND key NOT LIKE 'session_%'"
+  ).bind(`${prefix}%`).all()
   const obj: Record<string,string> = {}
-  for (const r of (rows.results as any[])) obj[r.key] = r.value
+  for (const r of (rows.results as any[])) {
+    // Strip the company prefix before returning to client
+    obj[r.key.slice(prefix.length)] = r.value
+  }
+  // Also include legacy keys (no prefix) for backward compat
+  const legacy = await c.env.DB.prepare(
+    "SELECT key, value FROM settings WHERE key NOT LIKE '%:%' AND key NOT LIKE 'session_%' AND key NOT LIKE 'db_%'"
+  ).all()
+  for (const r of (legacy.results as any[])) obj[r.key] = r.value
   return json(c, obj)
 })
 
-// PUT /api/settings  { key, value }
 app.put('/api/settings', async (c) => {
-  const { key, value } = await c.req.json()
-  if (!key) return err(c, 'key required')
+  const b = await c.req.json()
+  if (!b.key) return err(c, 'key required')
+  const companyId = b.companyId || 'avalon'
+  const scopedKey = b.key.includes(':') ? b.key : `${companyId}:${b.key}`
   await c.env.DB.prepare(
     "INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))"
-  ).bind(key, String(value)).run()
-  return json(c, { key })
+  ).bind(scopedKey, String(b.value)).run()
+  return json(c, { key: b.key })
 })
 
-// GET /api/revenue
+// ══════════════════════════════════════════════════════════════════════════════
+// REVENUE ACTUALS  — scoped by company_id
+// ══════════════════════════════════════════════════════════════════════════════
+
 app.get('/api/revenue', async (c) => {
-  const rows = await c.env.DB.prepare('SELECT * FROM revenue_actuals ORDER BY year, month').all()
+  const companyId = c.req.query('companyId') || 'avalon'
+  const rows = await c.env.DB.prepare(
+    'SELECT * FROM revenue_actuals WHERE company_id = ? ORDER BY year, month'
+  ).bind(companyId).all()
   return json(c, rows.results)
 })
 
-// PUT /api/revenue  { month, year, revenue, note, division }
 app.put('/api/revenue', async (c) => {
-  const b = await c.req.json()
+  const b         = await c.req.json()
+  const companyId = b.companyId || 'avalon'
   await c.env.DB.prepare(`
-    INSERT INTO revenue_actuals (id, month, year, revenue, note, division, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-    ON CONFLICT(month, year, division) DO UPDATE SET
+    INSERT INTO revenue_actuals (id, company_id, month, year, revenue, note, division, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(company_id, month, year, division) DO UPDATE SET
       revenue = excluded.revenue, note = excluded.note, updated_at = datetime('now')
   `).bind(
-    `rev-${b.month}-${b.year||2026}-${b.division||'total'}`,
-    b.month, b.year||2026, b.revenue||0, b.note||'', b.division||'total'
+    `rev-${companyId}-${b.month}-${b.year||2026}-${b.division||'total'}`,
+    companyId, b.month, b.year||2026, b.revenue||0, b.note||'', b.division||'total'
   ).run()
   return json(c, { updated: true })
 })
 
 // ══════════════════════════════════════════════════════════════════════════════
-// BULK SYNC — frontend sends full state, we upsert everything
+// BULK SYNC  — localStorage → D1 one-time migration, company-scoped
 // ══════════════════════════════════════════════════════════════════════════════
 
-// POST /api/sync  { opportunities[], notes[], communications[] }
 app.post('/api/sync', async (c) => {
-  const { opportunities = [], notes = [], communications = [], clients = [] } = await c.req.json()
+  const b = await c.req.json()
+  const { opportunities = [], notes = [], communications = [], clients = [] } = b
+  const companyId = b.companyId || 'avalon'
   const stmts: D1PreparedStatement[] = []
 
   for (const o of opportunities) {
     stmts.push(c.env.DB.prepare(`
       INSERT OR REPLACE INTO opportunities (
-        id, rep_id, client, phone, email, address, service_line, source, status,
+        id, company_id, rep_id, client, phone, email, address, service_line, source, status,
         job_value, project, urgency, decision_maker, budget_range, next_follow_up,
         pipeline_stage, estimate_amount, estimate_sent_date, estimate_count,
         work_type, client_type, prompt, desired_outcome, fit_concerns,
         commission_approved, collected, sold_date, sold_amount, created_at, updated_at
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).bind(
-      o.id||('opp_'+uid()), o.repId||o.rep_id||null, o.client||'', o.phone||'', o.email||'',
+      o.id||('opp_'+uid()), companyId, o.repId||o.rep_id||null,
+      o.client||'', o.phone||'', o.email||'',
       o.address||'', o.serviceLine||o.service_line||'', o.source||'', o.status||'New Lead',
       Number(o.jobValue||o.job_value||0), o.project||'', o.urgency||'',
       o.decisionMaker||o.decision_maker||'', o.budgetRange||o.budget_range||'',
@@ -523,51 +657,23 @@ app.post('/api/sync', async (c) => {
       o.updatedAt||o.updated_at||new Date().toISOString()
     ))
   }
-
   for (const n of notes) {
     stmts.push(c.env.DB.prepare(
-      'INSERT OR IGNORE INTO notes (id, opp_id, rep_id, body, created_at) VALUES (?,?,?,?,?)'
-    ).bind(n.id||('note_'+uid()), n.oppId||n.opp_id, n.repId||n.rep_id||null, n.body||'', n.createdAt||n.created_at||new Date().toISOString()))
+      'INSERT OR IGNORE INTO notes (id, opp_id, rep_id, body, company_id, created_at) VALUES (?,?,?,?,?,?)'
+    ).bind(n.id||('note_'+uid()), n.oppId||n.opp_id, n.repId||n.rep_id||null, n.body||'', companyId, n.createdAt||n.created_at||new Date().toISOString()))
   }
-
   for (const m of communications) {
     stmts.push(c.env.DB.prepare(
-      'INSERT OR IGNORE INTO communications (id, opp_id, rep_id, type, direction, subject, body, ts) VALUES (?,?,?,?,?,?,?,?)'
-    ).bind(m.id||('comm_'+uid()), m.oppId||m.opp_id, m.repId||m.rep_id||null, m.type||'note', m.direction||'out', m.subject||'', m.body||'', m.ts||new Date().toISOString()))
+      'INSERT OR IGNORE INTO communications (id, opp_id, rep_id, type, direction, subject, body, ts, company_id) VALUES (?,?,?,?,?,?,?,?,?)'
+    ).bind(m.id||('comm_'+uid()), m.oppId||m.opp_id, m.repId||m.rep_id||null, m.type||'note', m.direction||'out', m.subject||'', m.body||'', m.ts||new Date().toISOString(), companyId))
   }
-
   for (const cl of clients) {
     stmts.push(c.env.DB.prepare(
-      'INSERT OR IGNORE INTO clients (id, name, phone, email, address, type, notes, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)'
-    ).bind(cl.id||('client_'+uid()), cl.name||'', cl.phone||'', cl.email||'', cl.address||'', cl.type||'Residential', cl.notes||'', cl.createdAt||new Date().toISOString(), cl.updatedAt||new Date().toISOString()))
+      "INSERT OR IGNORE INTO clients (id, name, phone, email, address, type, notes, company_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)"
+    ).bind(cl.id||('client_'+uid()), cl.name||'', cl.phone||'', cl.email||'', cl.address||'', cl.type||'Residential', cl.notes||'', companyId, cl.createdAt||new Date().toISOString(), cl.updatedAt||new Date().toISOString()))
   }
-
   if (stmts.length) await c.env.DB.batch(stmts)
-  return json(c, { synced: stmts.length })
-})
-
-// ══════════════════════════════════════════════════════════════════════════════
-// CERTIFICATIONS
-// ══════════════════════════════════════════════════════════════════════════════
-
-// GET /api/academy/certs/:repId
-app.get('/api/academy/certs/:repId', async (c) => {
-  const rows = await c.env.DB.prepare(
-    'SELECT * FROM certifications WHERE rep_id = ?'
-  ).bind(c.req.param('repId')).all()
-  return json(c, rows.results)
-})
-
-// PUT /api/academy/certs  { repId, phaseId, status }
-app.put('/api/academy/certs', async (c) => {
-  const { repId, phaseId, status } = await c.req.json()
-  const id = `cert-${repId}-${phaseId}`
-  await c.env.DB.prepare(`
-    INSERT INTO certifications (id, rep_id, phase_id, status, updated_at)
-    VALUES (?, ?, ?, ?, datetime('now'))
-    ON CONFLICT(rep_id, phase_id) DO UPDATE SET status = excluded.status, updated_at = datetime('now')
-  `).bind(id, repId, phaseId, status||'not_started').run()
-  return json(c, { id })
+  return json(c, { synced: stmts.length, companyId })
 })
 
 // Google OAuth2 callback page — receives access token from Google's implicit flow,
@@ -769,6 +875,8 @@ function getHtml(): string {
       if (d1Rep) {
         // D1 session valid — sync D1 rep into reps.js auth system
         window._d1SessionRep = d1Rep;
+        // ── Multi-tenant: set company context for all subsequent DB calls ──
+        window._companyId = d1Rep.company_id || 'avalon';
         // Map D1 rep to reps.js format for full compatibility
         const localRep = (window.REPS || []).find(r => r.id === d1Rep.id);
         if (localRep) {

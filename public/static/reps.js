@@ -645,9 +645,11 @@ function renderLoginScreen() {
     // Try D1 API first (cloud auth), fall back to local REPS check
     if (window.DB) {
       try {
-        const d1Rep = await window.DB.auth.login(repId, pin);
+        const d1Rep = await window.DB.auth.login(repId, pin, 'avalon');
         // D1 login success — sets session cookie
         window._d1SessionRep = d1Rep;
+        // ── Multi-tenant: set company context from rep's company_id ──
+        window._companyId = d1Rep.company_id || 'avalon';
         window._d1Ready = true;
         loginRep(repId); // also set localStorage for getCurrentRep()
         // Reload opps from D1 before showing app
