@@ -8857,8 +8857,16 @@ async function superAdmin() {
       fetch('/api/admin/stats',     { credentials: 'include' }),
       fetch('/api/admin/companies', { credentials: 'include' })
     ]);
-    if (sRes.ok) stats     = await sRes.json();
-    if (cRes.ok) companies = await cRes.json();
+    if (!sRes.ok || !cRes.ok) {
+      const errBody = !sRes.ok ? await sRes.json().catch(()=>({})) : await cRes.json().catch(()=>({}));
+      throw new Error(errBody.error || `HTTP ${!sRes.ok ? sRes.status : cRes.status}`);
+    }
+    const sData = await sRes.json();
+    const cData = await cRes.json();
+    // API wraps results in { ok: true, data: ... }
+    stats     = sData.data  ?? sData;
+    companies = cData.data  ?? cData;
+    if (!Array.isArray(companies)) companies = [];
   } catch(e) {
     view.innerHTML = `<div style="padding:40px 24px;text-align:center">
       <p style="color:#f87171">Failed to load platform data: ${e.message}</p>
