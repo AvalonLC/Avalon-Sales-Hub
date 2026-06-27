@@ -1157,7 +1157,7 @@ function getHtml(): string {
       <div>
         <div class="brand-name">Groundwork</div>
         <div class="brand-subtitle">CRM</div>
-        <div class="brand-kicker">Avalon · Sales Hub</div>
+        <div class="brand-kicker" id="brandKicker"></div>
       </div>
     </div>
     <nav class="nav" id="mainNav" role="navigation">
@@ -1394,6 +1394,21 @@ function getHtml(): string {
         if (typeof window._d1FlushQueue === 'function') window._d1FlushQueue();
         // Refresh nav visibility now that super-admin status is known
         if (typeof window._refreshAdminNav === 'function') window._refreshAdminNav();
+        // ── Dynamic brand kicker: show real company name from D1 ──
+        try {
+          const compRes = await fetch('/api/companies/' + d1Rep.company_id);
+          if (compRes.ok) {
+            const compJson = await compRes.json();
+            const compName = (compJson.data ?? compJson)?.name;
+            if (compName) {
+              const kicker = document.getElementById('brandKicker');
+              if (kicker) kicker.textContent = compName;
+              window._companyName = compName;
+            }
+          }
+        } catch(e) {
+          console.warn('[Bootstrap] Could not load company name:', e.message);
+        }
         console.log('[Bootstrap] D1 session active for', d1Rep.name);
         return; // Don't show login screen
       }
