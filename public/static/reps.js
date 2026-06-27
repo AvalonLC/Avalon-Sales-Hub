@@ -709,6 +709,8 @@ function renderLoginScreen() {
         } catch(e) { console.warn('[Login] D1 clients load failed:', e.message); }
 
         window._d1Ready = true;
+        // Flush any writes that were queued before D1 was ready
+        if (typeof window._d1FlushQueue === 'function') window._d1FlushQueue();
         initApp();
         return;
       } catch(e) {

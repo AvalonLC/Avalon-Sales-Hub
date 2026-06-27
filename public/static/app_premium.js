@@ -35,24 +35,93 @@ function saveState(){
   window._avalonState = state;
 }
 
-// ── D1 Write-Through helpers (async, fire-and-forget unless awaited) ──────────
-// These are called after saveState() to replicate changes to D1
-async function _d1SaveOpp(opp) {
-  if (!window.DB || !window._d1Ready) return;
+// ── D1 Write Engine ───────────────────────────────────────────────────────────
+// Phase A: Structured logging with context (op type, entity id, error detail)
+// Phase B: 1 automatic retry after 2 s; pending queue survives navigation
+// Phase C: D1 is the write authority — localStorage is a read-cache only
+//
+// All writes go through _d1Write(op, fn).
+// On success:  [D1 ✓] op entity_id
+// On failure:  [D1 ✗] op entity_id — error message  (queued for retry)
+// On retry ok: [D1 ↺] op entity_id recovered
+
+const _d1PendingQueue = [];   // { op, entityId, fn, attempts } — survives SPA nav
+let   _d1FlushTimer   = null;
+
+async function _d1Write(op, entityId, fn) {
+  if (!window.DB || !window._d1Ready) {
+    // Not ready yet — queue for when D1 becomes ready
+    _d1PendingQueue.push({ op, entityId, fn, attempts: 0 });
+    console.info(`[D1 ⏳] ${op} ${entityId} — queued (D1 not ready)`);
+    return;
+  }
   try {
-    await window.DB.opportunities.save(opp);
-  } catch(e) { console.warn('[D1] save opp failed:', e.message); }
+    await fn();
+    console.info(`[D1 ✓] ${op} ${entityId}`);
+  } catch(e) {
+    console.warn(`[D1 ✗] ${op} ${entityId} — ${e.message} (queued for retry)`);
+    _d1PendingQueue.push({ op, entityId, fn, attempts: 1 });
+    _d1ScheduleFlush();
+  }
 }
 
-async function _d1DeleteOpp(id) {
-  if (!window.DB || !window._d1Ready) return;
-  try {
-    await window.DB.opportunities.delete(id);
-  } catch(e) { console.warn('[D1] delete opp failed:', e.message); }
+function _d1ScheduleFlush() {
+  if (_d1FlushTimer) return;
+  _d1FlushTimer = setTimeout(_d1FlushQueue, 2000);
 }
 
-window._d1SaveOpp   = _d1SaveOpp;
-window._d1DeleteOpp = _d1DeleteOpp;
+async function _d1FlushQueue() {
+  _d1FlushTimer = null;
+  if (!window.DB || !window._d1Ready || !_d1PendingQueue.length) return;
+  const items = _d1PendingQueue.splice(0); // drain queue atomically
+  for (const item of items) {
+    try {
+      await item.fn();
+      console.info(`[D1 ↺] ${item.op} ${item.entityId} recovered after retry`);
+    } catch(e) {
+      item.attempts++;
+      if (item.attempts < 3) {
+        console.warn(`[D1 ✗] ${item.op} ${item.entityId} retry ${item.attempts} failed — ${e.message}`);
+        _d1PendingQueue.push(item);
+        _d1ScheduleFlush();
+      } else {
+        console.error(`[D1 ✗✗] ${item.op} ${item.entityId} DROPPED after 3 attempts — ${e.message}`);
+        // Show subtle persistent toast so user knows to re-save
+        showToast(`⚠️ Cloud sync failed for ${item.entityId} — check connection`, 6000);
+      }
+    }
+  }
+}
+
+// Flush pending queue as soon as D1 becomes ready (called by bootstrap)
+window._d1FlushQueue = _d1FlushQueue;
+
+// ── D1 write helpers ──────────────────────────────────────────────────────────
+function _d1SaveOpp(opp) {
+  return _d1Write('save-opp', opp.id || 'new', () => window.DB.opportunities.save(opp));
+}
+
+function _d1DeleteOpp(id) {
+  return _d1Write('delete-opp', id, () => window.DB.opportunities.delete(id));
+}
+
+function _d1SaveNote(oppId, noteBody, repId, noteId) {
+  return _d1Write('save-note', noteId || oppId, () => window.DB.notes.add(oppId, noteBody, repId));
+}
+
+function _d1SaveClient(client) {
+  return _d1Write('save-client', client.id || client.name, () => window.DB.clients.save(client));
+}
+
+function _d1DeleteClient(id) {
+  return _d1Write('delete-client', id, () => window.DB.clients.delete(id));
+}
+
+window._d1SaveOpp     = _d1SaveOpp;
+window._d1DeleteOpp   = _d1DeleteOpp;
+window._d1SaveNote    = _d1SaveNote;
+window._d1SaveClient  = _d1SaveClient;
+window._d1DeleteClient= _d1DeleteClient;
 // ── Nav Permission System ──────────────────────────────────────────────────
 // All views always visible in sidebar. Tyler controls access per role here.
 const NAV_PERMS_KEY = 'avalonNavPermissions';
@@ -128,7 +197,7 @@ function estCommission(opp){
   const rates = { landscape:.06, maintenance_onetime:.04, maintenance_recurring:.20, hardscape:.06, drainage:.06, design_build:.06 };
   return val * (rates[opp?.workType] || .06);
 }
-function showToast(message){ toastEl.textContent = message; toastEl.hidden = false; setTimeout(()=>toastEl.hidden=true, 2200); }
+function showToast(message, duration){ toastEl.textContent = message; toastEl.hidden = false; setTimeout(()=>toastEl.hidden=true, duration || 2200); }
 function copyText(text, btnEl){
   const doFeedback = () => {
     showToast('Copied to clipboard!');
@@ -714,13 +783,10 @@ function loadClients() {
   catch(e) { return []; }
 }
 function saveClients(list) {
+  // Phase C: localStorage = read-cache; D1 = write authority
   localStorage.setItem(CLIENTS_KEY, JSON.stringify(list));
-  // Write-through to D1 (fire-and-forget)
-  if (window.DB && window._d1Ready) {
-    list.forEach(client => {
-      window.DB.clients.save(client).catch(e => console.warn('[D1] save client failed:', e.message));
-    });
-  }
+  // Write-through to D1 via write engine (logged, retried on failure)
+  list.forEach(client => _d1SaveClient(client));
 }
 function clientId() { return 'cl_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
 function propId()   { return 'pr_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
@@ -1131,7 +1197,10 @@ window.saveClientForm = function(existingId) {
 window.deleteClient = function(id) {
   if (!confirm('Delete this client? This cannot be undone.')) return;
   const list = loadClients().filter(x => x.id !== id);
-  saveClients(list);
+  // Update localStorage cache without triggering a save-all to D1
+  localStorage.setItem(CLIENTS_KEY, JSON.stringify(list));
+  // Delete from D1 via write engine (logged, retried on failure)
+  _d1DeleteClient(id);
   document.getElementById('clientFormModal')?.remove();
   showToast('Client deleted');
   show('clients');
@@ -2938,10 +3007,8 @@ function addNote(oppId){
   const o=state.opportunities.find(x=>x.id===oppId);
   if(o) o.updatedAt=new Date().toISOString();
   saveState();
-  // Write-through to D1
-  if (window.DB && window._d1Ready) {
-    window.DB.notes.add(oppId, noteBody, repId).catch(e => console.warn('[D1] add note failed:', e.message));
-  }
+  // Write-through to D1 via write engine (logged, retried on failure)
+  _d1SaveNote(oppId, noteBody, repId, note.id);
   showToast('Note added');
   show('pipeline', oppId);
 }
@@ -3120,12 +3187,12 @@ function wireChecks(){
     cb.addEventListener('change', ()=>{
       localStorage.setItem(key, cb.checked ? '1' : '0');
       if(rowEl) rowEl.classList.toggle('check-item--done', cb.checked);
-      // Write-through to D1 checklist
-      if (window.DB && window._d1Ready && cb.dataset.oppId && cb.dataset.checklistId) {
-        window.DB.checklist.set(
-          cb.dataset.oppId, cb.dataset.checklistId,
-          parseInt(cb.dataset.itemIndex || '0'), cb.checked
-        ).catch(e => console.warn('[D1] checklist update failed:', e.message));
+      // Write-through to D1 checklist via write engine (logged, retried)
+      if (cb.dataset.oppId && cb.dataset.checklistId) {
+        const oppId = cb.dataset.oppId, clId = cb.dataset.checklistId;
+        const idx = parseInt(cb.dataset.itemIndex || '0'), checked = cb.checked;
+        _d1Write('save-checklist', `${oppId}:${clId}:${idx}`,
+          () => window.DB.checklist.set(oppId, clId, idx, checked));
       }
       // Live-update progress bar
       const prefixMatch = key.match(/^(.+)-\d+$/);

@@ -247,8 +247,9 @@ app.post('/api/opportunities', async (c) => {
       job_value, project, urgency, decision_maker, budget_range, next_follow_up,
       pipeline_stage, estimate_amount, estimate_sent_date, estimate_count,
       work_type, client_type, prompt, desired_outcome, fit_concerns,
-      commission_approved, collected, sold_date, sold_amount, created_at, updated_at
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
+      commission_approved, collected, sold_date, sold_amount,
+      created_at, updated_at
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
   `).bind(
     id, companyId, b.repId||b.rep_id||null, b.client||'', b.phone||'', b.email||'',
     b.address||'', b.serviceLine||b.service_line||'', b.source||'',
@@ -973,6 +974,8 @@ function getHtml(): string {
 
         window._d1Ready = true;
         window._mapOpp = mapOpp; // expose for login flow reuse
+        // Flush any writes that were queued before D1 was ready
+        if (typeof window._d1FlushQueue === 'function') window._d1FlushQueue();
         console.log('[Bootstrap] D1 session active for', d1Rep.name);
         return; // Don't show login screen
       }
