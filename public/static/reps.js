@@ -587,6 +587,40 @@ function renderLoginScreen() {
         <button onclick="backToReps()" style="width:100%;margin-top:16px;padding:10px;background:transparent;border:1px solid #334155;border-radius:10px;color:#64748b;font-size:14px;cursor:pointer">
           ← Back
         </button>
+        <button onclick="showForgotPin()" style="width:100%;margin-top:8px;padding:8px;background:transparent;border:none;color:#475569;font-size:12px;cursor:pointer;text-decoration:underline">
+          Forgot PIN?
+        </button>
+      </div>
+
+      <!-- Forgot PIN flow (hidden by default) -->
+      <div id="forgotPinPanel" style="display:none;background:#0f172a;border-radius:16px;padding:24px;border:1px solid #f59e0b44;margin-top:16px">
+        <div id="forgotPinStep1">
+          <h3 style="color:#e2e8f0;font-size:16px;font-weight:700;margin:0 0 6px">Reset Your PIN</h3>
+          <p style="color:#64748b;font-size:13px;margin:0 0 16px">Enter your email address and we'll send you a 6-digit reset code.</p>
+          <input id="resetEmail" type="email" placeholder="your@email.com"
+            style="width:100%;box-sizing:border-box;padding:12px 14px;background:#0a0f1a;border:1px solid #334155;border-radius:10px;color:#e2e8f0;font-size:14px;margin-bottom:12px;outline:none">
+          <button onclick="sendResetCode()"
+            style="width:100%;padding:12px;background:#f59e0b;border:none;border-radius:10px;color:#0a0f1a;font-size:14px;font-weight:800;cursor:pointer">
+            Send Reset Code
+          </button>
+          <div id="resetStep1Error" style="color:#f87171;font-size:12px;text-align:center;margin-top:10px;display:none"></div>
+        </div>
+        <div id="forgotPinStep2" style="display:none">
+          <h3 style="color:#e2e8f0;font-size:16px;font-weight:700;margin:0 0 6px">Enter Reset Code</h3>
+          <p style="color:#64748b;font-size:13px;margin:0 0 16px">Check your email for the 6-digit code. It expires in 1 hour.</p>
+          <input id="resetCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456"
+            style="width:100%;box-sizing:border-box;padding:12px 14px;background:#0a0f1a;border:1px solid #334155;border-radius:10px;color:#e2e8f0;font-size:18px;letter-spacing:.2em;text-align:center;margin-bottom:10px;outline:none">
+          <input id="resetNewPin" type="text" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN"
+            style="width:100%;box-sizing:border-box;padding:12px 14px;background:#0a0f1a;border:1px solid #334155;border-radius:10px;color:#e2e8f0;font-size:18px;letter-spacing:.2em;text-align:center;margin-bottom:12px;outline:none">
+          <button onclick="confirmPinReset()"
+            style="width:100%;padding:12px;background:#10b981;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:800;cursor:pointer">
+            Set New PIN
+          </button>
+          <div id="resetStep2Error" style="color:#f87171;font-size:12px;text-align:center;margin-top:10px;display:none"></div>
+        </div>
+        <button onclick="hideForgotPin()" style="width:100%;margin-top:12px;padding:8px;background:transparent;border:none;color:#475569;font-size:12px;cursor:pointer">
+          ← Cancel
+        </button>
       </div>
 
       <p style="text-align:center;color:#1e293b;font-size:11px;margin-top:24px">Internal use only · Avalon Landscape Construction</p>
@@ -734,6 +768,91 @@ function renderLoginScreen() {
       }, 1500);
     }
   }
+
+  // ── Forgot PIN helpers (closured inside renderLoginScreen) ──────────────────
+  window.showForgotPin = function() {
+    document.getElementById('pinEntry').style.display = 'none';
+    document.getElementById('forgotPinPanel').style.display = 'block';
+    document.getElementById('forgotPinStep1').style.display = 'block';
+    document.getElementById('forgotPinStep2').style.display = 'none';
+    document.getElementById('resetStep1Error').style.display = 'none';
+  };
+
+  window.hideForgotPin = function() {
+    document.getElementById('forgotPinPanel').style.display = 'none';
+    if (selectedRepId) {
+      document.getElementById('pinEntry').style.display = 'block';
+    } else {
+      document.getElementById('repCards').style.display = 'flex';
+      document.getElementById('repCards').style.flexDirection = 'column';
+    }
+  };
+
+  window.sendResetCode = async function() {
+    const email = (document.getElementById('resetEmail')?.value || '').trim();
+    const errEl = document.getElementById('resetStep1Error');
+    if (!email) { errEl.textContent = 'Please enter your email address.'; errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+    const btn = document.querySelector('#forgotPinStep1 button');
+    if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
+    try {
+      const res = await fetch('/api/auth/reset-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send code');
+      // Move to step 2
+      document.getElementById('forgotPinStep1').style.display = 'none';
+      document.getElementById('forgotPinStep2').style.display = 'block';
+      document.getElementById('resetStep2Error').style.display = 'none';
+    } catch(e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    } finally {
+      if (btn) { btn.textContent = 'Send Reset Code'; btn.disabled = false; }
+    }
+  };
+
+  window.confirmPinReset = async function() {
+    const code   = (document.getElementById('resetCode')?.value || '').trim();
+    const newPin = (document.getElementById('resetNewPin')?.value || '').trim();
+    const email  = (document.getElementById('resetEmail')?.value || '').trim();
+    const errEl  = document.getElementById('resetStep2Error');
+    if (!code || code.length !== 6) { errEl.textContent = 'Enter the 6-digit code from your email.'; errEl.style.display = 'block'; return; }
+    if (!newPin || !/^\d{4}$/.test(newPin)) { errEl.textContent = 'New PIN must be exactly 4 digits.'; errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+    const btn = document.querySelector('#forgotPinStep2 button');
+    if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+    try {
+      const res = await fetch('/api/auth/reset-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, token: code, new_pin: newPin })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Reset failed');
+      // Success — hide panel, show login
+      document.getElementById('forgotPinPanel').style.display = 'none';
+      document.getElementById('repCards').style.display = 'flex';
+      document.getElementById('repCards').style.flexDirection = 'column';
+      document.getElementById('pinEntry').style.display = 'none';
+      // Show brief success message
+      const successBanner = document.createElement('div');
+      successBanner.style.cssText = 'background:#10b98122;border:1px solid #10b98144;border-radius:10px;color:#10b981;padding:12px 16px;font-size:13px;text-align:center;margin-top:12px;font-weight:600';
+      successBanner.textContent = '✓ PIN reset successfully — you can now log in.';
+      document.querySelector('.app-shell') || document.body;
+      const container = document.getElementById('repCards')?.parentNode;
+      if (container) container.appendChild(successBanner);
+      setTimeout(() => successBanner.remove(), 4000);
+    } catch(e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    } finally {
+      if (btn) { btn.textContent = 'Set New PIN'; btn.disabled = false; }
+    }
+  };
 }
 
 // ── REP DASHBOARD VIEW ────────────────────────────────────────────────────────

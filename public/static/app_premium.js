@@ -246,7 +246,8 @@ function show(viewName='today', param){
   const repRoute = (typeof repDashboard === 'function') ? {myDashboard: repDashboard} : {};
   const revenueRoute = (typeof revenueAdmin === 'function') ? {revenueAdmin} : {};
   const umRoute = (typeof userManagement === 'function') ? {userManagement} : {};
-  const routes = {today, pipeline, lead, clients, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute, ...repRoute, ...revenueRoute, ...umRoute, ai};
+  const saRoute = (typeof superAdmin === 'function') ? {superAdmin} : {};
+  const routes = {today, pipeline, lead, clients, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute, ...repRoute, ...revenueRoute, ...umRoute, ...saRoute, ai};
   (routes[viewName] || today)(param);
   window.scrollTo({top:0, behavior:'smooth'});
   if (typeof window._avalonState !== 'undefined') window._avalonState = state;
@@ -8826,5 +8827,201 @@ window.revenueAdmin = revenueAdmin;
     saveRevenueActuals(notesOnly);
   }
 })();
+
+// ── SUPER-ADMIN PLATFORM DASHBOARD ───────────────────────────────────────────
+async function superAdmin() {
+  const view = document.getElementById('view');
+  if (!view) return;
+
+  // Gate: only super admins may enter
+  const d1Rep = window._d1SessionRep;
+  const isSA = d1Rep && (d1Rep.is_super_admin === 1 || d1Rep.is_super_admin === true);
+  if (!isSA) {
+    view.innerHTML = `<div style="text-align:center;padding:80px 24px">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <h2 style="color:#f87171;margin-bottom:8px">Access Denied</h2>
+      <p style="color:#64748b">Platform Admin is restricted to super-administrators.</p>
+      <button class="secondary-btn" style="margin-top:24px" onclick="show('today')">← Back to Today</button>
+    </div>`;
+    return;
+  }
+
+  // Loading state
+  view.innerHTML = `<div style="padding:40px 24px;text-align:center;color:#64748b">
+    <div style="font-size:32px;margin-bottom:12px">🛡</div>Loading Platform Data…</div>`;
+
+  // Fetch stats + company list in parallel
+  let stats = {}, companies = [];
+  try {
+    const [sRes, cRes] = await Promise.all([
+      fetch('/api/admin/stats',     { credentials: 'include' }),
+      fetch('/api/admin/companies', { credentials: 'include' })
+    ]);
+    if (sRes.ok) stats     = await sRes.json();
+    if (cRes.ok) companies = await cRes.json();
+  } catch(e) {
+    view.innerHTML = `<div style="padding:40px 24px;text-align:center">
+      <p style="color:#f87171">Failed to load platform data: ${e.message}</p>
+      <button class="secondary-btn" style="margin-top:16px" onclick="superAdmin()">↺ Retry</button>
+    </div>`;
+    return;
+  }
+
+  const fmt = n => (n ?? 0).toLocaleString();
+  const dateStr = d => d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+  const planBadge = p => {
+    const colors = { trial:'#f59e0b', starter:'#6366f1', pro:'#00d4ff', enterprise:'#10b981' };
+    const c = colors[p] || '#64748b';
+    return `<span style="display:inline-block;background:${c}22;color:${c};border:1px solid ${c}44;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.05em;text-transform:uppercase">${p || 'free'}</span>`;
+  };
+
+  const companyRows = companies.map(co => `
+    <tr style="border-bottom:1px solid #1e293b">
+      <td style="padding:14px 12px">
+        <div style="font-weight:700;color:#e2e8f0;margin-bottom:2px">${co.name || '—'}</div>
+        <div style="font-size:11px;color:#475569">${co.slug || ''}</div>
+      </td>
+      <td style="padding:14px 12px;text-align:center">${planBadge(co.plan)}</td>
+      <td style="padding:14px 12px;text-align:center">
+        <span style="color:${co.active ? '#10b981':'#f87171'};font-size:12px;font-weight:700">${co.active ? '● Active':'○ Inactive'}</span>
+      </td>
+      <td style="padding:14px 12px;text-align:center;color:#94a3b8">${fmt(co.rep_count)}</td>
+      <td style="padding:14px 12px;text-align:center;color:#94a3b8">${fmt(co.opp_count)}</td>
+      <td style="padding:14px 12px;text-align:center;color:#475569;font-size:12px">${dateStr(co.last_activity)}</td>
+      <td style="padding:14px 12px;text-align:center">
+        <button onclick="window._saImpersonate('${co.id}','${(co.name||'').replace(/'/g,"\\'")}')"
+          style="padding:6px 14px;background:#f59e0b22;border:1px solid #f59e0b44;border-radius:8px;color:#f59e0b;font-size:12px;font-weight:700;cursor:pointer"
+          onmouseover="this.style.background='#f59e0b33'" onmouseout="this.style.background='#f59e0b22'">
+          Impersonate
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  view.innerHTML = `
+  <div style="max-width:1200px;margin:0 auto;padding:32px 20px">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:16px">
+      <div>
+        <h1 style="font-size:28px;font-weight:800;color:#e2e8f0;margin:0 0 4px">🛡 Platform Admin</h1>
+        <p style="color:#64748b;margin:0;font-size:14px">Groundwork CRM · All tenants · Super-admin view</p>
+      </div>
+      <button onclick="superAdmin()" style="padding:8px 18px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#94a3b8;font-size:13px;cursor:pointer">↺ Refresh</button>
+    </div>
+
+    <!-- Stat Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:36px">
+      ${[
+        { label:'Companies',      value: fmt(stats.companies),        icon:'🏢', color:'#6366f1' },
+        { label:'Active Tenants', value: fmt(stats.active_companies),  icon:'✅', color:'#10b981' },
+        { label:'Total Reps',     value: fmt(stats.reps),              icon:'👥', color:'#00d4ff' },
+        { label:'Opportunities',  value: fmt(stats.opportunities),     icon:'📊', color:'#f59e0b' },
+        { label:'Notes',          value: fmt(stats.notes),             icon:'📝', color:'#a78bfa' },
+      ].map(s => `
+        <div style="background:#0f172a;border:1px solid ${s.color}22;border-radius:16px;padding:20px 18px">
+          <div style="font-size:24px;margin-bottom:8px">${s.icon}</div>
+          <div style="font-size:28px;font-weight:800;color:${s.color};margin-bottom:4px">${s.value}</div>
+          <div style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${s.label}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Companies Table -->
+    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;overflow:hidden">
+      <div style="padding:20px 20px 16px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between">
+        <h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:0">All Companies (${companies.length})</h2>
+        <a href="/onboard" target="_blank" style="padding:7px 16px;background:#00d4ff22;border:1px solid #00d4ff44;border-radius:8px;color:#00d4ff;font-size:12px;font-weight:700;text-decoration:none">+ New Company</a>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#0a0f1a;border-bottom:1px solid #1e293b">
+              <th style="padding:12px;text-align:left;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Company</th>
+              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Plan</th>
+              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Status</th>
+              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Reps</th>
+              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Opps</th>
+              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Last Activity</th>
+              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${companyRows || '<tr><td colspan="7" style="padding:40px;text-align:center;color:#475569">No companies found</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="margin-top:24px;padding:20px;background:#0f172a;border:1px solid #1e293b;border-radius:16px">
+      <h3 style="font-size:14px;font-weight:700;color:#94a3b8;margin:0 0 14px;text-transform:uppercase;letter-spacing:.05em">Quick Actions</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="/onboard" target="_blank"
+          style="padding:10px 20px;background:#6366f122;border:1px solid #6366f144;border-radius:10px;color:#6366f1;font-size:13px;font-weight:700;text-decoration:none">
+          🏢 New Company Onboarding
+        </a>
+        <button onclick="superAdmin()"
+          style="padding:10px 20px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer">
+          ↺ Reload Data
+        </button>
+      </div>
+    </div>
+
+    <!-- Impersonate confirm overlay -->
+    <div id="saImpersonateOverlay" style="display:none;position:fixed;inset:0;background:#00000099;z-index:9999;align-items:center;justify-content:center">
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:20px;padding:32px;width:min(420px,90vw)">
+        <h2 style="color:#e2e8f0;margin:0 0 8px;font-size:20px;font-weight:800">Impersonate Company</h2>
+        <p id="saImpersonateMsg" style="color:#94a3b8;margin:0 0 24px;font-size:14px"></p>
+        <div style="display:flex;gap:12px">
+          <button id="saImpersonateConfirmBtn"
+            style="flex:1;padding:12px;background:#f59e0b;border:none;border-radius:10px;color:#0a0f1a;font-size:14px;font-weight:800;cursor:pointer">
+            Confirm Impersonate
+          </button>
+          <button onclick="document.getElementById('saImpersonateOverlay').style.display='none'"
+            style="padding:12px 20px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#94a3b8;font-size:14px;cursor:pointer">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>`;
+
+  // Wire up impersonate handler
+  window._saImpersonate = async function(companyId, companyName) {
+    const overlay = document.getElementById('saImpersonateOverlay');
+    const msg     = document.getElementById('saImpersonateMsg');
+    const btn     = document.getElementById('saImpersonateConfirmBtn');
+    if (!overlay) return;
+    msg.textContent = `You will be switched to view "${companyName}" as a member of that company. Your own session remains unchanged — refresh to return.`;
+    overlay.style.display = 'flex';
+    btn.onclick = async () => {
+      btn.textContent = 'Switching…'; btn.disabled = true;
+      try {
+        const res = await fetch('/api/admin/impersonate', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company_id: companyId })
+        });
+        if (!res.ok) throw new Error((await res.json()).error || 'Failed');
+        const data = await res.json();
+        // Swap session cookie to impersonation token, reload cleanly
+        document.cookie = `avalon_session=${data.token};path=/;max-age=86400;samesite=lax`;
+        window._d1Ready       = false;
+        window._d1SessionRep  = null;
+        window._companyId     = companyId;
+        showToast(`Switched to ${companyName} — reloading…`, 3000);
+        overlay.style.display = 'none';
+        setTimeout(() => location.reload(), 1000);
+      } catch(e) {
+        showToast('Impersonate failed: ' + e.message, 4000);
+        btn.textContent = 'Confirm Impersonate'; btn.disabled = false;
+      }
+    };
+  };
+}
+window.superAdmin = superAdmin;
 
 show('today');

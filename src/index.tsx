@@ -3,8 +3,8 @@ import { serveStatic } from 'hono/cloudflare-workers'
 import { cors } from 'hono/cors'
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 
-type Bindings = { DB: D1Database }
-type Variables = { repId: string; companyId: string; role: string }
+type Bindings = { DB: D1Database; SENDGRID_API_KEY?: string }
+type Variables = { repId: string; companyId: string; role: string; isSuperAdmin: boolean }
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -28,24 +28,81 @@ function err(c: any, msg: string, status = 400) {
   return c.json({ ok: false, error: msg }, status)
 }
 
+// ── PIN hashing (PBKDF2-SHA256 via Web Crypto API) ───────────────────────────
+// Format stored in DB: "pbkdf2:100000:<salt_hex>:<hash_hex>"
+async function hashPin(pin: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16))
+  const enc  = new TextEncoder()
+  const key  = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits'])
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 100_000 },
+    key, 256
+  )
+  const toHex = (b: Uint8Array) => Array.from(b).map(x => x.toString(16).padStart(2,'0')).join('')
+  return `pbkdf2:100000:${toHex(salt)}:${toHex(new Uint8Array(bits))}`
+}
+
+async function verifyPin(pin: string, stored: string): Promise<boolean> {
+  if (!stored || !stored.startsWith('pbkdf2:')) return false
+  const parts = stored.split(':')
+  if (parts.length !== 4) return false
+  const [,iters, saltHex, hashHex] = parts
+  const salt = new Uint8Array(saltHex.match(/.{2}/g)!.map(h => parseInt(h, 16)))
+  const enc  = new TextEncoder()
+  const key  = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits'])
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: parseInt(iters) },
+    key, 256
+  )
+  const toHex = (b: Uint8Array) => Array.from(b).map(x => x.toString(16).padStart(2,'0')).join('')
+  return toHex(new Uint8Array(bits)) === hashHex
+}
+
+// ── SendGrid email helper ─────────────────────────────────────────────────────
+async function sendEmail(apiKey: string, to: string, subject: string, html: string): Promise<boolean> {
+  try {
+    const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: to }] }],
+        from: { email: 'noreply@groundwork-crm.com', name: 'Groundwork CRM' },
+        subject,
+        content: [{ type: 'text/html', value: html }]
+      })
+    })
+    return res.status >= 200 && res.status < 300
+  } catch { return false }
+}
+
+// ── Secure random hex token ───────────────────────────────────────────────────
+function secureToken(bytes = 32): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(bytes)))
+    .map(b => b.toString(16).padStart(2,'0')).join('')
+}
+
 // ── requireAuth middleware ────────────────────────────────────────────────────
-// Resolves session cookie → rep → company_id, sets c.var.{repId,companyId,role}
+// Resolves session cookie → rep → company_id, sets c.var.{repId,companyId,role,isSuperAdmin}
 async function requireAuth(c: any, next: any) {
   const token = getCookie(c, 'avalon_session')
   if (!token) return err(c, 'Unauthorized', 401)
-  // Session key stores repId; rep row has company_id
   const row = await c.env.DB.prepare(`
-    SELECT r.id as rep_id, r.company_id, r.role
+    SELECT r.id as rep_id, r.company_id, r.role, r.is_super_admin
     FROM settings s
-    JOIN reps r ON r.id = s.value AND r.company_id = (
-      SELECT company_id FROM reps WHERE id = s.value LIMIT 1
-    )
+    JOIN reps r ON r.id = s.value
     WHERE s.key = ? LIMIT 1
-  `).bind(`session_${token}`).first<{ rep_id: string; company_id: string; role: string }>()
+  `).bind(`session_${token}`).first<{ rep_id: string; company_id: string; role: string; is_super_admin: number }>()
   if (!row) return err(c, 'Session expired', 401)
-  c.set('repId',     row.rep_id)
-  c.set('companyId', row.company_id)
-  c.set('role',      row.role)
+  c.set('repId',        row.rep_id)
+  c.set('companyId',    row.company_id)
+  c.set('role',         row.role)
+  c.set('isSuperAdmin', !!row.is_super_admin)
+  await next()
+}
+
+async function requireSuperAdmin(c: any, next: any) {
+  await requireAuth(c, async () => {})
+  if (!c.var.isSuperAdmin) return err(c, 'Forbidden', 403)
   await next()
 }
 
@@ -57,18 +114,38 @@ async function requireAuth(c: any, next: any) {
 app.post('/api/auth/login', async (c) => {
   const { repId, pin, companyId } = await c.req.json()
   if (!repId || !pin) return err(c, 'repId and pin required')
-  // companyId is optional — if omitted, look up by repId alone (single-tenant mode)
+  // Fetch rep row — look up by id + companyId (or id alone for single-tenant)
   let rep: any
   if (companyId) {
     rep = await c.env.DB.prepare(
-      'SELECT * FROM reps WHERE id = ? AND pin = ? AND company_id = ? AND active = 1 LIMIT 1'
-    ).bind(repId, String(pin), companyId).first()
+      'SELECT * FROM reps WHERE id = ? AND company_id = ? AND active = 1 LIMIT 1'
+    ).bind(repId, companyId).first()
   } else {
     rep = await c.env.DB.prepare(
-      'SELECT * FROM reps WHERE id = ? AND pin = ? AND active = 1 LIMIT 1'
-    ).bind(repId, String(pin)).first()
+      'SELECT * FROM reps WHERE id = ? AND active = 1 LIMIT 1'
+    ).bind(repId).first()
   }
   if (!rep) return err(c, 'Invalid credentials', 401)
+
+  // Dual-mode PIN check: prefer hashed, fall back to plain during rollout
+  let pinOk = false
+  if (rep.pin_hash) {
+    pinOk = await verifyPin(String(pin), rep.pin_hash)
+    // Auto-upgrade plain pin column if hash matches
+    if (pinOk && rep.pin) {
+      await c.env.DB.prepare("UPDATE reps SET pin = '' WHERE id = ? AND company_id = ?")
+        .bind(rep.id, rep.company_id).run()
+    }
+  } else if (rep.pin) {
+    // Legacy plain-text PIN — verify then upgrade to hash
+    pinOk = String(pin) === String(rep.pin)
+    if (pinOk) {
+      const hash = await hashPin(String(pin))
+      await c.env.DB.prepare("UPDATE reps SET pin_hash = ?, pin = '' WHERE id = ? AND company_id = ?")
+        .bind(hash, rep.id, rep.company_id).run()
+    }
+  }
+  if (!pinOk) return err(c, 'Invalid credentials', 401)
   const token = uid() + uid()
   // Store session: key = session_{token}, value = repId
   // We also store company_id in a second key for fast lookup
@@ -109,7 +186,7 @@ app.get('/api/auth/me', async (c) => {
   ).bind(`session_${token}`).first<{ value: string }>()
   if (!sess) return err(c, 'Session expired', 401)
   const rep = await c.env.DB.prepare(
-    'SELECT id, name, title, role, color, commission_plan, company_id FROM reps WHERE id = ? LIMIT 1'
+    'SELECT id, name, title, role, color, commission_plan, company_id, is_super_admin FROM reps WHERE id = ? LIMIT 1'
   ).bind(sess.value).first()
   if (!rep) return err(c, 'Rep not found', 404)
   return json(c, rep)
@@ -185,10 +262,11 @@ app.get('/api/reps/:id', async (c) => {
 app.post('/api/reps', async (c) => {
   const b = await c.req.json()
   if (!b.id || !b.name || !b.pin || !b.companyId) return err(c, 'id, name, pin, companyId required')
+  const pinHash = await hashPin(String(b.pin))
   await c.env.DB.prepare(`
-    INSERT INTO reps (id, name, title, role, pin, color, commission_plan, company_id, active)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
-  `).bind(b.id, b.name, b.title||'', b.role||'rep', b.pin, b.color||'#6366f1', b.commissionPlan||'standard', b.companyId).run()
+    INSERT INTO reps (id, name, title, role, pin, pin_hash, email, color, commission_plan, company_id, active)
+    VALUES (?, ?, ?, ?, '', ?, ?, ?, ?, ?, 1)
+  `).bind(b.id, b.name, b.title||'', b.role||'rep', pinHash, b.email||'', b.color||'#6366f1', b.commissionPlan||'standard', b.companyId).run()
   return json(c, { id: b.id }, 201)
 })
 
@@ -197,13 +275,21 @@ app.put('/api/reps/:id', async (c) => {
   const id = c.req.param('id')
   const b  = await c.req.json()
   const companyId = b.companyId || 'avalon'
-  const fields = ['name','title','role','color','pin','commission_plan','active']
-  const updates = fields.filter(f => b[f] !== undefined)
+  const fields = ['name','title','role','color','email','commission_plan','active']
+  const updates: string[] = []
+  const vals: any[] = []
+  for (const f of fields) {
+    if (b[f] !== undefined) { updates.push(`${f} = ?`); vals.push(b[f]) }
+  }
+  // Hash new PIN if provided
+  if (b.pin) {
+    const pinHash = await hashPin(String(b.pin))
+    updates.push("pin_hash = ?"); vals.push(pinHash)
+    updates.push("pin = ''")     // clear legacy plain pin
+  }
   if (!updates.length) return err(c, 'Nothing to update')
-  const set = updates.map(f => `${f} = ?`).join(', ')
-  const vals = updates.map(f => b[f])
   await c.env.DB.prepare(
-    `UPDATE reps SET ${set}, updated_at = datetime('now') WHERE id = ? AND company_id = ?`
+    `UPDATE reps SET ${updates.join(', ')}, updated_at = datetime('now') WHERE id = ? AND company_id = ?`
   ).bind(...vals, id, companyId).run()
   return json(c, { updated: id })
 })
@@ -677,6 +763,335 @@ app.post('/api/sync', async (c) => {
   return json(c, { synced: stmts.length, companyId })
 })
 
+// ══════════════════════════════════════════════════════════════════════════════
+// PASSWORD RESET
+// ══════════════════════════════════════════════════════════════════════════════
+
+// POST /api/auth/reset-request  { email } OR { repId, companyId }
+// Sends a 6-digit OTP to the rep's email. OTP expires in 1 hour.
+app.post('/api/auth/reset-request', async (c) => {
+  const body = await c.req.json()
+  const { email, repId, companyId } = body
+  let rep: any = null
+  if (email) {
+    // Email-based lookup (preferred — used by frontend forgot-PIN flow)
+    rep = await c.env.DB.prepare(
+      'SELECT id, name, email, company_id FROM reps WHERE email = ? AND active = 1 LIMIT 1'
+    ).bind(email.toLowerCase().trim()).first<any>()
+  } else if (repId && companyId) {
+    rep = await c.env.DB.prepare(
+      'SELECT id, name, email, company_id FROM reps WHERE id = ? AND company_id = ? AND active = 1 LIMIT 1'
+    ).bind(repId, companyId).first<any>()
+  } else {
+    return err(c, 'email required')
+  }
+  // Always return ok to prevent enumeration
+  if (!rep || !rep.email) return json(c, { sent: false, reason: 'no_email' })
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000)) // 6-digit
+  const otpHash = await hashPin(otp) // store hashed OTP
+  const exp = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+  await c.env.DB.prepare(
+    "UPDATE reps SET reset_token = ?, reset_token_exp = ? WHERE id = ? AND company_id = ?"
+  ).bind(otpHash, exp, rep.id, rep.company_id).run()
+
+  const sent = c.env.SENDGRID_API_KEY ? await sendEmail(
+    c.env.SENDGRID_API_KEY, rep.email,
+    'Your Groundwork CRM login code',
+    `<div style="font-family:Inter,sans-serif;max-width:480px;margin:40px auto;background:#0f172a;padding:40px;border-radius:16px;color:#e2e8f0">
+      <h2 style="margin:0 0 8px;color:#fff">Login code</h2>
+      <p style="color:#94a3b8;margin:0 0 32px">Hi ${rep.name}, use this code to reset your Groundwork CRM PIN:</p>
+      <div style="background:#1e293b;border-radius:12px;padding:24px;text-align:center;margin-bottom:32px">
+        <span style="font-size:48px;font-weight:800;letter-spacing:8px;color:#00A7E1">${otp}</span>
+      </div>
+      <p style="color:#64748b;font-size:13px;margin:0">This code expires in 1 hour. If you didn't request this, ignore this email.</p>
+    </div>`
+  ) : false
+
+  return json(c, { sent, email: rep.email.replace(/(.{2}).+(@.+)/, '$1***$2') })
+})
+
+// POST /api/auth/reset-pin  { email, token, new_pin } OR { repId, companyId, otp, newPin }
+app.post('/api/auth/reset-pin', async (c) => {
+  const body = await c.req.json()
+  // Support both frontend shape (email, token, new_pin) and legacy (repId, companyId, otp, newPin)
+  const email  = body.email
+  const otp    = body.token    || body.otp
+  const newPin = body.new_pin  || body.newPin
+  const repId  = body.repId
+  const companyId = body.companyId
+  if (!otp || !newPin) return err(c, 'token and new_pin required')
+  let rep: any = null
+  if (email) {
+    rep = await c.env.DB.prepare(
+      'SELECT id, reset_token, reset_token_exp, company_id FROM reps WHERE email = ? AND active = 1 LIMIT 1'
+    ).bind(email.toLowerCase().trim()).first<any>()
+  } else if (repId && companyId) {
+    rep = await c.env.DB.prepare(
+      'SELECT id, reset_token, reset_token_exp, company_id FROM reps WHERE id = ? AND company_id = ? AND active = 1 LIMIT 1'
+    ).bind(repId, companyId).first<any>()
+  } else {
+    return err(c, 'email or repId+companyId required')
+  }
+  if (!rep || !rep.reset_token) return err(c, 'No reset requested', 400)
+  if (new Date(rep.reset_token_exp) < new Date()) return err(c, 'Code expired', 400)
+  const valid = await verifyPin(String(otp), rep.reset_token)
+  if (!valid) return err(c, 'Invalid code', 401)
+  const newHash = await hashPin(String(newPin))
+  await c.env.DB.prepare(
+    "UPDATE reps SET pin_hash = ?, pin = '', reset_token = '', reset_token_exp = '' WHERE id = ? AND company_id = ?"
+  ).bind(newHash, rep.id, rep.company_id).run()
+  return json(c, { reset: true })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COMPANY ONBOARDING  (public signup — no auth required)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// GET /onboard  — serve the public signup page
+app.get('/onboard', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get Started — Groundwork CRM</title>
+  <meta name="description" content="Set up your team on Groundwork CRM in 2 minutes." />
+  <link rel="icon" type="image/png" href="/static/avalon-logo.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{background:#1e293b;border-radius:20px;padding:40px;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,.4)}
+    .logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+    .logo img{width:40px;height:40px;border-radius:10px;background:#0f172a;padding:4px}
+    .logo-text{font-size:20px;font-weight:800;color:#fff}
+    .logo-sub{font-size:12px;color:#64748b;font-weight:500}
+    h1{font-size:26px;font-weight:800;margin-bottom:8px;color:#fff}
+    p.sub{color:#94a3b8;font-size:15px;margin-bottom:32px;line-height:1.5}
+    label{display:block;font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:6px}
+    input,select{width:100%;padding:12px 16px;background:#0f172a;border:1.5px solid #334155;border-radius:10px;color:#e2e8f0;font-size:15px;font-family:inherit;outline:none;transition:border-color .15s}
+    input:focus,select:focus{border-color:#00A7E1}
+    .field{margin-bottom:20px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .hint{font-size:12px;color:#64748b;margin-top:5px}
+    .slug-preview{font-size:12px;color:#00A7E1;margin-top:5px;font-weight:500}
+    button[type=submit]{width:100%;padding:14px;background:#00A7E1;color:#fff;font-size:16px;font-weight:700;border:none;border-radius:12px;cursor:pointer;margin-top:8px;transition:background .15s;font-family:inherit}
+    button[type=submit]:hover{background:#0096cc}
+    button[type=submit]:disabled{background:#334155;cursor:not-allowed}
+    .divider{border:none;border-top:1px solid #334155;margin:28px 0}
+    .step{display:none}.step.active{display:block}
+    .success-icon{font-size:56px;text-align:center;margin-bottom:16px}
+    .creds{background:#0f172a;border-radius:12px;padding:20px;margin:20px 0;font-size:14px}
+    .creds p{margin-bottom:8px;color:#94a3b8}.creds strong{color:#fff}
+    .error{background:#450a0a;border:1px solid #7f1d1d;color:#fca5a5;padding:12px 16px;border-radius:10px;font-size:14px;margin-bottom:16px;display:none}
+    .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <img src="/static/avalon-logo.png" alt="Groundwork CRM">
+    <div><div class="logo-text">Groundwork CRM</div><div class="logo-sub">Field sales, finally simple</div></div>
+  </div>
+
+  <!-- Step 1: Company info -->
+  <div class="step active" id="step1">
+    <h1>Set up your team</h1>
+    <p class="sub">Get your crew on Groundwork CRM in 2 minutes. No credit card required.</p>
+    <div id="errorBox" class="error"></div>
+    <form id="onboardForm">
+      <div class="field">
+        <label>Company name</label>
+        <input type="text" id="companyName" placeholder="Apex Landscaping" required autocomplete="organization">
+        <div class="slug-preview" id="slugPreview"></div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Your name</label>
+          <input type="text" id="ownerName" placeholder="Tyler" required autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label>Your role</label>
+          <select id="ownerRole">
+            <option value="admin">Owner / Admin</option>
+            <option value="office_manager">Office Manager</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Work email <span style="color:#64748b;font-weight:400">(for PIN reset)</span></label>
+        <input type="email" id="ownerEmail" placeholder="tyler@yourbusiness.com" autocomplete="email">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Your login ID</label>
+          <input type="text" id="ownerId" placeholder="tyler" required autocomplete="username" pattern="[a-z0-9_-]+" title="lowercase letters, numbers, - _">
+          <div class="hint">Lowercase, no spaces</div>
+        </div>
+        <div class="field">
+          <label>Choose a PIN</label>
+          <input type="password" id="ownerPin" placeholder="4–8 digits" required minlength="4" maxlength="8" inputmode="numeric">
+        </div>
+      </div>
+      <button type="submit" id="submitBtn">Create my account →</button>
+    </form>
+  </div>
+
+  <!-- Step 2: Success -->
+  <div class="step" id="step2">
+    <div class="success-icon">🎉</div>
+    <h1 style="text-align:center">You're all set!</h1>
+    <p class="sub" style="text-align:center">Your Groundwork CRM workspace is ready. Save these details.</p>
+    <div class="creds">
+      <p>Company ID: <strong id="s2company"></strong></p>
+      <p>Your login ID: <strong id="s2repId"></strong></p>
+      <p>PIN: <strong id="s2pin"></strong></p>
+    </div>
+    <a href="/" style="display:block;width:100%;padding:14px;background:#00A7E1;color:#fff;font-size:16px;font-weight:700;border-radius:12px;text-align:center;text-decoration:none;margin-top:8px">
+      Open Groundwork CRM →
+    </a>
+  </div>
+</div>
+
+<script>
+  // Auto-generate slug from company name
+  const nameEl = document.getElementById('companyName')
+  const slugEl = document.getElementById('slugPreview')
+  function toSlug(s) {
+    return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,30)
+  }
+  nameEl.addEventListener('input', () => {
+    const slug = toSlug(nameEl.value)
+    slugEl.textContent = slug ? 'Your company ID: ' + slug : ''
+  })
+
+  document.getElementById('onboardForm').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = document.getElementById('submitBtn')
+    const errBox = document.getElementById('errorBox')
+    errBox.style.display = 'none'
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span>Creating account…'
+
+    const companyName = nameEl.value.trim()
+    const slug        = toSlug(companyName)
+    const ownerName   = document.getElementById('ownerName').value.trim()
+    const ownerRole   = document.getElementById('ownerRole').value
+    const ownerEmail  = document.getElementById('ownerEmail').value.trim()
+    const ownerId     = document.getElementById('ownerId').value.trim().toLowerCase()
+    const ownerPin    = document.getElementById('ownerPin').value
+
+    try {
+      // 1. Create company
+      const cRes = await fetch('/api/companies', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ name: companyName, slug, ownerEmail, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+      })
+      const cData = await cRes.json()
+      if (!cData.ok) throw new Error(cData.error || 'Company creation failed')
+
+      // 2. Create owner rep
+      const rRes = await fetch('/api/reps', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id: ownerId, name: ownerName, role: ownerRole, pin: ownerPin, email: ownerEmail, companyId: slug, color: '#00A7E1' })
+      })
+      const rData = await rRes.json()
+      if (!rData.ok) throw new Error(rData.error || 'Rep creation failed')
+
+      // 3. Show success
+      document.getElementById('s2company').textContent = slug
+      document.getElementById('s2repId').textContent   = ownerId
+      document.getElementById('s2pin').textContent     = ownerPin
+      document.getElementById('step1').classList.remove('active')
+      document.getElementById('step2').classList.add('active')
+    } catch(err) {
+      errBox.textContent = err.message
+      errBox.style.display = 'block'
+      btn.disabled = false
+      btn.textContent = 'Create my account →'
+    }
+  })
+</script>
+</body>
+</html>`)
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SUPER-ADMIN API  (is_super_admin = 1 required)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/companies  — list all companies with stats
+app.get('/api/admin/companies', requireSuperAdmin, async (c) => {
+  const companies = await c.env.DB.prepare(`
+    SELECT c.id, c.name, c.slug, c.plan, c.owner_email, c.active, c.created_at, c.trial_ends_at,
+           COUNT(DISTINCT r.id)   AS rep_count,
+           COUNT(DISTINCT o.id)   AS opp_count,
+           MAX(o.updated_at)      AS last_activity
+    FROM companies c
+    LEFT JOIN reps r         ON r.company_id = c.id AND r.active = 1
+    LEFT JOIN opportunities o ON o.company_id = c.id
+    GROUP BY c.id
+    ORDER BY c.created_at DESC
+  `).all()
+  return json(c, companies.results)
+})
+
+// GET /api/admin/stats  — platform-wide totals
+app.get('/api/admin/stats', requireSuperAdmin, async (c) => {
+  const [companies, reps, opps] = await c.env.DB.batch([
+    c.env.DB.prepare('SELECT COUNT(*) as n FROM companies WHERE active = 1'),
+    c.env.DB.prepare('SELECT COUNT(*) as n FROM reps WHERE active = 1'),
+    c.env.DB.prepare('SELECT COUNT(*) as n FROM opportunities')
+  ])
+  return json(c, {
+    companies: (companies.results[0] as any).n,
+    reps:      (reps.results[0] as any).n,
+    opps:      (opps.results[0] as any).n
+  })
+})
+
+// POST /api/admin/impersonate  { companyId } — set session company scope
+// Creates a new session token scoped to the target company, returns it.
+// The super-admin's own session is unchanged; frontend stores the impersonation token separately.
+app.post('/api/admin/impersonate', requireSuperAdmin, async (c) => {
+  const { companyId } = await c.req.json()
+  if (!companyId) return err(c, 'companyId required')
+  // Find admin rep of that company
+  const targetRep = await c.env.DB.prepare(
+    "SELECT id, company_id FROM reps WHERE company_id = ? AND role IN ('admin','office_manager') AND active = 1 ORDER BY role ASC LIMIT 1"
+  ).bind(companyId).first<any>()
+  if (!targetRep) return err(c, 'No admin rep found for that company', 404)
+  const token = secureToken()
+  await c.env.DB.batch([
+    c.env.DB.prepare("INSERT OR REPLACE INTO settings (key,value,updated_at) VALUES (?,?,datetime('now'))")
+      .bind(`session_${token}`, targetRep.id),
+    c.env.DB.prepare("INSERT OR REPLACE INTO settings (key,value,updated_at) VALUES (?,?,datetime('now'))")
+      .bind(`session_company_${token}`, companyId)
+  ])
+  // Set the impersonation cookie (replaces current session in browser)
+  setCookie(c, 'avalon_session', token, {
+    httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 60 * 60 * 2 // 2hr impersonation window
+  })
+  return json(c, { impersonating: companyId, repId: targetRep.id })
+})
+
+// PUT /api/admin/companies/:id  — update company plan/status
+app.put('/api/admin/companies/:id', requireSuperAdmin, async (c) => {
+  const id = c.req.param('id')
+  const b  = await c.req.json()
+  const allowed = ['plan','active','trial_ends_at']
+  const updates = allowed.filter(f => b[f] !== undefined)
+  if (!updates.length) return err(c, 'Nothing to update')
+  const set  = updates.map(f => `${f} = ?`).join(', ')
+  const vals = updates.map(f => b[f])
+  await c.env.DB.prepare(
+    `UPDATE companies SET ${set}, updated_at = datetime('now') WHERE id = ?`
+  ).bind(...vals, id).run()
+  return json(c, { updated: id })
+})
+
 // Google OAuth2 callback page — receives access token from Google's implicit flow,
 // posts it back to the opener window, then closes itself.
 app.get('/auth/google/callback', (c) => {
@@ -792,6 +1207,7 @@ function getHtml(): string {
           <button class="nav-item" data-view="integrations" onclick="show('integrations')">Integrations</button>
           <button class="nav-item" data-view="userManagement" onclick="show('userManagement')">User Management</button>
           <button class="nav-item" data-view="settings" onclick="show('settings')">Settings</button>
+          <button class="nav-item" data-view="superAdmin" id="superAdminNavBtn" onclick="show('superAdmin')" style="display:none;color:#f59e0b;font-weight:700;border-top:1px solid #334155;margin-top:6px;padding-top:10px">🛡 Platform Admin</button>
         </div>
       </details>
 
@@ -976,6 +1392,8 @@ function getHtml(): string {
         window._mapOpp = mapOpp; // expose for login flow reuse
         // Flush any writes that were queued before D1 was ready
         if (typeof window._d1FlushQueue === 'function') window._d1FlushQueue();
+        // Refresh nav visibility now that super-admin status is known
+        if (typeof window._refreshAdminNav === 'function') window._refreshAdminNav();
         console.log('[Bootstrap] D1 session active for', d1Rep.name);
         return; // Don't show login screen
       }
@@ -999,6 +1417,13 @@ function getHtml(): string {
       const umBtn = document.querySelector('[data-view="userManagement"]');
       if (umBtn) {
         umBtn.style.display = isAdmin ? '' : 'none';
+      }
+      // Super-admin nav: visible only if is_super_admin from D1 session rep
+      const d1Rep = window._d1SessionRep;
+      const isSuperAdmin = d1Rep && (d1Rep.is_super_admin === 1 || d1Rep.is_super_admin === true);
+      const saBtn = document.getElementById('superAdminNavBtn');
+      if (saBtn) {
+        saBtn.style.display = isSuperAdmin ? '' : 'none';
       }
     }
     // Run on load and expose so login/logout can call it
