@@ -798,14 +798,37 @@ app.post('/api/auth/reset-request', async (c) => {
   const sent = c.env.SENDGRID_API_KEY ? await sendEmail(
     c.env.SENDGRID_API_KEY, rep.email,
     'Your Groundwork CRM login code',
-    `<div style="font-family:Inter,sans-serif;max-width:480px;margin:40px auto;background:#0f172a;padding:40px;border-radius:16px;color:#e2e8f0">
-      <h2 style="margin:0 0 8px;color:#fff">Login code</h2>
-      <p style="color:#94a3b8;margin:0 0 32px">Hi ${rep.name}, use this code to reset your Groundwork CRM PIN:</p>
-      <div style="background:#1e293b;border-radius:12px;padding:24px;text-align:center;margin-bottom:32px">
-        <span style="font-size:48px;font-weight:800;letter-spacing:8px;color:#00A7E1">${otp}</span>
-      </div>
-      <p style="color:#64748b;font-size:13px;margin:0">This code expires in 1 hour. If you didn't request this, ignore this email.</p>
-    </div>`
+    `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#F5F9F7;font-family:Inter,Arial,sans-serif">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F9F7;padding:48px 20px">
+      <tr><td align="center">
+        <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(30,70,56,.10)">
+          <!-- Header -->
+          <tr><td style="background:linear-gradient(135deg,#152F26 0%,#1E4638 60%,#255A47 100%);padding:36px 40px 32px;text-align:center">
+            <div style="display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:10px 18px;margin-bottom:18px">
+              <span style="font-size:20px;font-weight:900;color:#ffffff;letter-spacing:-.04em">Groundwork</span>
+              <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.12em;text-transform:uppercase;display:block;margin-top:1px">CRM</span>
+            </div>
+            <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-.03em">Your login code</h1>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,.55);font-size:14px">Use this to reset your PIN</p>
+          </td></tr>
+          <!-- Body -->
+          <tr><td style="padding:36px 40px 20px">
+            <p style="margin:0 0 28px;font-size:15px;color:#5A6B79;line-height:1.6">Hi <strong style="color:#0F1C14">${rep.name}</strong>, here is your one-time login code for Groundwork CRM:</p>
+            <!-- OTP block -->
+            <div style="background:#F5F9F7;border:1.5px solid #E2EBE8;border-radius:14px;padding:28px;text-align:center;margin-bottom:28px">
+              <span style="font-size:52px;font-weight:900;letter-spacing:10px;color:#1E4638;display:block;line-height:1">${otp}</span>
+              <p style="margin:12px 0 0;font-size:12px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.1em">One-time code · expires in 1 hour</p>
+            </div>
+            <p style="margin:0 0 12px;font-size:13px;color:#94A3B8;line-height:1.6">Enter this code in the Groundwork CRM app when prompted. If you didn't request this, you can safely ignore this email — your account remains secure.</p>
+          </td></tr>
+          <!-- Footer -->
+          <tr><td style="padding:20px 40px 36px;border-top:1px solid #E2EBE8;text-align:center">
+            <p style="margin:0;font-size:11px;color:#C8D8D3;font-weight:600;letter-spacing:.08em;text-transform:uppercase">Groundwork CRM · Sent automatically · Do not reply</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+    </body></html>`
   ) : false
 
   return json(c, { sent, email: rep.email.replace(/(.{2}).+(@.+)/, '$1***$2') })
@@ -848,7 +871,7 @@ app.post('/api/auth/reset-pin', async (c) => {
 // COMPANY ONBOARDING  (public signup — no auth required)
 // ══════════════════════════════════════════════════════════════════════════════
 
-// GET /onboard  — serve the public signup page
+// GET /onboard  — serve the public signup page  (GW-015 rebranded)
 app.get('/onboard', (c) => {
   return c.html(`<!DOCTYPE html>
 <html lang="en">
@@ -856,102 +879,199 @@ app.get('/onboard', (c) => {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Get Started — Groundwork CRM</title>
+  <meta name="theme-color" content="#1E4638" />
   <meta name="description" content="Set up your team on Groundwork CRM in 2 minutes." />
   <link rel="icon" type="image/png" href="/static/avalon-logo.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Inter,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-    .card{background:#1e293b;border-radius:20px;padding:40px;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,.4)}
-    .logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
-    .logo img{width:40px;height:40px;border-radius:10px;background:#0f172a;padding:4px}
-    .logo-text{font-size:20px;font-weight:800;color:#fff}
-    .logo-sub{font-size:12px;color:#64748b;font-weight:500}
-    h1{font-size:26px;font-weight:800;margin-bottom:8px;color:#fff}
-    p.sub{color:#94a3b8;font-size:15px;margin-bottom:32px;line-height:1.5}
-    label{display:block;font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:6px}
-    input,select{width:100%;padding:12px 16px;background:#0f172a;border:1.5px solid #334155;border-radius:10px;color:#e2e8f0;font-size:15px;font-family:inherit;outline:none;transition:border-color .15s}
-    input:focus,select:focus{border-color:#00A7E1}
-    .field{margin-bottom:20px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .hint{font-size:12px;color:#64748b;margin-top:5px}
-    .slug-preview{font-size:12px;color:#00A7E1;margin-top:5px;font-weight:500}
-    button[type=submit]{width:100%;padding:14px;background:#00A7E1;color:#fff;font-size:16px;font-weight:700;border:none;border-radius:12px;cursor:pointer;margin-top:8px;transition:background .15s;font-family:inherit}
-    button[type=submit]:hover{background:#0096cc}
-    button[type=submit]:disabled{background:#334155;cursor:not-allowed}
-    .divider{border:none;border-top:1px solid #334155;margin:28px 0}
+    body{
+      font-family:Inter,sans-serif;
+      background:linear-gradient(160deg,#152F26 0%,#1E4638 45%,#152F26 100%);
+      min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    }
+    /* Decorative ring behind card */
+    body::before{
+      content:'';position:fixed;top:-120px;right:-120px;
+      width:440px;height:440px;
+      background:radial-gradient(circle,rgba(16,185,129,.08) 0%,transparent 70%);
+      pointer-events:none;
+    }
+    .card{
+      background:#ffffff;
+      border-radius:24px;
+      padding:0;
+      width:100%;max-width:500px;
+      box-shadow:0 32px 80px rgba(0,0,0,.25);
+      overflow:hidden;
+      position:relative;
+    }
+    /* Pine header strip */
+    .card-header{
+      background:linear-gradient(135deg,#152F26 0%,#1E4638 60%,#255A47 100%);
+      padding:30px 36px 28px;
+      text-align:center;
+    }
+    .logo-pill{
+      display:inline-flex;align-items:center;gap:10px;
+      background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
+      border-radius:14px;padding:8px 16px 8px 12px;margin-bottom:16px;
+    }
+    .logo-pill img{width:28px;height:28px;object-fit:contain;filter:brightness(0) invert(1);opacity:.9;border-radius:6px}
+    .logo-pill-text{font-size:17px;font-weight:900;color:#fff;letter-spacing:-.03em;line-height:1}
+    .logo-pill-sub{font-size:9px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.13em;text-transform:uppercase;margin-top:1px}
+    .card-header h1{margin:0;font-size:20px;font-weight:800;color:#fff;letter-spacing:-.03em}
+    .card-header p{margin:6px 0 0;color:rgba(255,255,255,.52);font-size:13px}
+    .card-body{padding:32px 36px 36px}
+    h1.step-title{font-size:24px;font-weight:800;margin-bottom:6px;color:#0F1C14;letter-spacing:-.03em}
+    p.sub{color:#5A6B79;font-size:14px;margin-bottom:24px;line-height:1.55}
+    label{display:block;font-size:12px;font-weight:700;color:#5A6B79;margin-bottom:5px;letter-spacing:.02em;text-transform:uppercase}
+    input,select{
+      width:100%;padding:11px 14px;
+      background:#F5F9F7;border:1.5px solid #E2EBE8;
+      border-radius:10px;color:#0F1C14;font-size:14px;
+      font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s;
+    }
+    input:focus,select:focus{border-color:#1E4638;box-shadow:0 0 0 3px rgba(30,70,56,.12)}
+    input::placeholder{color:#94A3B8}
+    .field{margin-bottom:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .hint{font-size:11px;color:#94A3B8;margin-top:4px}
+    .slug-preview{font-size:12px;color:#1E4638;margin-top:4px;font-weight:700}
+    button[type=submit]{
+      width:100%;padding:13px;
+      background:#1E4638;color:#fff;
+      font-size:15px;font-weight:700;
+      border:none;border-radius:12px;cursor:pointer;
+      margin-top:6px;transition:background .15s,box-shadow .15s;
+      font-family:inherit;
+      box-shadow:0 4px 16px rgba(30,70,56,.3);
+    }
+    button[type=submit]:hover{background:#255A47;box-shadow:0 6px 22px rgba(30,70,56,.38)}
+    button[type=submit]:disabled{background:#C8D8D3;box-shadow:none;cursor:not-allowed}
     .step{display:none}.step.active{display:block}
-    .success-icon{font-size:56px;text-align:center;margin-bottom:16px}
-    .creds{background:#0f172a;border-radius:12px;padding:20px;margin:20px 0;font-size:14px}
-    .creds p{margin-bottom:8px;color:#94a3b8}.creds strong{color:#fff}
-    .error{background:#450a0a;border:1px solid #7f1d1d;color:#fca5a5;padding:12px 16px;border-radius:10px;font-size:14px;margin-bottom:16px;display:none}
-    .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+    /* Success state */
+    .success-ring{
+      width:68px;height:68px;border-radius:50%;
+      background:linear-gradient(135deg,#1E4638,#10B981);
+      display:flex;align-items:center;justify-content:center;
+      font-size:28px;margin:0 auto 18px;
+      box-shadow:0 8px 24px rgba(16,185,129,.3);
+    }
+    .creds{
+      background:#F5F9F7;border:1px solid #E2EBE8;
+      border-radius:12px;padding:18px;margin:18px 0 24px;
+      font-size:14px;
+    }
+    .creds .row-item{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:7px 0;border-bottom:1px solid #E2EBE8;
+    }
+    .creds .row-item:last-child{border-bottom:none}
+    .creds .cred-label{font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em}
+    .creds .cred-val{font-size:14px;font-weight:700;color:#0F1C14;font-family:monospace}
+    .open-btn{
+      display:block;width:100%;padding:13px;
+      background:#1E4638;color:#fff;
+      font-size:15px;font-weight:700;border-radius:12px;
+      text-align:center;text-decoration:none;
+      box-shadow:0 4px 16px rgba(30,70,56,.3);
+      transition:background .15s;
+    }
+    .open-btn:hover{background:#255A47}
+    .error{
+      background:#FEF2F2;border:1px solid #FECACA;
+      color:#991B1B;padding:11px 14px;border-radius:10px;
+      font-size:13px;margin-bottom:14px;display:none;
+    }
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:7px}
     @keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:520px){
+      .card-header{padding:24px 24px 22px}.card-body{padding:24px 24px 28px}
+      .row{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
 <div class="card">
-  <div class="logo">
-    <img src="/static/avalon-logo.png" alt="Groundwork CRM">
-    <div><div class="logo-text">Groundwork CRM</div><div class="logo-sub">Field sales, finally simple</div></div>
-  </div>
-
-  <!-- Step 1: Company info -->
-  <div class="step active" id="step1">
-    <h1>Set up your team</h1>
-    <p class="sub">Get your crew on Groundwork CRM in 2 minutes. No credit card required.</p>
-    <div id="errorBox" class="error"></div>
-    <form id="onboardForm">
-      <div class="field">
-        <label>Company name</label>
-        <input type="text" id="companyName" placeholder="Apex Landscaping" required autocomplete="organization">
-        <div class="slug-preview" id="slugPreview"></div>
+  <!-- Pine header -->
+  <div class="card-header">
+    <div class="logo-pill">
+      <img src="/static/avalon-logo.png" alt="Groundwork CRM">
+      <div>
+        <div class="logo-pill-text">Groundwork</div>
+        <div class="logo-pill-sub">CRM</div>
       </div>
-      <div class="row">
-        <div class="field">
-          <label>Your name</label>
-          <input type="text" id="ownerName" placeholder="Tyler" required autocomplete="given-name">
-        </div>
-        <div class="field">
-          <label>Your role</label>
-          <select id="ownerRole">
-            <option value="admin">Owner / Admin</option>
-            <option value="office_manager">Office Manager</option>
-          </select>
-        </div>
-      </div>
-      <div class="field">
-        <label>Work email <span style="color:#64748b;font-weight:400">(for PIN reset)</span></label>
-        <input type="email" id="ownerEmail" placeholder="tyler@yourbusiness.com" autocomplete="email">
-      </div>
-      <div class="row">
-        <div class="field">
-          <label>Your login ID</label>
-          <input type="text" id="ownerId" placeholder="tyler" required autocomplete="username" pattern="[a-z0-9_-]+" title="lowercase letters, numbers, - _">
-          <div class="hint">Lowercase, no spaces</div>
-        </div>
-        <div class="field">
-          <label>Choose a PIN</label>
-          <input type="password" id="ownerPin" placeholder="4–8 digits" required minlength="4" maxlength="8" inputmode="numeric">
-        </div>
-      </div>
-      <button type="submit" id="submitBtn">Create my account →</button>
-    </form>
-  </div>
-
-  <!-- Step 2: Success -->
-  <div class="step" id="step2">
-    <div class="success-icon">🎉</div>
-    <h1 style="text-align:center">You're all set!</h1>
-    <p class="sub" style="text-align:center">Your Groundwork CRM workspace is ready. Save these details.</p>
-    <div class="creds">
-      <p>Company ID: <strong id="s2company"></strong></p>
-      <p>Your login ID: <strong id="s2repId"></strong></p>
-      <p>PIN: <strong id="s2pin"></strong></p>
     </div>
-    <a href="/" style="display:block;width:100%;padding:14px;background:#00A7E1;color:#fff;font-size:16px;font-weight:700;border-radius:12px;text-align:center;text-decoration:none;margin-top:8px">
-      Open Groundwork CRM →
-    </a>
+    <h1>Set up your workspace</h1>
+    <p>Get your crew live in 2 minutes. No credit card required.</p>
+  </div>
+
+  <div class="card-body">
+
+    <!-- Step 1: Company info -->
+    <div class="step active" id="step1">
+      <div id="errorBox" class="error"></div>
+      <form id="onboardForm">
+        <div class="field">
+          <label>Company name</label>
+          <input type="text" id="companyName" placeholder="Apex Landscaping" required autocomplete="organization">
+          <div class="slug-preview" id="slugPreview"></div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Your name</label>
+            <input type="text" id="ownerName" placeholder="Tyler" required autocomplete="given-name">
+          </div>
+          <div class="field">
+            <label>Your role</label>
+            <select id="ownerRole">
+              <option value="admin">Owner / Admin</option>
+              <option value="office_manager">Office Manager</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Work email <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94A3B8">(for PIN reset)</span></label>
+          <input type="email" id="ownerEmail" placeholder="tyler@yourbusiness.com" autocomplete="email">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Login ID</label>
+            <input type="text" id="ownerId" placeholder="tyler" required autocomplete="username" pattern="[a-z0-9_-]+" title="lowercase letters, numbers, - _">
+            <div class="hint">Lowercase, no spaces</div>
+          </div>
+          <div class="field">
+            <label>Choose a PIN</label>
+            <input type="password" id="ownerPin" placeholder="4–8 digits" required minlength="4" maxlength="8" inputmode="numeric">
+          </div>
+        </div>
+        <button type="submit" id="submitBtn">Create my account →</button>
+      </form>
+    </div>
+
+    <!-- Step 2: Success -->
+    <div class="step" id="step2">
+      <div class="success-ring">✓</div>
+      <h1 class="step-title" style="text-align:center">You're all set!</h1>
+      <p class="sub" style="text-align:center">Your Groundwork CRM workspace is ready. Save these credentials.</p>
+      <div class="creds">
+        <div class="row-item">
+          <span class="cred-label">Company ID</span>
+          <span class="cred-val" id="s2company"></span>
+        </div>
+        <div class="row-item">
+          <span class="cred-label">Login ID</span>
+          <span class="cred-val" id="s2repId"></span>
+        </div>
+        <div class="row-item">
+          <span class="cred-label">PIN</span>
+          <span class="cred-val" id="s2pin"></span>
+        </div>
+      </div>
+      <a href="/" class="open-btn">Open Groundwork CRM →</a>
+    </div>
+
   </div>
 </div>
 
@@ -1100,9 +1220,9 @@ app.get('/auth/google/callback', (c) => {
 <head>
   <title>Connecting to Google…</title>
   <style>
-    body { font-family: Inter, sans-serif; background: #0f172a; color: #e2e8f0;
+    body { font-family: Inter, sans-serif; background: linear-gradient(160deg,#152F26,#1E4638); color: #e2e8f0;
            display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; flex-direction: column; gap: 16px; }
-    .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #00A7E1; border-radius: 50%; animation: spin .8s linear infinite; }
+    .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,.2); border-top-color: #10B981; border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     p { color: #94a3b8; font-size: 14px; margin: 0; }
   </style>
@@ -1138,7 +1258,7 @@ function getHtml(): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Groundwork CRM</title>
   <link rel="icon" type="image/png" href="/static/avalon-logo.png" />
-  <meta name="theme-color" content="#00A7E1" />
+  <meta name="theme-color" content="#1E4638" />
   <meta name="description" content="Field sales CRM built for home services teams." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1253,14 +1373,14 @@ function getHtml(): string {
 </div>
 <div id="toast" class="toast" hidden role="alert" aria-live="assertive"></div>
 
-<script src="/static/db.js?v=20260627"></script>
-<script src="/static/data.js?v=20260624"></script>
-<script src="/static/reps.js?v=20260624"></script>
-<script src="/static/academy.js?v=20260624"></script>
-<script src="/static/app_premium.js?v=20260627"></script>
-<script src="/static/integrations.js?v=20260624"></script>
-<script src="/static/import_clients_csv.js?v=20260624"></script>
-<script src="/static/user_management.js?v=20260624"></script>
+<script src="/static/db.js?v=20260627gw3"></script>
+<script src="/static/data.js?v=20260627gw3"></script>
+<script src="/static/reps.js?v=20260627gw3"></script>
+<script src="/static/academy.js?v=20260627gw3"></script>
+<script src="/static/app_premium.js?v=20260627gw3"></script>
+<script src="/static/integrations.js?v=20260627gw3"></script>
+<script src="/static/import_clients_csv.js?v=20260627gw3"></script>
+<script src="/static/user_management.js?v=20260627gw3"></script>
 <script>
   // Service Worker registration
   if ('serviceWorker' in navigator) {
