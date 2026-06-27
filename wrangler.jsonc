@@ -5,15 +5,12 @@
   "pages_build_output_dir": "./dist",
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "avalon-sales-hub-production",
+      "database_id": "a09eba8e-6c21-4ec3-a257-70a94b6e2aeb"
+    }
   ]
-  // D1 binding — uncomment and add real database_id after running:
-  //   npx wrangler d1 create avalon-sales-hub-production
-  // Then redeploy: npm run build && npx wrangler pages deploy dist --project-name avalon-sales-hub
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "avalon-sales-hub-production",
-  //     "database_id": "PASTE_ID_HERE"
-  //   }
-  // ]
 }
