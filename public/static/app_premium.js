@@ -267,10 +267,10 @@ window.show = show;
         const initials = (rep.name || 'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
         const roleLabel = isAdmin ? 'Owner / Admin' : isOM ? 'Office Manager' : (rep.title || 'Sales Rep');
         footer.innerHTML = `
-          <div style="width:32px;height:32px;border-radius:50%;background:var(--gw-pine);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;cursor:pointer" onclick="logoutRep();renderLoginScreen()" title="Switch account">${initials}</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;cursor:pointer;letter-spacing:-.01em" onclick="logoutRep();renderLoginScreen()" title="Switch account">${initials}</div>
           <div style="min-width:0;flex:1">
-            <strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;font-size:13px;color:var(--gw-ink)">${rep.name}</strong>
-            <span style="font-size:11px;color:var(--gw-muted)">${roleLabel}</span>
+            <strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;font-size:13px;color:#ffffff">${rep.name}</strong>
+            <span style="font-size:11px;color:rgba(255,255,255,.50)">${roleLabel}</span>
           </div>`;
       }
       // Nav items: always fully visible — access controlled by Permission Matrix in Settings
