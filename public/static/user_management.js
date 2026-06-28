@@ -298,6 +298,44 @@ function umRenderUsers(container) {
   const users    = umLoadUsers();
   const googleMap= umLoadUserGoogle();
   const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
+  // Fetch D1 rep data in background to get invite status and sync
+  const companyId = currentRep?.company_id || window._d1SessionRep?.company_id || 'avalon';
+  fetch(`/api/reps?companyId=${encodeURIComponent(companyId)}`)
+    .then(r=>r.json())
+    .then(d1Reps => {
+      if (!Array.isArray(d1Reps)) return;
+      // Store D1 invite statuses in a map for user row rendering
+      window._umD1InviteMap = {};
+      d1Reps.forEach(r => {
+        window._umD1InviteMap[r.id] = {
+          invite_accepted: r.invite_accepted,
+          invite_sent_at: r.invite_sent_at,
+          email: r.email
+        };
+        // Also merge pending users into local list if not present
+        if (r.invite_accepted === 0) {
+          const localUser = users.find(u=>u.id===r.id);
+          if (!localUser) {
+            users.push({
+              id: r.id, name: r.name, displayName: r.name,
+              email: r.email||'', phone:'', position: r.title||'Sales Rep',
+              role: r.role, color: r.color||'#4D8A86',
+              status: 'inactive', mustResetPin: false,
+              failedLoginCount:0, lastLoginAt:null,
+              createdAt:r.invite_sent_at||new Date().toISOString(),
+              updatedAt:r.invite_sent_at||new Date().toISOString(), notes:''
+            });
+          }
+        }
+      });
+      // Re-render user list with invite badges
+      const listEl = document.getElementById('um-user-list');
+      if (listEl) {
+        listEl.innerHTML = users.length
+          ? users.map(u => umUserRow(u, googleMap[u.id])).join('')
+          : `<div style="text-align:center;padding:40px;color:#6F7E6A">No users yet. Add your first team member.</div>`;
+      }
+    }).catch(()=>{});
 
   // ── Shared Client ID config (Google OAuth app credentials) ──────────────
   let globalIntState = {};
@@ -363,7 +401,13 @@ function umRenderUsers(container) {
     Team Members
     <span style="font-size:12px;color:#6F7E6A;font-weight:400;margin-left:8px">${users.filter(u=>u.status==='active').length} active · ${users.filter(u=>u.status==='inactive').length} inactive</span>
   </div>
-  <button class="primary-btn" onclick="window._umOpenUserForm(null)">+ Add User</button>
+  <div style="display:flex;gap:8px">
+    <button class="secondary-btn" onclick="window._umOpenInviteForm()" style="display:flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Send Invite
+    </button>
+    <button class="primary-btn" onclick="window._umOpenUserForm(null)">+ Add User</button>
+  </div>
 </div>
 
 <div style="display:flex;flex-direction:column;gap:10px" id="um-user-list">
@@ -618,6 +662,167 @@ function umRenderUsers(container) {
     umToast(`Password reset for ${u.name}`);
     userManagement('users');
   };
+
+  // ── Invite Team Member modal ──────────────────────────────────────────────
+  window._umOpenInviteForm = function() {
+    const modal = document.createElement('div');
+    modal.id = 'um-invite-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:#000000cc;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = `
+<div class="gw-modal-card" style="width:min(520px,100%);max-height:90vh;overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div>
+      <h2 style="margin:0 0 4px;font-size:18px">Invite Team Member</h2>
+      <p style="margin:0;font-size:13px;color:#6F7E6A">Send a magic-link invite so they can set their own password.</p>
+    </div>
+    <button onclick="document.getElementById('um-invite-modal').remove()" style="background:none;border:none;color:#6F7E6A;cursor:pointer;font-size:20px;padding:0 4px">✕</button>
+  </div>
+
+  <div style="display:grid;gap:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label class="um-label">Full Name *</label>
+        <input id="inv-f-name" class="um-input" type="text" placeholder="e.g. Sarah Johnson">
+      </div>
+      <div>
+        <label class="um-label">Email Address *</label>
+        <input id="inv-f-email" class="um-input" type="email" placeholder="sarah@company.com">
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label class="um-label">Position / Job Title</label>
+        <select id="inv-f-position" class="um-input">
+          ${UM_POSITIONS.map(p => `<option value="${umEscape(p)}">${umEscape(p)}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="um-label">Role (Access Level) *</label>
+        <select id="inv-f-role" class="um-input" onchange="window._umInvRoleChanged(this.value)">
+          ${UM_ROLE_DEFS.map(r => `<option value="${r.id}" ${r.id==='rep'?'selected':''}>${r.label}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+
+    <div id="inv-role-desc" class="gw-um-role-desc" style="font-size:12px;color:var(--gw-muted);line-height:1.6">
+      ${UM_ROLE_DEFS.find(r=>r.id==='rep')?.description || ''}
+    </div>
+
+    <div>
+      <label class="um-label">Profile Color</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px" id="inv-color-picker">
+        ${['#4D8A86','#2D7A55','#8B6914','#C97B6A','#6F7E6A'].map((c,i) => `
+        <button type="button" onclick="window._umInvPickColor('${c}')" id="inv-clr-${c.replace('#','')}"
+          style="width:30px;height:30px;border-radius:8px;background:${c}22;border:2px solid ${i===0?c:'var(--gw-line)'};cursor:pointer;transition:all .12s;position:relative" title="${c}">
+          <span style="width:14px;height:14px;border-radius:50%;background:${c};display:block;margin:auto"></span>
+          ${i===0?`<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:${c};font-size:14px">✓</span>`:''}
+        </button>`).join('')}
+      </div>
+      <input type="hidden" id="inv-f-color" value="#4D8A86">
+    </div>
+
+    <div>
+      <label class="um-label">Personal Message <span style="font-weight:400;color:#5C6B58">(optional)</span></label>
+      <textarea id="inv-f-message" class="um-input" rows="2"
+        placeholder="Add a personal note that will appear in the invite email…"
+        style="resize:vertical"></textarea>
+    </div>
+
+    <div style="background:#4D8A8610;border:1px solid #4D8A8630;border-radius:10px;padding:12px 14px">
+      <div style="font-size:12px;color:#4D8A86;font-weight:600;margin-bottom:4px">📧 How it works</div>
+      <div style="font-size:12px;color:#5C6B58;line-height:1.6">
+        We'll send them an email with a secure magic link. When they click it, they'll land on a setup page to confirm their name and create their own password. They'll be active and ready to log in immediately.
+      </div>
+    </div>
+  </div>
+
+  <div id="inv-error" style="display:none;color:#C97B6A;font-size:13px;margin-top:10px;padding:10px 14px;background:#C97B6A10;border-radius:8px;border:1px solid #C97B6A30"></div>
+
+  <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end">
+    <button class="secondary-btn" onclick="document.getElementById('um-invite-modal').remove()">Cancel</button>
+    <button class="primary-btn" id="inv-send-btn" onclick="window._umSendInvite()">
+      Send Invite →
+    </button>
+  </div>
+</div>`;
+    document.body.appendChild(modal);
+
+    window._umInvRoleChanged = function(roleId) {
+      const desc = document.getElementById('inv-role-desc');
+      if (desc) desc.textContent = umRoleDef(roleId).description;
+    };
+    window._umInvPickColor = function(color) {
+      document.getElementById('inv-f-color').value = color;
+      document.querySelectorAll('[id^="inv-clr-"]').forEach(btn => {
+        const btnColor = '#' + btn.id.replace('inv-clr-','');
+        btn.style.border = `2px solid ${color === btnColor ? btnColor : 'var(--gw-line)'}`;
+        btn.innerHTML = `<span style="width:14px;height:14px;border-radius:50%;background:${btnColor};display:block;margin:auto"></span>${color===btnColor?`<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:${btnColor};font-size:14px">✓</span>`:''}`;
+      });
+    };
+  };
+
+  window._umSendInvite = async function() {
+    const name    = document.getElementById('inv-f-name')?.value?.trim() || '';
+    const email   = document.getElementById('inv-f-email')?.value?.trim() || '';
+    const pos     = document.getElementById('inv-f-position')?.value || 'Sales Rep';
+    const role    = document.getElementById('inv-f-role')?.value || 'rep';
+    const color   = document.getElementById('inv-f-color')?.value || '#4D8A86';
+    const message = document.getElementById('inv-f-message')?.value?.trim() || '';
+    const errEl   = document.getElementById('inv-error');
+    const btn     = document.getElementById('inv-send-btn');
+
+    if (!name) { errEl.textContent='Full name is required.'; errEl.style.display='block'; return; }
+    if (!email || !email.includes('@')) { errEl.textContent='A valid email address is required.'; errEl.style.display='block'; return; }
+
+    btn.disabled = true; btn.textContent = 'Sending…';
+    errEl.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/auth/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, inviteRole: role, title: pos, color, message })
+      });
+      const data = await res.json();
+      if (res.ok && data.invited) {
+        document.getElementById('um-invite-modal')?.remove();
+        umToast(data.emailSent
+          ? `Invite sent to ${email}! They'll get an email with a setup link.`
+          : `Invite created for ${email}. (Email delivery requires SendGrid setup.)`);
+        umAddAuditEntry({ type:'invite_sent', userName:name, by:window.getCurrentRep?.()?.name||'Admin' });
+        userManagement('users');
+      } else {
+        errEl.textContent = data.error || 'Failed to send invite. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Send Invite →';
+      }
+    } catch(e) {
+      errEl.textContent = 'Network error. Please check your connection.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Send Invite →';
+    }
+  };
+
+  window._umResendInvite = async function(userId, userName) {
+    if (!confirm(`Resend invite to ${userName}?`)) return;
+    try {
+      const res = await fetch('/api/auth/resend-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repId: userId })
+      });
+      const data = await res.json();
+      if (res.ok && data.resent) {
+        umToast(data.emailSent
+          ? `Invite resent to ${data.email}`
+          : `Invite refreshed for ${userName}. (Email delivery requires SendGrid setup.)`);
+        userManagement('users');
+      } else {
+        umToast(data.error || 'Failed to resend invite');
+      }
+    } catch(e) { umToast('Network error'); }
+  };
 }
 
 function umUserRow(u, gc) {
@@ -627,38 +832,63 @@ function umUserRow(u, gc) {
   const googleConnected = gc && gc.token && Date.now() < (gc.expiry || 0);
   const googleEmail     = gc?.email || '';
 
+  // Check invite status from D1 data
+  const d1Info = (window._umD1InviteMap || {})[u.id];
+  const isPendingInvite = d1Info && d1Info.invite_accepted === 0;
+  const inviteSentAt = d1Info?.invite_sent_at;
+
   return `
-<div class="gw-um-user-row">
+<div class="gw-um-user-row" style="${isPendingInvite ? 'opacity:0.85;border:1px solid #8B691430' : ''}">
   <!-- Main row -->
   <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;flex-wrap:wrap;gap:12px">
     ${umColorTile(u.displayName || u.name, u.color, 42)}
     <div style="flex:1;min-width:160px">
-      <div style="font-weight:700;font-size:15px;color:#E8E4D9">${umEscape(u.displayName||u.name)}</div>
-      <div style="font-size:12px;color:#6F7E6A;margin-top:1px">${umEscape(u.position)}${u.email ? ' · '+umEscape(u.email) : ''}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-weight:700;font-size:15px;color:#E8E4D9">${umEscape(u.displayName||u.name)}</span>
+        ${isPendingInvite
+          ? `<span style="font-size:10px;font-weight:700;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.35);border-radius:20px;padding:2px 8px">⏳ Invite Pending</span>`
+          : ''}
+      </div>
+      <div style="font-size:12px;color:#6F7E6A;margin-top:2px">
+        ${umEscape(u.position)}${u.email ? ' · '+umEscape(u.email) : ''}
+        ${isPendingInvite && inviteSentAt ? ` · Sent ${umFormatDate(inviteSentAt)}` : ''}
+      </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span style="font-size:11px;font-weight:700;color:${role.color};background:${role.color}18;border:1px solid ${role.color}40;border-radius:20px;padding:2px 10px">${role.label}</span>
-      ${umStatusPill(u.status)}
-      ${u.mustResetPin ? `<span style="font-size:10px;font-weight:700;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:2px 8px">⚠ Pw Reset</span>` : ''}
+      ${isPendingInvite
+        ? `<span style="font-size:10px;font-weight:700;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:2px 8px">Not Active</span>`
+        : umStatusPill(u.status)}
+      ${u.mustResetPin && !isPendingInvite ? `<span style="font-size:10px;font-weight:700;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:2px 8px">⚠ Pw Reset</span>` : ''}
     </div>
-    <div style="display:flex;gap:8px;margin-left:auto">
-      <button class="secondary-btn" style="font-size:12px;padding:6px 12px" onclick="window._umResetPin('${u.id}')">Reset Password</button>
+    <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
+      ${isPendingInvite
+        ? `<button class="secondary-btn" style="font-size:12px;padding:6px 12px;color:#8B6914;border-color:#8B691440" onclick="window._umResendInvite('${u.id}','${umEscape(u.name)}')">Resend Invite</button>`
+        : `<button class="secondary-btn" style="font-size:12px;padding:6px 12px" onclick="window._umResetPin('${u.id}')">Reset Password</button>`}
       <button class="secondary-btn" style="font-size:12px;padding:6px 12px" onclick="window._umOpenUserForm('${u.id}')">Edit</button>
     </div>
   </div>
-  <!-- Google status strip -->
-  <div style="display:flex;align-items:center;gap:10px;padding:8px 18px;background:${googleConnected?'#2D7A5508':'var(--gw-surface)'};border-top:1px solid var(--gw-line);flex-wrap:wrap">
-    <img src="https://www.google.com/favicon.ico" style="width:13px;height:13px;opacity:.7" alt="G">
-    ${googleConnected
-      ? `<span style="font-size:11px;color:#2D7A55;font-weight:600">● Google connected as ${umEscape(googleEmail)}</span>
-         <div style="display:flex;gap:6px;margin-left:auto">
-           ${[['Gmail'],['Cal'],['Drive']].map(([lb])=>`<span style="font-size:10px;color:#2D7A55;background:#2D7A5515;border:1px solid #2D7A5530;border-radius:4px;padding:1px 6px">${lb}</span>`).join('')}
-           <button onclick="window._umAdminDisconnectUser('${u.id}')" style="font-size:10px;font-weight:700;color:#C97B6A;background:#C97B6A15;border:1px solid #C97B6A40;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:4px">Disconnect</button>
-         </div>`
-      : `<span style="font-size:11px;color:#5C6B58">○ Google not connected</span>
-         <span style="font-size:11px;color:var(--gw-muted);margin-left:auto">User connects via Integrations → Google Workspace</span>`
-    }
-  </div>
+  ${isPendingInvite
+    ? `<!-- Invite pending strip -->
+       <div style="display:flex;align-items:center;gap:10px;padding:8px 18px;background:#8B691408;border-top:1px solid #8B691420;flex-wrap:wrap">
+         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8B6914" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+         <span style="font-size:11px;color:#8B6914;font-weight:600">Invite email sent — waiting for user to set up their account</span>
+         <span style="font-size:11px;color:var(--gw-muted);margin-left:auto">${u.email||''}</span>
+       </div>`
+    : `<!-- Google status strip -->
+       <div style="display:flex;align-items:center;gap:10px;padding:8px 18px;background:${googleConnected?'#2D7A5508':'var(--gw-surface)'};border-top:1px solid var(--gw-line);flex-wrap:wrap">
+         <img src="https://www.google.com/favicon.ico" style="width:13px;height:13px;opacity:.7" alt="G">
+         ${googleConnected
+           ? `<span style="font-size:11px;color:#2D7A55;font-weight:600">● Google connected as ${umEscape(googleEmail)}</span>
+              <div style="display:flex;gap:6px;margin-left:auto">
+                ${[['Gmail'],['Cal'],['Drive']].map(([lb])=>`<span style="font-size:10px;color:#2D7A55;background:#2D7A5515;border:1px solid #2D7A5530;border-radius:4px;padding:1px 6px">${lb}</span>`).join('')}
+                <button onclick="window._umAdminDisconnectUser('${u.id}')" style="font-size:10px;font-weight:700;color:#C97B6A;background:#C97B6A15;border:1px solid #C97B6A40;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:4px">Disconnect</button>
+              </div>`
+           : `<span style="font-size:11px;color:#5C6B58">○ Google not connected</span>
+              <span style="font-size:11px;color:var(--gw-muted);margin-left:auto">User connects via Integrations → Google Workspace</span>`
+         }
+       </div>`
+  }
 </div>`;
 }
 

@@ -259,7 +259,7 @@ app.post('/api/companies', async (c) => {
 app.get('/api/reps', async (c) => {
   const companyId = c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT id, name, title, role, color, commission_plan, active, company_id FROM reps WHERE company_id = ? AND active = 1 ORDER BY name'
+    'SELECT id, name, title, role, color, commission_plan, active, company_id, email, invite_accepted, invite_sent_at FROM reps WHERE company_id = ? ORDER BY active DESC, name'
   ).bind(companyId).all()
   return json(c, rows.results)
 })
@@ -312,6 +312,320 @@ app.put('/api/reps/:id', async (c) => {
     `UPDATE reps SET ${updates.join(', ')}, updated_at = datetime('now') WHERE id = ? AND company_id = ?`
   ).bind(...vals, id, companyId).run()
   return json(c, { updated: id })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INVITE SYSTEM  — admin sends magic-link invites to new team members
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Shared helper: build + send the invite email
+async function sendInviteEmail(
+  c: any,
+  { toEmail, toName, fromName, companyName, token, role, message }: {
+    toEmail: string; toName: string; fromName: string;
+    companyName: string; token: string; role: string; message?: string
+  }
+) {
+  const apiKey = c.env.SENDGRID_API_KEY
+  if (!apiKey) return false
+  const inviteUrl = `https://groundwork-crm.com/invite/${token}`
+  const roleLabel = role === 'admin' ? 'Owner / Admin'
+    : role === 'office_manager' ? 'Office Manager'
+    : role === 'estimator' ? 'Estimator'
+    : role === 'view_only' ? 'View Only' : 'Sales Rep'
+  const personalNote = message
+    ? `<p style="font-size:15px;color:#b8bfb0;margin:0 0 24px;padding:16px;background:#1a2318;border-left:3px solid #4D8A86;border-radius:0 8px 8px 0;font-style:italic">"${message}"</p>`
+    : ''
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d1510;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<div style="max-width:520px;margin:40px auto;padding:0 16px">
+  <div style="background:#131c11;border:1px solid #2a3a27;border-radius:16px;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#1a2a18 0%,#0f1e0d 100%);padding:32px 36px;border-bottom:1px solid #2a3a27">
+      <div style="font-size:22px;font-weight:800;color:#e8e4d9;letter-spacing:-0.5px">🌱 Groundwork CRM</div>
+      <div style="font-size:13px;color:#5c6b58;margin-top:4px">You've been invited to join the team</div>
+    </div>
+    <div style="padding:32px 36px">
+      <p style="font-size:16px;color:#e8e4d9;margin:0 0 8px;font-weight:600">Hi ${toName || 'there'},</p>
+      <p style="font-size:15px;color:#b8bfb0;margin:0 0 24px;line-height:1.6">
+        <strong style="color:#e8e4d9">${fromName}</strong> has invited you to join 
+        <strong style="color:#e8e4d9">${companyName}</strong> on Groundwork CRM 
+        as <strong style="color:#4D8A86">${roleLabel}</strong>.
+      </p>
+      ${personalNote}
+      <p style="font-size:14px;color:#b8bfb0;margin:0 0 20px;line-height:1.6">
+        Click the button below to set up your account — you'll choose your own password and be ready to go in under a minute.
+      </p>
+      <div style="text-align:center;margin:28px 0">
+        <a href="${inviteUrl}" style="display:inline-block;background:#4D8A86;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:0.2px">
+          Accept Invite &amp; Set Up Account →
+        </a>
+      </div>
+      <p style="font-size:12px;color:#5c6b58;margin:0;text-align:center;line-height:1.6">
+        This invite link expires in 7 days. If you didn't expect this email, you can safely ignore it.<br>
+        Or copy this link: <a href="${inviteUrl}" style="color:#4D8A86">${inviteUrl}</a>
+      </p>
+    </div>
+    <div style="padding:20px 36px;border-top:1px solid #2a3a27;text-align:center">
+      <div style="font-size:11px;color:#3d4d3a">Groundwork CRM · Sent on behalf of ${companyName}</div>
+    </div>
+  </div>
+</div>
+</body></html>`
+  return sendEmail(apiKey, toEmail, `You're invited to join ${companyName} on Groundwork CRM`, html)
+}
+
+// POST /api/auth/invite  — admin creates a pending rep + sends magic-link invite
+app.post('/api/auth/invite', requireAuth, async (c) => {
+  const companyId = c.var.companyId as string
+  const role      = c.var.role      as string
+  if (role !== 'admin' && role !== 'office_manager') return err(c, 'Only admins can send invites', 403)
+
+  const b = await c.req.json()
+  const { email, name, inviteRole, title, color, message } = b
+  if (!email || !name) return err(c, 'email and name required')
+
+  // Check email not already taken in this company
+  const existing = await c.env.DB.prepare(
+    'SELECT id, invite_accepted FROM reps WHERE email = ? AND company_id = ? LIMIT 1'
+  ).bind(email, companyId).first<{ id: string; invite_accepted: number }>()
+  if (existing && existing.invite_accepted) return err(c, 'A user with that email already exists')
+
+  // Get inviter + company info for email
+  const inviterRow = await c.env.DB.prepare(
+    'SELECT name FROM reps WHERE id = ? LIMIT 1'
+  ).bind(c.var.repId).first<{ name: string }>()
+  const companyRow = await c.env.DB.prepare(
+    'SELECT name FROM companies WHERE id = ? LIMIT 1'
+  ).bind(companyId).first<{ name: string }>()
+  const fromName    = inviterRow?.name || 'Your admin'
+  const companyName = companyRow?.name || companyId
+
+  const token  = secureToken(32)
+  const repId  = existing?.id || ('rep_' + uid())
+  const roleToUse = inviteRole || 'rep'
+
+  if (existing) {
+    // Re-invite: refresh token on the same pending record
+    await c.env.DB.prepare(`
+      UPDATE reps SET invite_token=?, invite_sent_at=datetime('now'), name=?, role=?, title=?, color=?,
+        updated_at=datetime('now')
+      WHERE id=? AND company_id=?
+    `).bind(token, name, roleToUse, title||'', color||'#4D8A86', existing.id, companyId).run()
+  } else {
+    // New pending rep — no password yet, active=0
+    await c.env.DB.prepare(`
+      INSERT INTO reps (id, name, title, role, pin, pin_hash, email, color, commission_plan,
+        company_id, active, invite_token, invite_sent_at, invite_accepted)
+      VALUES (?, ?, ?, ?, '', '', ?, ?, 'standard', ?, 0, ?, datetime('now'), 0)
+    `).bind(repId, name, title||'', roleToUse, email, color||'#4D8A86', companyId, token).run()
+  }
+
+  const sent = await sendInviteEmail(c, { toEmail: email, toName: name, fromName, companyName, token, role: roleToUse, message })
+  return json(c, { invited: true, email, emailSent: sent })
+})
+
+// POST /api/auth/resend-invite  — resend to a pending (invite_accepted=0) rep
+app.post('/api/auth/resend-invite', requireAuth, async (c) => {
+  const companyId = c.var.companyId as string
+  const role      = c.var.role      as string
+  if (role !== 'admin' && role !== 'office_manager') return err(c, 'Only admins can send invites', 403)
+
+  const { repId: targetId } = await c.req.json()
+  if (!targetId) return err(c, 'repId required')
+
+  const rep = await c.env.DB.prepare(
+    'SELECT id, name, email, role, invite_accepted FROM reps WHERE id=? AND company_id=? LIMIT 1'
+  ).bind(targetId, companyId).first<{ id:string;name:string;email:string;role:string;invite_accepted:number }>()
+  if (!rep) return err(c, 'Rep not found', 404)
+  if (rep.invite_accepted) return err(c, 'User has already accepted their invite')
+  if (!rep.email) return err(c, 'Rep has no email address')
+
+  const token = secureToken(32)
+  await c.env.DB.prepare(`
+    UPDATE reps SET invite_token=?, invite_sent_at=datetime('now'), updated_at=datetime('now')
+    WHERE id=? AND company_id=?
+  `).bind(token, targetId, companyId).run()
+
+  const inviterRow  = await c.env.DB.prepare('SELECT name FROM reps WHERE id=? LIMIT 1').bind(c.var.repId).first<{ name:string }>()
+  const companyRow  = await c.env.DB.prepare('SELECT name FROM companies WHERE id=? LIMIT 1').bind(companyId).first<{ name:string }>()
+  const sent = await sendInviteEmail(c, {
+    toEmail: rep.email, toName: rep.name, fromName: inviterRow?.name||'Your admin',
+    companyName: companyRow?.name||companyId, token, role: rep.role
+  })
+  return json(c, { resent: true, email: rep.email, emailSent: sent })
+})
+
+// GET /invite/:token  — onboarding landing page
+app.get('/invite/:token', async (c) => {
+  const token = c.req.param('token')
+  const rep = await c.env.DB.prepare(`
+    SELECT r.id, r.name, r.email, r.role, r.title, r.company_id, r.invite_accepted,
+           co.name as company_name
+    FROM reps r
+    LEFT JOIN companies co ON co.id = r.company_id
+    WHERE r.invite_token = ? AND r.invite_accepted = 0 LIMIT 1
+  `).bind(token).first<{
+    id:string; name:string; email:string; role:string; title:string;
+    company_id:string; invite_accepted:number; company_name:string
+  }>()
+
+  const roleLabel = !rep ? '' : rep.role === 'admin' ? 'Owner / Admin'
+    : rep.role === 'office_manager' ? 'Office Manager'
+    : rep.role === 'estimator' ? 'Estimator'
+    : rep.role === 'view_only' ? 'View Only' : 'Sales Rep'
+
+  if (!rep) {
+    return c.html(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Invalid Invite — Groundwork CRM</title>
+<style>*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1510;color:#e8e4d9;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}</style>
+</head><body>
+<div style="text-align:center;max-width:420px">
+  <div style="font-size:48px;margin-bottom:16px">🔗</div>
+  <h1 style="font-size:22px;margin:0 0 12px;color:#e8e4d9">Invite Link Expired or Invalid</h1>
+  <p style="color:#6F7E6A;font-size:15px;line-height:1.6;margin:0 0 24px">This invite link has already been used or has expired. Ask your admin to send a new invite.</p>
+  <a href="/" style="display:inline-block;background:#4D8A86;color:#fff;text-decoration:none;padding:12px 28px;border-radius:10px;font-weight:700;font-size:14px">← Go to Login</a>
+</div>
+</body></html>`)
+  }
+
+  return c.html(`<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Join ${rep.company_name || rep.company_id} — Groundwork CRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1510;color:#e8e4d9;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:#131c11;border:1px solid #2a3a27;border-radius:16px;width:min(480px,100%);overflow:hidden}
+.card-header{background:linear-gradient(135deg,#1a2a18 0%,#0f1e0d 100%);padding:28px 32px;border-bottom:1px solid #2a3a27}
+.card-body{padding:32px}
+label{display:block;font-size:12px;font-weight:700;color:#5c6b58;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+input{width:100%;padding:11px 14px;background:#0d1510;border:1.5px solid #2a3a27;border-radius:8px;color:#e8e4d9;font-size:15px;outline:none;transition:border-color .15s}
+input:focus{border-color:#4D8A86}
+.btn{width:100%;padding:14px;background:#4D8A86;color:#fff;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer;margin-top:8px;transition:opacity .15s}
+.btn:hover{opacity:.9}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.err{color:#C97B6A;font-size:13px;margin-top:10px;display:none}
+.info-pill{display:inline-block;background:#4D8A8618;border:1px solid #4D8A8640;color:#4D8A86;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px}
+</style>
+</head><body>
+<div class="card">
+  <div class="card-header">
+    <div style="font-size:20px;font-weight:800;color:#e8e4d9;letter-spacing:-0.5px;margin-bottom:4px">🌱 Groundwork CRM</div>
+    <div style="font-size:13px;color:#5c6b58">Account Setup</div>
+  </div>
+  <div class="card-body">
+    <div style="margin-bottom:24px">
+      <p style="font-size:16px;color:#e8e4d9;font-weight:600;margin-bottom:6px">Welcome, ${rep.name}!</p>
+      <p style="font-size:14px;color:#b8bfb0;line-height:1.6;margin-bottom:12px">
+        You've been invited to join <strong style="color:#e8e4d9">${rep.company_name || rep.company_id}</strong>.
+        Set your password below to activate your account.
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="info-pill">${roleLabel}</span>
+        ${rep.title ? `<span class="info-pill" style="background:#8B691418;border-color:#8B691440;color:#8B6914">${rep.title}</span>` : ''}
+        <span style="font-size:12px;color:#5c6b58;align-self:center">${rep.email}</span>
+      </div>
+    </div>
+
+    <form id="accept-form">
+      <input type="hidden" id="inv-token" value="${token}">
+      <div style="margin-bottom:16px">
+        <label>Your Full Name</label>
+        <input id="inv-name" type="text" value="${rep.name}" placeholder="Your full name" required>
+      </div>
+      <div style="margin-bottom:16px">
+        <label>Create Password</label>
+        <input id="inv-pw" type="password" placeholder="Min 6 characters" required autocomplete="new-password">
+      </div>
+      <div style="margin-bottom:20px">
+        <label>Confirm Password</label>
+        <input id="inv-pw2" type="password" placeholder="Re-enter password" required autocomplete="new-password">
+      </div>
+      <button class="btn" type="submit" id="inv-btn">Activate My Account →</button>
+      <div class="err" id="inv-err"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('accept-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('inv-btn');
+  const errEl = document.getElementById('inv-err');
+  const name = document.getElementById('inv-name').value.trim();
+  const pw   = document.getElementById('inv-pw').value;
+  const pw2  = document.getElementById('inv-pw2').value;
+  const token = document.getElementById('inv-token').value;
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'Please enter your name.'; errEl.style.display='block'; return; }
+  if (pw.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display='block'; return; }
+  if (pw !== pw2) { errEl.textContent = 'Passwords do not match.'; errEl.style.display='block'; return; }
+  btn.disabled = true; btn.textContent = 'Activating…';
+  try {
+    const res = await fetch('/api/auth/accept-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, name, password: pw })
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      btn.textContent = '✓ Account activated! Redirecting…';
+      setTimeout(() => { window.location.href = '/'; }, 1200);
+    } else {
+      errEl.textContent = data.error || 'Something went wrong. Please try again.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Activate My Account →';
+    }
+  } catch(err) {
+    errEl.textContent = 'Network error. Please check your connection and try again.';
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Activate My Account →';
+  }
+});
+</script>
+</body></html>`)
+})
+
+// POST /api/auth/accept-invite  — validates token, hashes password, activates rep, creates session
+app.post('/api/auth/accept-invite', async (c) => {
+  const { token, name, password } = await c.req.json()
+  if (!token || !password) return err(c, 'token and password required')
+  if (String(password).length < 6) return err(c, 'Password must be at least 6 characters')
+
+  const rep = await c.env.DB.prepare(`
+    SELECT id, company_id, role, email FROM reps
+    WHERE invite_token = ? AND invite_accepted = 0 LIMIT 1
+  `).bind(token).first<{ id:string; company_id:string; role:string; email:string }>()
+  if (!rep) return err(c, 'Invite link is invalid or has already been used')
+
+  const pinHash = await hashPin(String(password))
+  const finalName = (name || '').trim()
+
+  await c.env.DB.prepare(`
+    UPDATE reps SET
+      pin_hash = ?, pin = '', active = 1, invite_accepted = 1, invite_token = '',
+      ${finalName ? "name = ?," : ''}
+      updated_at = datetime('now')
+    WHERE id = ? AND company_id = ?
+  `).bind(
+    pinHash,
+    ...(finalName ? [finalName] : []),
+    rep.id, rep.company_id
+  ).run()
+
+  // Create session
+  const sessionToken = uid() + uid()
+  await c.env.DB.prepare(
+    `INSERT OR REPLACE INTO settings (id, key, value, company_id) VALUES (?, ?, ?, ?)`
+  ).bind('sess_' + sessionToken, `session_${sessionToken}`, rep.id, rep.company_id).run()
+
+  const cookie = `avalon_session=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`
+  return new Response(JSON.stringify({ ok: true, repId: rep.id }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookie }
+  })
 })
 
 // ══════════════════════════════════════════════════════════════════════════════
