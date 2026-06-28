@@ -47,7 +47,7 @@ const REPS = [
     commissionPlan: null
   }
   // Add new reps here — copy the Ryan structure and give them a unique id/pin
-  // { id: 'sarah', name: 'Sarah', title: 'Account Manager', role: 'rep', pin: '4444', avatar: '⭐', color: '#4D8A86', base: { rateTraining: 20, ratePostTraining: 21 }, commissionPlan: 'ryan' }
+  // { id: 'sarah', name: 'Sarah', title: 'Account Manager', role: 'rep', pin: '4444', avatar: '', color: '#4D8A86', base: { rateTraining: 20, ratePostTraining: 21 }, commissionPlan: 'ryan' }
 ];
 
 // ── Commission Plans ───────────────────────────────────────────────────────────
@@ -1053,7 +1053,7 @@ function renderRepDashboard(viewEl, rep) {
     ${items.map(({ opp, result, lcStatus: s }) => {
       const capBadge = result.capApplied ? `<span style="font-size:9px;background:#C97B6A;color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">CAPPED</span>` : '';
       const bonusEl = result.retentionBonus > 0
-        ? `<div style="font-size:10px;color:#2D7A55;margin-top:2px">${s === 'paid' ? '✓' : '○'} ${fmtCurrency(result.retentionBonus)} retention bonus ${s === 'paid' ? 'earned' : 'after 90-day active'}</div>` : '';
+        ? `<div style="font-size:10px;color:#2D7A55;margin-top:2px">${s === 'paid' ? '✓' : ''} ${fmtCurrency(result.retentionBonus)} retention bonus ${s === 'paid' ? 'earned' : 'after 90-day active'}</div>` : '';
       // COMM-15: collection gate badge on payout cards
       const gateInfo = window.getCollectionGateInfo ? window.getCollectionGateInfo(opp, result) : null;
       const gateEl   = gateInfo && gateInfo.held
@@ -1277,7 +1277,7 @@ function renderCommissionPlanRef(planId) {
 
     <p class="gw-info-strip" style="font-size:11px;color:var(--gw-muted);margin:0;padding:10px">
       Commission paid only on approved, sold, and collected work. Pricing must be management-approved.
-      ${override ? `<span style="color:#8B6914"> ⚙ Custom rules active (edited ${new Date(override.updatedAt||'').toLocaleDateString()}).</span>` : ''}
+      ${override ? `<span style="color:#8B6914"> gwIcon('settings',16) Custom rules active (edited ${new Date(override.updatedAt||'').toLocaleDateString()}).</span>` : ''}
     </p>
   </div>`;
 }
@@ -1373,7 +1373,7 @@ function renderOMDashboard(viewEl, rep) {
             <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
             <div style="font-size:11px;color:var(--gw-muted);margin-top:1px">${escapeHtml(o.status)} · Due ${o.nextFollowUp}</div>
           </div>
-          ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:10px;font-weight:600;color:${_r.color||'#6F7E6A'};background:${_r.color||'#6F7E6A'}18;border:1px solid ${_r.color||'#6F7E6A'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(_r.name)}</span>` : `<span style="font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`; })()}
+          ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:10px;font-weight:600;color:${_r.color||'#6F7E6A'};background:${_r.color||'#6F7E6A'}18;border:1px solid ${_r.color||'#6F7E6A'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(_r.name)}</span>` : `<span style="font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">gwIcon('warning',16) Unassigned</span>`; })()}
           <span style="font-size:10px;color:#C97B6A;font-weight:700;white-space:nowrap">OVERDUE</span>
         </div>`).join('')}
     ${overdueList.length > 8 ? `<p style="font-size:12px;color:#6F7E6A;text-align:center;margin-top:8px">+ ${overdueList.length - 8} more — <button class="link-btn" onclick="show('pipeline')" style="color:var(--accent);background:none;border:none;cursor:pointer;font-size:12px;padding:0">Open pipeline</button></p>` : ''}
@@ -1754,7 +1754,7 @@ ${(()=>{
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
             <div style="font-size:10px;color:#6F7E6A">${escapeHtml(o.status)} · Due ${o.nextFollowUp}</div>
-            ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:9px;font-weight:600;color:${_r.color||'#6F7E6A'};background:${_r.color||'#6F7E6A'}18;border:1px solid ${_r.color||'#6F7E6A'}40;border-radius:20px;padding:1px 6px;white-space:nowrap">${escapeHtml(_r.name)}</span>` : `<span style="font-size:9px;font-weight:600;color:#8B6914;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 6px">⚠ Unassigned</span>`; })()}
+            ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:9px;font-weight:600;color:${_r.color||'#6F7E6A'};background:${_r.color||'#6F7E6A'}18;border:1px solid ${_r.color||'#6F7E6A'}40;border-radius:20px;padding:1px 6px;white-space:nowrap">${escapeHtml(_r.name)}</span>` : `<span style="font-size:9px;font-weight:600;color:#8B6914;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 6px">gwIcon('warning',16) Unassigned</span>`; })()}
           </div>
           <span style="font-size:9px;color:#C97B6A;font-weight:700">OVERDUE</span>
         </div>`).join('')}
@@ -2406,7 +2406,7 @@ function runCommissionQA() {
   // Print summary
   console.group('[COMM-18 QA]');
   results.forEach(r => {
-    const icon = r.status === 'PASS' ? '✅' : r.status === 'WARN' ? '⚠️' : r.status === 'ERROR' ? '💥' : '❌';
+    const icon = r.status === 'PASS' ? 'PASS' : r.status === 'WARN' ? 'WARN' : r.status === 'ERROR' ? 'ERROR' : 'FAIL';
     console.log(`${icon} ${r.name}${r.detail ? ' — ' + r.detail : ''}`);
   });
   console.groupEnd();

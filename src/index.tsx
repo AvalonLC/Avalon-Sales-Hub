@@ -1309,7 +1309,7 @@ function getHtml(): string {
           <button class="nav-item" data-view="templates" onclick="show('templates')">Email Templates</button>
           <button class="nav-item" data-view="objections" onclick="show('objections')">Objection Handling</button>
           <button class="nav-item" data-view="calculator" onclick="show('calculator')">Pricing Tools</button>
-          <button class="nav-item" data-view="ai" onclick="show('ai')" style="color:#6366f1;font-weight:600">✦ AI Sales Assistant</button>
+          <button class="nav-item" data-view="ai" onclick="show('ai')" style="color:#6366f1;font-weight:600">AI Sales Assistant</button>
         </div>
       </details>
 
@@ -1328,7 +1328,7 @@ function getHtml(): string {
           <button class="nav-item" data-view="integrations" onclick="show('integrations')">Integrations</button>
           <button class="nav-item" data-view="userManagement" onclick="show('userManagement')">User Management</button>
           <button class="nav-item" data-view="settings" onclick="show('settings')">Settings</button>
-          <button class="nav-item" data-view="superAdmin" id="superAdminNavBtn" onclick="show('superAdmin')" style="display:none;color:var(--gw-emerald);font-weight:700;border-top:1px solid rgba(255,255,255,.1);margin-top:6px;padding-top:10px">🛡 Platform Admin</button>
+          <button class="nav-item" data-view="superAdmin" id="superAdminNavBtn" onclick="show('superAdmin')" style="display:none;color:var(--gw-emerald);font-weight:700;border-top:1px solid rgba(255,255,255,.1);margin-top:6px;padding-top:10px">gwIcon('shield',16) Platform Admin</button>
         </div>
       </details>
 
@@ -1377,6 +1377,7 @@ function getHtml(): string {
 </div>
 <div id="toast" class="toast" hidden role="alert" aria-live="assertive"></div>
 
+<script src="/static/gw-icons.js?v=20260628gw1"></script>
 <script src="/static/db.js?v=20260627gw3"></script>
 <script src="/static/data.js?v=20260627gw3"></script>
 <script src="/static/reps.js?v=20260627gw3"></script>

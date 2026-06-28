@@ -87,7 +87,7 @@ async function _d1FlushQueue() {
       } else {
         console.error(`[D1 ✗✗] ${item.op} ${item.entityId} DROPPED after 3 attempts — ${e.message}`);
         // Show subtle persistent toast so user knows to re-save
-        showToast(`⚠️ Cloud sync failed for ${item.entityId} — check connection`, 6000);
+        showToast(`gwIcon('warning',16) Cloud sync failed for ${item.entityId} — check connection`, 6000);
       }
     }
   }
@@ -441,7 +441,7 @@ function oppMini(o){
   const repObj = (window.REPS||[]).find(r => r.id === o.repId);
   const repPill = repObj
     ? `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:${repObj.color||'#6F7E6A'};background:${repObj.color||'#6F7E6A'}18;border:1px solid ${repObj.color||'#6F7E6A'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(repObj.name)}</span>`
-    : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`;
+    : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">gwIcon('warning',16) Unassigned</span>`;
   return `<button class="mini-row ${isOverdue?'mini-row-overdue':''}" onclick="show('pipeline','${o.id}')">
     <strong>${urgencyDot}${escapeHtml(o.client||'Unnamed')}</strong>
     <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px;padding:1px 6px">${escapeHtml(o.status||'New Lead')}</span>
@@ -475,7 +475,7 @@ function oppCard(o){
       ${o.jobValue ? `<span class="opp-value">${money(Number(o.jobValue))}</span>` : ''}
       ${repObj
         ? `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:${repObj.color||'#6F7E6A'};background:${repObj.color||'#6F7E6A'}18;border:1px solid ${repObj.color||'#6F7E6A'}40;border-radius:20px;padding:1px 8px;white-space:nowrap;margin-left:auto">${escapeHtml(repObj.name)}</span>`
-        : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 8px;white-space:nowrap;margin-left:auto">⚠ Unassigned</span>`}
+        : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 8px;white-space:nowrap;margin-left:auto">gwIcon('warning',16) Unassigned</span>`}
     </div>
   </article>`;
 }
@@ -1235,7 +1235,7 @@ function clientDetail(id) {
     const _repO = (window.REPS||[]).find(r => r.id === o.repId);
     const _repPill = _repO
       ? `<span style="font-size:10px;font-weight:600;color:${_repO.color||'#6F7E6A'};background:${_repO.color||'#6F7E6A'}18;border:1px solid ${_repO.color||'#6F7E6A'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(_repO.name)}</span>`
-      : `<span style="font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`;
+      : `<span style="font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">gwIcon('warning',16) Unassigned</span>`;
     return `<button class="mini-row" onclick="show('pipeline','${o.id}')">
       <strong>${escapeHtml(o.client||'Unnamed')}</strong>
       <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px">${escapeHtml(o.status||'New Lead')}</span>
@@ -1963,14 +1963,14 @@ function opportunityDetail(id){
     </div>`;
 
   // ── Right-rail activity snapshot ─────────────────────────────────────────
-  const TYPE_ICON = { sms:'💬', email:'✉️', call:'📞', note:'📋', proposal:'📄' };
+  const TYPE_ICON = { sms: gwIcon('message',14,'#4D8A86'), email: gwIcon('email',14,'#113931'), call: gwIcon('call',14,'#2D7A55'), note: gwIcon('checklist',14,'#8B6914'), proposal: gwIcon('document',14,'#4D8A86') };
   const recentComms = (state.communications||[]).filter(c=>c.oppId===o.id)
     .sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,5);
   const railActivityHtml = recentComms.length ? recentComms.map(m => {
     const fmt = dt => { try{ return new Date(dt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '';} };
     const preview = (m.subject ? m.subject : (m.body||'').slice(0,60)) || '(no content)';
     return `<div class="rail-activity-item">
-      <div class="rail-act-icon">${TYPE_ICON[m.type]||'📋'}</div>
+      <div class="rail-act-icon">${TYPE_ICON[m.type]||gwIcon('checklist',14,'#6F7E6A')}</div>
       <div class="rail-act-body">
         <div class="rail-act-type">${m.type.toUpperCase()} <span class="rail-act-dir">${m.direction==='out'?'↑ Sent':'↓ Received'}</span></div>
         <div class="rail-act-preview">${escapeHtml(preview)}</div>
@@ -2063,7 +2063,7 @@ function opportunityDetail(id){
         Mark Sold
       </button>` : _isSold ? `<span class="ld-sold-badge-large">✓ Sold</span>` : ''}
       ${_isAdm||_isOM ? `<div class="ld-overflow-wrap ld-overflow-hero">
-        <button class="ld-btn-secondary" onclick="toggleLeadOverflow(this)">More ▾</button>
+        <button class="ld-btn-secondary" onclick="toggleLeadOverflow(this)">More</button>
         <div class="ld-overflow-menu" style="display:none">
           <button onclick="duplicateOpportunity('${o.id}');toggleLeadOverflow()">
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 10V2h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
@@ -2330,7 +2330,7 @@ function opportunityDetail(id){
           </div>
           ${(state.communications||[]).filter(c=>c.oppId===o.id).length === 0 ?
             `<div style="text-align:center;padding:40px;color:#6F7E6A">
-              <div style="font-size:28px;margin-bottom:12px">📋</div>
+              <div style="font-size:28px;margin-bottom:12px">gwIcon('checklist',16)</div>
               <p style="font-weight:600;margin:0 0 6px">No activity yet</p>
               <p style="font-size:12.5px;color:#5C6B58;margin:0">Activity will appear here as you log calls, emails, and notes.</p>
             </div>` :
@@ -2341,7 +2341,7 @@ function opportunityDetail(id){
                 const typeColors = {sms:'#2D7A55',email:'#1A4740',call:'#8B6914',note:'#6F7E6A',proposal:'#B8744F'};
                 const tc = typeColors[m.type]||'#6F7E6A';
                 return `<div class="ld-activity-item">
-                  <div class="ld-act-dot" style="background:${tc}22;border-color:${tc}44;color:${tc}">${TYPE_ICON[m.type]||'📋'}</div>
+                  <div class="ld-act-dot" style="background:${tc}22;border-color:${tc}44;color:${tc}">${TYPE_ICON[m.type]||gwIcon('checklist',14,'#6F7E6A')}</div>
                   <div class="ld-act-content">
                     <div class="ld-act-header">
                       <span class="ld-act-type" style="color:${tc}">${m.type.toUpperCase()}</span>
@@ -2370,7 +2370,7 @@ function opportunityDetail(id){
           Next Follow-Up
         </div>
         <div class="ld-rail-follow-date ${_isOvd?'overdue':''}">${prettyDate(o.nextFollowUp)}</div>
-        ${_isOvd ? '<div class="ld-rail-overdue-badge">⚠ Overdue</div>' : ''}
+        ${_isOvd ? '<div class="ld-rail-overdue-badge">gwIcon('warning',16) Overdue</div>' : ''}
         <input type="date" id="railFollowEdit" value="${escapeHtml(o.nextFollowUp||'')}" style="width:100%;margin-top:10px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-size:12px">
         <button class="ld-rail-btn" onclick="setOppField('${o.id}','nextFollowUp',document.getElementById('railFollowEdit').value);showToast('Follow-up updated')">Update</button>
       </div>
@@ -2382,7 +2382,7 @@ function opportunityDetail(id){
           Last Contact
         </div>
         ${_lastComm ? `
-          <div class="ld-rail-last-type">${TYPE_ICON[_lastComm.type]||'📋'} ${_lastComm.type.toUpperCase()}</div>
+          <div class="ld-rail-last-type">${TYPE_ICON[_lastComm.type]||gwIcon('checklist',14,'#6F7E6A')} ${_lastComm.type.toUpperCase()}</div>
           <div class="ld-rail-last-time">${(()=>{ try{ return new Date(_lastComm.ts).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '—';} })()}</div>
           <div class="ld-rail-last-preview">${escapeHtml((_lastComm.subject||_lastComm.body||'').slice(0,80))}${(_lastComm.subject||_lastComm.body||'').length>80?'…':''}</div>
         ` : '<div class="ld-rail-empty">No contact logged yet</div>'}
@@ -2491,7 +2491,7 @@ function commsBoardHtml(oppId, opp){
       const ext = (f.name||'').split('.').pop().toLowerCase();
       const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
       const isPdf = ext==='pdf';
-      const icon = isImg ? '🖼' : isPdf ? '📄' : ext==='docx'||ext==='doc' ? '📝' : '📎';
+      const icon = isImg ? gwIcon('image',14,'#4D8A86') : isPdf ? gwIcon('document',14,'#8B3A2A') : ext==='docx'||ext==='doc' ? gwIcon('note',14,'#113931') : gwIcon('attachment',14,'#6F7E6A');
       return '<span class="comm-file-chip" title="'+escapeHtml(f.name)+'">' + icon + ' <span>'+escapeHtml(f.name)+'</span></span>';
     }).join('') + '</div>';
   }
@@ -2504,7 +2504,7 @@ function commsBoardHtml(oppId, opp){
       '<div class="comm-bubble">' +
         '<div class="comm-meta-row">' +
           '<span class="comm-type-badge" style="background:'+meta.color+'22;color:'+meta.color+';border-color:'+meta.color+'44">'+meta.icon+' '+meta.label+'</span>' +
-          (m.gmailSent ? '<span class="comm-gmail-badge">✅ Sent via Gmail</span>' : (m.type==='email'&&m.direction==='out' ? '<span class="comm-gmail-badge comm-gmail-local">📋 Logged locally</span>' : '')) +
+          (m.gmailSent ? '<span class="comm-gmail-badge">gwIcon('success',16) Sent via Gmail</span>' : (m.type==='email'&&m.direction==='out' ? '<span class="comm-gmail-badge comm-gmail-local">gwIcon('checklist',16) Logged locally</span>' : '')) +
           (m.subject ? '<span class="comm-subject">'+escapeHtml(m.subject)+'</span>' : '') +
           '<span class="comm-time">'+fmt(m.ts)+'</span>' +
           '<button class="comm-delete-btn" title="Delete" onclick="deleteComm(\''+m.id+'\',\''+oppId+'\')">×</button>' +
@@ -2523,7 +2523,7 @@ function commsBoardHtml(oppId, opp){
   const groups = groupByDate(msgs);
   const threadHtml = Object.keys(groups).length === 0
     ? '<div class="comm-empty">' +
-        '<div class="comm-empty-icon">💬</div>' +
+        '<div class="comm-empty-icon">gwIcon('message',16)</div>' +
         '<p>No communications yet for '+clientName+'.</p>' +
         '<p style="color:#4A5947;font-size:12.5px;max-width:320px;line-height:1.6">Use the compose bar below to log a call, send an SMS, draft an email, or attach a proposal.</p>' +
       '</div>'
@@ -2632,15 +2632,15 @@ function filesTabHtml(oppId, opp){
 
   const fmt = dt => { try{ return new Date(dt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '';} };
 
-  if(!allFiles.length) return '<div class="comms-board"><div class="comm-empty"><div class="comm-empty-icon">📁</div><p>No files attached yet.</p><p style="color:#4A5947;font-size:12.5px;max-width:300px;line-height:1.6">Attach photos, PDFs, proposals, and documents from the Communications tab.</p></div></div>';
+  if(!allFiles.length) return '<div class="comms-board"><div class="comm-empty"><div class="comm-empty-icon">gwIcon('folder',16)</div><p>No files attached yet.</p><p style="color:#4A5947;font-size:12.5px;max-width:300px;line-height:1.6">Attach photos, PDFs, proposals, and documents from the Communications tab.</p></div></div>';
 
   const ext2icon = ext => {
     const e = (ext||'').toLowerCase();
-    if(['jpg','jpeg','png','gif','webp'].includes(e)) return '🖼';
-    if(e==='pdf') return '📄';
-    if(['doc','docx'].includes(e)) return '📝';
-    if(['xls','xlsx'].includes(e)) return '📊';
-    return '📎';
+    if(['jpg','jpeg','png','gif','webp'].includes(e)) return gwIcon('image',16,'#4D8A86');
+    if(e==='pdf') return gwIcon('document',16,'#8B3A2A');
+    if(['doc','docx'].includes(e)) return gwIcon('note',16,'#113931');
+    if(['xls','xlsx'].includes(e)) return gwIcon('spreadsheet',16,'#2D7A55');
+    return gwIcon('attachment',16,'#6F7E6A');
   };
 
   const clientInitials = (opp.client||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -2744,7 +2744,7 @@ function wireCommsCompose(oppId){
     preview.innerHTML = pendingFiles.map((f,i)=>{
       const ext = f.name.split('.').pop().toLowerCase();
       const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
-      return '<span class="attach-chip">'+(isImg?'🖼':'📎')+' <span>'+escapeHtml(f.name)+'</span><button onclick="removePendingFile('+i+')" title="Remove">×</button></span>';
+      return '<span class="attach-chip">'+(isImg ? gwIcon('image',14,'#4D8A86') : gwIcon('attachment',14,'#6F7E6A'))+' <span>'+escapeHtml(f.name)+'</span><button onclick="removePendingFile('+i+')" title="Remove">×</button></span>';
     }).join('');
   }
 
@@ -2786,7 +2786,7 @@ window.sendComm = async function(oppId){
     const googleConnected = (typeof isGoogleConnected === 'function') && isGoogleConnected();
     if(!googleConnected){
       // Warn the user — email will be logged only, not sent
-      showToast('⚠️ Google not connected — email logged locally only. Connect in Integrations to send real emails.');
+      showToast('Google not connected — email logged locally only. Connect in Integrations to send real emails.');
     } else {
       // Require a To address and subject
       const toAddr = opp ? opp.email : '';
@@ -2805,7 +2805,7 @@ window.sendComm = async function(oppId){
       try {
         const htmlBody = body.replace(/\n/g,'<br>');
         await gmailSendEmail({ to: toAddr, subject: subject.trim(), body: htmlBody });
-        showToast('Email sent via Gmail ✅ — from ' + (getGoogleUserEmail ? getGoogleUserEmail() : 'your Google account'));
+        showToast('Email sent via Gmail gwIcon('success',16) — from ' + (getGoogleUserEmail ? getGoogleUserEmail() : 'your Google account'));
       } catch(e){
         showToast('Gmail error: ' + (e.message||'Send failed') + ' — email logged locally.');
         if(sendBtn){ sendBtn.innerHTML = origHtml; sendBtn.disabled = false; }
@@ -3384,7 +3384,7 @@ ${data.stages.map(s=>{
         <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="primary-btn" onclick="show('process',${idx+1})" style="font-size:.82rem">Go to Stage ${idx+1} →</button>
           <button class="secondary-btn" onclick="show('scripts')" style="font-size:.82rem">Scripts for this step</button>
-          <button class="secondary-btn" onclick="show('ai')" style="font-size:.82rem">✦ AI Coach</button>
+          <button class="secondary-btn" onclick="show('ai')" style="font-size:.82rem">' + gwIcon('ai-spark',14,'currentColor') + ' AI Coach</button>
         </div>
       </div>`;
     panel.style.display = 'block';
@@ -3552,7 +3552,7 @@ function renderChecklistPage(c){
   ${renderChecklist(c, true)}
   <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
     <button class="secondary-btn" onclick="resetChecklist('${c.id}', ${c.items.length})">Reset Checklist</button>
-    <button class="secondary-btn" onclick="show('ai')">✦ AI Coach for this stage</button>
+    <button class="secondary-btn" onclick="show('ai')">' + gwIcon('ai-spark',14,'currentColor') + ' AI Coach</button>
   </div>
 </div>`;
   wireChecks();
@@ -3584,7 +3584,7 @@ function renderFormTool(f){
     ${list(fieldLabels)}
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
       <button class="secondary-btn" onclick="copyText('${escapeForJs(_fieldCopyStr)}',this)">Copy Field Template</button>
-      <button class="secondary-btn" onclick="show('ai')">✦ AI Draft from Fields</button>
+      <button class="secondary-btn" onclick="show('ai')">' + gwIcon('ai-spark',14,'currentColor') + ' AI Draft</button>
     </div>
   </section>
   <section class="card">
@@ -3628,7 +3628,7 @@ function scripts(){
 <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
   <input id="scriptSearch" type="search" placeholder="Search scripts…" style="flex:1;min-width:180px;max-width:280px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:.88rem;color:var(--ink);background:var(--surface)">
   <div class="tabs" style="margin:0;flex:1">${cats.map((c,i)=>`<button class="tab ${i===0?'active':''}" data-cat="${c}">${escapeHtml(c)}</button>`).join('')}</div>
-  <button id="favToggle" class="secondary-btn" style="font-size:.8rem;white-space:nowrap">★ Favorites</button>
+  <button id="favToggle" class="secondary-btn" style="font-size:.8rem;white-space:nowrap"> Favorites</button>
 </div>
 
 <div id="scriptList" class="grid grid-2" style="gap:14px"></div>`;
@@ -3652,7 +3652,7 @@ function scripts(){
       const isFav = favs.includes(s.title);
       const verbatim = s.category && s.category.toLowerCase().includes('verbatim');
       return `<article class="card" style="position:relative;border:1px solid var(--line);border-top:3px solid ${verbatim?'#8B6914':'var(--blue)'}">
-        <button onclick="toggleScriptFav('${escapeForJs(s.title)}')" style="position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;font-size:1rem;color:${isFav?'#8B6914':'var(--muted)'}" title="${isFav?'Remove from favorites':'Add to favorites'}">${isFav?'★':'☆'}</button>
+        <button onclick="toggleScriptFav('${escapeForJs(s.title)}')" style="position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;font-size:1rem;color:${isFav?'#8B6914':'var(--muted)'}" title="${isFav?'Remove from favorites':'Add to favorites'}">${isFav ? gwIcon('star',14,'#8B6914') : gwIcon('star',14,'#C8C3B6')}</button>
         ${verbatim?`<div style="display:inline-block;font-size:.68rem;font-weight:700;background:#8B691422;color:#8B6914;border:1px solid #8B691444;border-radius:4px;padding:2px 7px;margin-bottom:6px">VERBATIM — Do Not Deviate</div>`:''}
         <span class="badge" style="display:block;margin-bottom:6px">${escapeHtml(s.category)}</span>
         <h3 style="color:var(--ink);margin:0 0 6px;padding-right:28px">${escapeHtml(s.title)}</h3>
@@ -3661,7 +3661,7 @@ function scripts(){
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
           <button class="secondary-btn" style="font-size:.78rem" onclick="copyText('${escapeForJs(s.body)}',this)">Copy Script</button>
           <button class="secondary-btn" style="font-size:.78rem" onclick="scriptUseForLead('${escapeForJs(s.title)}','${escapeForJs(s.body)}')">Link to Lead</button>
-          <button class="secondary-btn" style="font-size:.78rem" onclick="scriptToAI('${escapeForJs(s.title)}','${escapeForJs(s.situation||'')}')">✦ AI Coach</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="scriptToAI('${escapeForJs(s.title)}','${escapeForJs(s.situation||'')}')">' + gwIcon('ai-spark',14,'currentColor') + ' AI Coach</button>
         </div>
       </article>`;
     }).join('');
@@ -3747,9 +3747,9 @@ function templates(){
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
           <button class="secondary-btn" style="font-size:.78rem" onclick="copyText('${escapeForJs(t.subject)}',this)">Copy Subject</button>
           <button class="primary-btn" style="font-size:.78rem" onclick="copyText('${escapeForJs(t.body)}',this)">Copy Body</button>
-          <button class="secondary-btn" style="font-size:.78rem" onclick="tmplPersonalize('${escapeForJs(t.subject)}','${escapeForJs(t.body)}')">✦ Personalize + Copy</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="tmplPersonalize('${escapeForJs(t.subject)}','${escapeForJs(t.body)}')">' + gwIcon('ai-spark',14,'currentColor') + ' Personalize + Copy</button>
           <button class="secondary-btn" style="font-size:.78rem" onclick="tmplUseForLead('${escapeForJs(t.subject)}','${escapeForJs(t.body)}')">Link to Lead</button>
-          <button class="secondary-btn" style="font-size:.78rem" onclick="tmplToAI('${escapeForJs(t.title)}','${escapeForJs(t.category)}')">✦ AI Refine</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="tmplToAI('${escapeForJs(t.title)}','${escapeForJs(t.category)}')">' + gwIcon('ai-spark',14,'currentColor') + ' AI Refine</button>
         </div>
       </article>`).join('');
   }
@@ -3825,7 +3825,7 @@ function objections(){
         </div>
         <p style="font-size:.82rem;color:var(--muted);margin:0 0 10px"><strong>What it may mean:</strong> ${escapeHtml(o.meaning)}</p>
         <details>
-          <summary style="cursor:pointer;font-size:.82rem;font-weight:600;color:var(--blue);user-select:none;margin-bottom:8px;list-style:none">How to respond ▾</summary>
+          <summary style="cursor:pointer;font-size:.82rem;font-weight:600;color:var(--blue);user-select:none;margin-bottom:8px;list-style:none">How to respond</summary>
           <div style="margin-top:8px">${list_(o.response)}</div>
         </details>
         <h4 style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:10px 0 6px">Say This</h4>
@@ -3833,7 +3833,7 @@ function objections(){
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
           <button class="secondary-btn" style="font-size:.78rem" onclick="copyText('${escapeForJs(o.say)}',this)">Copy Response</button>
           <button class="secondary-btn" style="font-size:.78rem" onclick="objLogToLead('${escapeForJs(o.title)}','${escapeForJs(o.say)}')">Link to Lead</button>
-          <button class="secondary-btn" style="font-size:.78rem" onclick="objToAI('${escapeForJs(o.title)}','${escapeForJs(o.say)}')">✦ AI Refine Reply</button>
+          <button class="secondary-btn" style="font-size:.78rem" onclick="objToAI('${escapeForJs(o.title)}','${escapeForJs(o.say)}')">' + gwIcon('ai-spark',14,'currentColor') + ' AI Refine Reply</button>
         </div>
       </article>`;
     }).join('') || `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted)">No objections in this category.</div>`;
@@ -3939,15 +3939,15 @@ function ai(){
   window._aiPreload = null; // consume
 
   const SITUATIONS = [
-    { id:'reply_email',     label:'Reply to a Client Email',        icon:'✉️',  color:'#1A4740' },
-    { id:'follow_up',       label:'Follow-Up After No Response',    icon:'🔄',  color:'#4D8A86' },
-    { id:'proposal_intro',  label:'Proposal Introduction Email',    icon:'📋',  color:'#2D7A55' },
-    { id:'objection_reply', label:'Handle an Objection',            icon:'🛡️',  color:'#8B6914' },
-    { id:'discovery_prep',  label:'Discovery Call Prep',            icon:'🎯',  color:'#B8744F' },
-    { id:'site_walk_recap', label:'Post-Site Walk Summary',         icon:'📍',  color:'#B8744F' },
-    { id:'closing_email',   label:'Closing / Decision Ask',         icon:'🤝',  color:'#8B3A2A' },
-    { id:'referral_ask',    label:'Ask for a Referral',             icon:'⭐',  color:'#8B6914' },
-    { id:'custom',          label:'Custom Situation',               icon:'✦',   color:'#6F7E6A' },
+    { id:'reply_email',     label:'Reply to a Client Email',        icon: gwIcon('email',18,'#fff'), color:'#1A4740' },
+    { id:'follow_up',       label:'Follow-Up After No Response',    icon: gwIcon('sync',18,'#fff'),  color:'#4D8A86' },
+    { id:'proposal_intro',  label:'Proposal Introduction Email',    icon: gwIcon('checklist',18,'#fff'), color:'#2D7A55' },
+    { id:'objection_reply', label:'Handle an Objection',            icon: gwIcon('shield',18,'#fff'), color:'#8B6914' },
+    { id:'discovery_prep',  label:'Discovery Call Prep',            icon: gwIcon('target',18,'#fff'), color:'#B8744F' },
+    { id:'site_walk_recap', label:'Post-Site Walk Summary',         icon: gwIcon('pin',18,'#fff'),    color:'#B8744F' },
+    { id:'closing_email',   label:'Closing / Decision Ask',         icon: gwIcon('handshake',18,'#fff'), color:'#8B3A2A' },
+    { id:'referral_ask',    label:'Ask for a Referral',             icon: gwIcon('star',18,'#fff'),  color:'#8B6914' },
+    { id:'custom',          label:'Custom Situation',               icon: gwIcon('ai-spark',18,'#fff'), color:'#6F7E6A' },
   ];
 
   const openLeads = (state.opportunities||[]).filter(o=>!['Sold / Activation','Closed Lost'].includes(o.status));
@@ -4001,7 +4001,7 @@ function ai(){
     </div>
 
     <button class="primary-btn" style="font-size:.95rem;padding:13px" onclick="aiGenerate()">
-      ✦ Generate Email / Reply
+      ' + gwIcon('ai-spark',16,'currentColor') + ' Generate
     </button>
   </div>
 
@@ -5738,9 +5738,9 @@ ${masteryCandidate ? `
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
         <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy')">← Academy Home</button>
-        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','badges')">🏅 Badges &amp; Achievements</button>
-        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','certifications')">🎓 Certifications</button>
-        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','profile')">👤 My Progress Profile</button>
+        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','badges')">gwIcon('badge',16) Badges &amp; Achievements</button>
+        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','certifications')">gwIcon('academy',16) Certifications</button>
+        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','profile')">gwIcon('user',16) My Progress Profile</button>
       </div>
     </div>
   </div>
@@ -5811,7 +5811,7 @@ function academyRepProfile() {
     <div class="acad-profile-level">
       ${svgLevelIcon(lvlInfo ? lvlInfo.id : 'rookie', lvlColor, 18)}
       <span style="color:${lvlColor};font-weight:700">${lvlInfo ? escapeHtml(lvlInfo.name) : 'Rookie'}</span>
-      ${rp.streak_days > 0 ? `<span class="acad-streak-badge" style="font-size:.75rem;padding:3px 10px">${rp.streak_days}-day streak 🔥</span>` : ''}
+      ${rp.streak_days > 0 ? `<span class="acad-streak-badge" style="font-size:.75rem;padding:3px 10px">${rp.streak_days}-day streak gwIcon('streak',16)</span>` : ''}
     </div>
     <div class="acad-profile-stats">
       <div class="acad-profile-stat">
@@ -5924,8 +5924,8 @@ function academyRepProfile() {
       <div class="acad-sidebar-card-head"><span style="font-size:.78rem;font-weight:700;color:var(--ink)">Quick Links</span></div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
         <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy')">← Academy Home</button>
-        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','practice')">⚡ Practice Arena</button>
-        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','certifications')">🎓 Certifications</button>
+        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','practice')">gwIcon('streak',16) Practice Arena</button>
+        <button class="sa-btn-ghost" style="width:100%;justify-content:flex-start" onclick="show('academy','certifications')">gwIcon('academy',16) Certifications</button>
       </div>
     </div>
   </div>
@@ -6918,7 +6918,7 @@ function settings(){
         <div class="gw-comm-tools-title" style="margin-bottom:2px">Admin Controls</div>
         <div style="font-size:12px;color:var(--gw-muted);margin-top:2px">Manage users, roles, permissions, and Google Workspace connections.</div>
       </div>
-      <button class="secondary-btn" onclick="show('userManagement')" style="font-size:13px">⚙️ User &amp; Access Management →</button>
+      <button class="secondary-btn" onclick="show('userManagement')" style="font-size:13px">gwIcon('settings',16)️ User &amp; Access Management →</button>
     </div>
     <!-- Commission Rules Manager (COMM-01) -->
     <div style="margin-top:16px" id="comm-rules-panel">
@@ -6934,16 +6934,16 @@ function settings(){
     </div>
     <!-- Commission Admin Tools (COMM-16 migration · COMM-18 QA · COMM-17 flags) -->
     <div class="gw-comm-tools" style="margin-top:16px">
-      <div class="gw-comm-tools-title">⚙️ Commission Admin Tools</div>
+      <div class="gw-comm-tools-title">gwIcon('settings',16)️ Commission Admin Tools</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <button onclick="window._runMigrationFromUI()" class="gw-admin-btn">
-          📦 Run Data Migration
+          gwIcon('package',16) Run Data Migration
         </button>
         <button onclick="window._runQAFromUI()" class="gw-admin-btn">
-          🔍 Run QA Self-Check
+          gwIcon('search',16) Run QA Self-Check
         </button>
         <button onclick="window._showFlagPanel()" class="gw-admin-btn">
-          🚩 Feature Flags
+          gwIcon('flag',16) Feature Flags
         </button>
       </div>
       <div id="comm-tool-result" class="gw-tool-result"></div>
@@ -6966,7 +6966,7 @@ function renderCommissionRulesPanel() {
   if (!active) return '<p style="color:#6F7E6A;font-size:13px">Commission engine not loaded yet — reload the page.</p>';
 
   const updatedInfo = override
-    ? `<span style="color:#8B6914;font-size:12px"> ⚙ Custom rules active — last edited ${new Date(override.updatedAt||'').toLocaleDateString()} by ${override.updatedBy||'admin'}</span>`
+    ? `<span style="color:#8B6914;font-size:12px"> gwIcon('settings',16) Custom rules active — last edited ${new Date(override.updatedAt||'').toLocaleDateString()} by ${override.updatedBy||'admin'}</span>`
     : `<span style="color:#2D7A55;font-size:12px"> ✓ Using default Avalon commission structure</span>`;
 
   const lTiers = active.landscape.tiers;
@@ -7017,7 +7017,7 @@ function renderCommissionRulesPanel() {
   <div class="gw-comm-panel">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
       <div>
-        <div style="font-size:14px;font-weight:800;color:#E8E4D9">💰 Commission Rules Manager</div>
+        <div style="font-size:14px;font-weight:800;color:#E8E4D9">gwIcon('revenue',16) Commission Rules Manager</div>
         <div style="font-size:12px;color:#6F7E6A;margin-top:2px">Edit rates, caps, and thresholds. Changes apply immediately to all commission calculations.${updatedInfo}</div>
       </div>
       <div style="display:flex;gap:8px">
@@ -7136,18 +7136,18 @@ window._resetCommRules = function() {
 window._runMigrationFromUI = function() {
   const result = window._migrateCommissionLifecycle ? window._migrateCommissionLifecycle() : null;
   const el = document.getElementById('comm-tool-result');
-  if (!result) { if (el) el.textContent = '⚠ Migration function not loaded — refresh and try again.'; return; }
+  if (!result) { if (el) el.textContent = 'Migration function not loaded — refresh and try again.'; return; }
   if (el) el.innerHTML = `<span style="color:#2D7A55">✓ Migration complete: ${result.migrated} opps updated, ${result.skipped} already migrated.</span>`;
   if (window.showToast) window.showToast(`Migration: ${result.migrated} updated, ${result.skipped} skipped ✓`);
 };
 
 window._runQAFromUI = function() {
   const el = document.getElementById('comm-tool-result');
-  if (!window._commQA) { if (el) el.textContent = '⚠ QA function not loaded — refresh and try again.'; return; }
+  if (!window._commQA) { if (el) el.textContent = 'QA function not loaded — refresh and try again.'; return; }
   const { passed, failed, warnings, results } = window._commQA();
   const failItems = results.filter(r => r.status !== 'PASS');
   const statusColor = failed > 0 ? '#C97B6A' : warnings > 0 ? '#8B6914' : '#2D7A55';
-  const icon = failed > 0 ? '❌' : warnings > 0 ? '⚠️' : '✅';
+  const icon = failed > 0 ? gwIcon('alert',16,'#C97B6A') : warnings > 0 ? gwIcon('warning',16,'#8B6914') : gwIcon('success',16,'#2D7A55');
   if (el) {
     el.innerHTML = `
       <div style="color:${statusColor};font-weight:700;margin-bottom:4px">${icon} QA: ${passed} passed · ${warnings} warnings · ${failed} failed</div>
@@ -7188,7 +7188,7 @@ function renderCommissionSimulator() {
   <div class="gw-sim-panel">
     <div class="gw-sim-header">
       <div>
-        <div style="font-size:14px;font-weight:800;color:#E8E4D9">🧮 Commission Simulator</div>
+        <div style="font-size:14px;font-weight:800;color:#E8E4D9">gwIcon('calculator',16) Commission Simulator</div>
         <div style="font-size:11px;color:#6F7E6A;margin-top:2px">Hypothetical — no data is saved or changed</div>
       </div>
       <button onclick="window._runCommSim()" class="gw-btn-primary">Calculate →</button>
@@ -7277,7 +7277,7 @@ window._runCommSim = function() {
   const appBadge    = r.requiresApproval ? `<span style="font-size:10px;background:#7A5C10;color:#8B6914;border-radius:10px;padding:2px 7px;margin-left:6px">APPROVAL REQUIRED</span>` : '';
   const bonusEl     = r.retentionBonus > 0 ? `<div style="margin-top:8px;font-size:12px;color:#2D7A55">+ ${fmtC(r.retentionBonus)} retention bonus eligible after 90-day active period</div>` : '';
   const gateEl      = !collected && !r.requiresApproval && r.amount === 0
-    ? `<div style="margin-top:6px;font-size:11px;color:#8B6914">⚠ Collection gate: commission held until payment is received</div>` : '';
+    ? `<div style="margin-top:6px;font-size:11px;color:#8B6914">gwIcon('warning',16) Collection gate: commission held until payment is received</div>` : '';
 
   document.getElementById('sim-result').innerHTML = `
     <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px">
@@ -7287,7 +7287,7 @@ window._runCommSim = function() {
     </div>
     <div style="font-size:12px;color:#6F7E6A;margin-bottom:4px"><strong style="color:#6F7E6A">Rule applied:</strong> ${r.ruleApplied}</div>
     <div style="font-size:12px;color:#6F7E6A"><strong style="color:#6F7E6A">Explanation:</strong> ${r.note}</div>
-    ${r.approvalReason ? `<div style="margin-top:6px;font-size:11px;color:#8B6914">⚠ ${r.approvalReason}</div>` : ''}
+    ${r.approvalReason ? `<div style="margin-top:6px;font-size:11px;color:#8B6914">gwIcon('warning',16) ${r.approvalReason}</div>` : ''}
     ${gateEl}${bonusEl}`;
 };
 
@@ -7297,7 +7297,7 @@ function renderCommissionAuditTrail() {
   if (!audit.length) {
     return `
     <div class="gw-audit-panel" style="padding:16px 18px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:6px">📋 Commission Rule Audit Trail</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:6px">gwIcon('checklist',16) Commission Rule Audit Trail</div>
       <p style="color:var(--gw-muted);font-size:13px;margin:0">No rule changes recorded yet. Changes appear here when Tyler edits and saves commission rates.</p>
     </div>`;
   }
@@ -7327,7 +7327,7 @@ function renderCommissionAuditTrail() {
   <div class="gw-audit-panel">
     <div class="gw-audit-panel-header">
       <div>
-        <div style="font-size:14px;font-weight:800;color:#E8E4D9">📋 Commission Rule Audit Trail</div>
+        <div style="font-size:14px;font-weight:800;color:#E8E4D9">gwIcon('checklist',16) Commission Rule Audit Trail</div>
         <div style="font-size:11px;color:#6F7E6A;margin-top:2px">${audit.length} change${audit.length !== 1 ? 's' : ''} recorded</div>
       </div>
     </div>
@@ -8837,7 +8837,7 @@ async function superAdmin() {
   const isSA = d1Rep && (d1Rep.is_super_admin === 1 || d1Rep.is_super_admin === true);
   if (!isSA) {
     view.innerHTML = `<div style="text-align:center;padding:80px 24px">
-      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <div style="font-size:48px;margin-bottom:16px">gwIcon('lock',16)</div>
       <h2 style="color:#C97B6A;margin-bottom:8px">Access Denied</h2>
       <p style="color:#6F7E6A">Platform Admin is restricted to super-administrators.</p>
       <button class="secondary-btn" style="margin-top:24px" onclick="show('today')">← Back to Today</button>
@@ -8847,7 +8847,7 @@ async function superAdmin() {
 
   // Loading state
   view.innerHTML = `<div style="padding:40px 24px;text-align:center;color:#6F7E6A">
-    <div style="font-size:32px;margin-bottom:12px">🛡</div>Loading Platform Data…</div>`;
+    <div style="font-size:32px;margin-bottom:12px">gwIcon('shield',16)</div>Loading Platform Data…</div>`;
 
   // Fetch stats + company list in parallel
   let stats = {}, companies = [];
@@ -8890,7 +8890,7 @@ async function superAdmin() {
       </td>
       <td style="padding:14px 12px;text-align:center">${planBadge(co.plan)}</td>
       <td style="padding:14px 12px;text-align:center">
-        <span style="color:${co.active ? '#2D7A55':'#C97B6A'};font-size:12px;font-weight:700">${co.active ? '● Active':'○ Inactive'}</span>
+        <span style="color:${co.active ? '#2D7A55':'#C97B6A'};font-size:12px;font-weight:700">${co.active ? ' Active':' Inactive'}</span>
       </td>
       <td style="padding:14px 12px;text-align:center;color:#6F7E6A">${fmt(co.rep_count)}</td>
       <td style="padding:14px 12px;text-align:center;color:#6F7E6A">${fmt(co.opp_count)}</td>
@@ -8911,7 +8911,7 @@ async function superAdmin() {
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:16px">
       <div>
-        <h1 style="font-size:28px;font-weight:800;color:#E8E4D9;margin:0 0 4px">🛡 Platform Admin</h1>
+        <h1 style="font-size:28px;font-weight:800;color:#E8E4D9;margin:0 0 4px">gwIcon('shield',16) Platform Admin</h1>
         <p style="color:#6F7E6A;margin:0;font-size:14px">Groundwork CRM · All tenants · Super-admin view</p>
       </div>
       <button onclick="superAdmin()" class="gw-admin-btn" style="padding:8px 18px">↺ Refresh</button>
@@ -8920,11 +8920,11 @@ async function superAdmin() {
     <!-- Stat Cards -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:36px">
       ${[
-        { label:'Companies',      value: fmt(stats.companies),        icon:'🏢', color:'#1A4740' },
-        { label:'Active Tenants', value: fmt(stats.active_companies),  icon:'✅', color:'#2D7A55' },
-        { label:'Total Reps',     value: fmt(stats.reps),              icon:'👥', color:'#4D8A86' },
-        { label:'Opportunities',  value: fmt(stats.opportunities),     icon:'📊', color:'#8B6914' },
-        { label:'Notes',          value: fmt(stats.notes),             icon:'📝', color:'#4D8A86' },
+        { label:'Companies',      value: fmt(stats.companies),        icon: gwIcon('building',16,'#1A4740'), color:'#1A4740' },
+        { label:'Active Tenants', value: fmt(stats.active_companies),  icon: gwIcon('success',16,'#2D7A55'), color:'#2D7A55' },
+        { label:'Total Reps',     value: fmt(stats.reps),              icon: gwIcon('users',16,'#4D8A86'), color:'#4D8A86' },
+        { label:'Opportunities',  value: fmt(stats.opportunities),     icon: gwIcon('reports',16,'#8B6914'), color:'#8B6914' },
+        { label:'Notes',          value: fmt(stats.notes),             icon: gwIcon('note',16,'#4D8A86'), color:'#4D8A86' },
       ].map(s => `
         <div class="gw-div-tile" style="border-color:${s.color}44">
           <div style="font-size:24px;margin-bottom:8px">${s.icon}</div>
@@ -8966,7 +8966,7 @@ async function superAdmin() {
       <div style="display:flex;gap:12px;flex-wrap:wrap">
         <a href="/onboard" target="_blank"
           style="padding:10px 20px;background:rgba(32,74,67,.13);border:1px solid #1A474044;border-radius:10px;color:#1A4740;font-size:13px;font-weight:700;text-decoration:none">
-          🏢 New Company Onboarding
+          gwIcon('building',16) New Company Onboarding
         </a>
         <button onclick="superAdmin()"
           class="gw-admin-btn" style="padding:10px 20px">
