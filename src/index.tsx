@@ -1167,7 +1167,8 @@ app.get('/onboard', (c) => {
 // Excludes groundwork_platform (the platform owner's anchor record, not a customer tenant)
 app.get('/api/admin/companies', requireSuperAdmin, async (c) => {
   const companies = await c.env.DB.prepare(`
-    SELECT c.id, c.name, c.slug, c.plan, c.owner_email, c.active, c.created_at, c.trial_ends_at,
+    SELECT c.id, c.name, c.slug, c.plan, c.owner_email, c.website, c.active,
+           c.created_at, c.updated_at, c.trial_ends_at, c.notes,
            COUNT(DISTINCT r.id)   AS rep_count,
            COUNT(DISTINCT o.id)   AS opp_count,
            MAX(o.updated_at)      AS last_activity
@@ -1220,11 +1221,11 @@ app.post('/api/admin/impersonate', requireSuperAdmin, async (c) => {
   return json(c, { impersonating: companyId, repId: targetRep.id })
 })
 
-// PUT /api/admin/companies/:id  — update company plan/status
+// PUT /api/admin/companies/:id  — update company fields (plan, status, name, etc.)
 app.put('/api/admin/companies/:id', requireSuperAdmin, async (c) => {
   const id = c.req.param('id')
   const b  = await c.req.json()
-  const allowed = ['plan','active','trial_ends_at']
+  const allowed = ['plan','active','trial_ends_at','name','owner_email','website','notes']
   const updates = allowed.filter(f => b[f] !== undefined)
   if (!updates.length) return err(c, 'Nothing to update')
   const set  = updates.map(f => `${f} = ?`).join(', ')
@@ -1233,6 +1234,133 @@ app.put('/api/admin/companies/:id', requireSuperAdmin, async (c) => {
     `UPDATE companies SET ${set}, updated_at = datetime('now') WHERE id = ?`
   ).bind(...vals, id).run()
   return json(c, { updated: id })
+})
+
+// POST /api/admin/companies  — create a new tenant company
+app.post('/api/admin/companies', requireSuperAdmin, async (c) => {
+  const b = await c.req.json()
+  const { id, name, slug, owner_email, website, plan, active, notes } = b as any
+  if (!id || !name) return err(c, 'id and name required')
+  await c.env.DB.prepare(
+    `INSERT INTO companies (id, name, slug, plan, owner_email, website, active, notes, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
+  ).bind(id, name, slug||id, plan||'trial', owner_email||'', website||'', active??1, notes||'').run()
+  return json(c, { created: id })
+})
+
+// ── Platform internal data routes (gw-leads, tickets, announcements) ──────────
+
+// GW Sales Leads  (/api/platform/gw-leads)
+app.get('/api/platform/gw-leads', requireSuperAdmin, async (c) => {
+  const limit = parseInt(c.req.query('limit')||'200')
+  const rows = await c.env.DB.prepare(
+    `SELECT * FROM gw_leads ORDER BY updated_at DESC LIMIT ?`
+  ).bind(limit).all()
+  return json(c, rows.results || [])
+})
+app.post('/api/platform/gw-leads', requireSuperAdmin, async (c) => {
+  const b = await c.req.json()
+  const id = uid()
+  const { company_name, contact_name, email, phone, stage, priority, deal_value, next_action, notes, source } = b as any
+  await c.env.DB.prepare(
+    `INSERT INTO gw_leads (id, company_name, contact_name, email, phone, stage, priority, deal_value, next_action, notes, source, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
+  ).bind(id, company_name||'', contact_name||'', email||'', phone||'', stage||'prospect', priority||'medium', deal_value||0, next_action||'', notes||'', source||'other').run()
+  return json(c, { id })
+})
+app.put('/api/platform/gw-leads/:id', requireSuperAdmin, async (c) => {
+  const id = c.req.param('id')
+  const b  = await c.req.json()
+  const allowed = ['company_name','contact_name','email','phone','stage','priority','deal_value','next_action','notes','source']
+  const updates = allowed.filter(f => (b as any)[f] !== undefined)
+  if (!updates.length) return err(c, 'Nothing to update')
+  const set  = updates.map(f => `${f} = ?`).join(', ')
+  const vals = updates.map(f => (b as any)[f])
+  await c.env.DB.prepare(
+    `UPDATE gw_leads SET ${set}, updated_at = datetime('now') WHERE id = ?`
+  ).bind(...vals, id).run()
+  return json(c, { updated: id })
+})
+app.delete('/api/platform/gw-leads/:id', requireSuperAdmin, async (c) => {
+  const id = c.req.param('id')
+  await c.env.DB.prepare(`DELETE FROM gw_leads WHERE id = ?`).bind(id).run()
+  return json(c, { deleted: id })
+})
+
+// Support Tickets  (/api/platform/tickets)
+app.get('/api/platform/tickets', requireSuperAdmin, async (c) => {
+  const limit  = parseInt(c.req.query('limit')||'200')
+  const status = c.req.query('status')
+  const rows = status
+    ? await c.env.DB.prepare(`SELECT * FROM gw_tickets WHERE status = ? ORDER BY created_at DESC LIMIT ?`).bind(status, limit).all()
+    : await c.env.DB.prepare(`SELECT * FROM gw_tickets ORDER BY created_at DESC LIMIT ?`).bind(limit).all()
+  return json(c, rows.results || [])
+})
+app.post('/api/platform/tickets', requireSuperAdmin, async (c) => {
+  const b = await c.req.json()
+  const id = uid()
+  const { subject, body, company_name, company_id, submitter_email, submitter_name, priority, status, internal_notes } = b as any
+  await c.env.DB.prepare(
+    `INSERT INTO gw_tickets (id, subject, body, company_name, company_id, submitter_email, submitter_name, priority, status, internal_notes, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
+  ).bind(id, subject||'', body||'', company_name||'', company_id||'', submitter_email||'', submitter_name||'', priority||'medium', status||'open', internal_notes||'').run()
+  return json(c, { id })
+})
+app.put('/api/platform/tickets/:id', requireSuperAdmin, async (c) => {
+  const id = c.req.param('id')
+  const b  = await c.req.json()
+  const allowed = ['subject','status','priority','internal_notes','body']
+  const updates = allowed.filter(f => (b as any)[f] !== undefined)
+  if (!updates.length) return err(c, 'Nothing to update')
+  const set  = updates.map(f => `${f} = ?`).join(', ')
+  const vals = updates.map(f => (b as any)[f])
+  await c.env.DB.prepare(
+    `UPDATE gw_tickets SET ${set}, updated_at = datetime('now') WHERE id = ?`
+  ).bind(...vals, id).run()
+  return json(c, { updated: id })
+})
+app.delete('/api/platform/tickets/:id', requireSuperAdmin, async (c) => {
+  await c.env.DB.prepare(`DELETE FROM gw_tickets WHERE id = ?`).bind(c.req.param('id')).run()
+  return json(c, { deleted: c.req.param('id') })
+})
+
+// Announcements  (/api/platform/announcements)
+app.get('/api/platform/announcements', requireSuperAdmin, async (c) => {
+  const rows = await c.env.DB.prepare(`SELECT * FROM gw_announcements ORDER BY created_at DESC LIMIT 200`).all()
+  return json(c, rows.results || [])
+})
+app.post('/api/platform/announcements', requireSuperAdmin, async (c) => {
+  const b = await c.req.json()
+  const id = uid()
+  const { title, body, type, published, audience } = b as any
+  await c.env.DB.prepare(
+    `INSERT INTO gw_announcements (id, title, body, type, published, audience, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
+  ).bind(id, title||'', body||'', type||'announcement', published?1:0, audience||'all').run()
+  return json(c, { id })
+})
+app.put('/api/platform/announcements/:id', requireSuperAdmin, async (c) => {
+  const id = c.req.param('id')
+  const b  = await c.req.json()
+  const allowed = ['title','body','type','published','audience','published_at']
+  const updates = allowed.filter(f => (b as any)[f] !== undefined)
+  if (!updates.length) return err(c, 'Nothing to update')
+  const set  = updates.map(f => `${f} = ?`).join(', ')
+  const vals = updates.map(f => (b as any)[f])
+  await c.env.DB.prepare(
+    `UPDATE gw_announcements SET ${set}, updated_at = datetime('now') WHERE id = ?`
+  ).bind(...vals, id).run()
+  return json(c, { updated: id })
+})
+app.delete('/api/platform/announcements/:id', requireSuperAdmin, async (c) => {
+  await c.env.DB.prepare(`DELETE FROM gw_announcements WHERE id = ?`).bind(c.req.param('id')).run()
+  return json(c, { deleted: c.req.param('id') })
+})
+
+// POST /api/admin/clear-sessions — wipe all session tokens from settings table
+app.post('/api/admin/clear-sessions', requireSuperAdmin, async (c) => {
+  await c.env.DB.prepare(`DELETE FROM settings WHERE key LIKE 'session_%'`).run()
+  return json(c, { cleared: true })
 })
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1574,16 +1702,39 @@ function getHtml(): string {
       </details>
 
       <!-- ── Platform Admin nav (visible only when company_id=groundwork_platform) ── -->
-      <details class="nav-group platform-nav" id="platformAdminNav" style="display:none" open>
-        <summary class="nav-summary" style="color:#4D8A86;font-weight:700">Platform Admin</summary>
+      <div id="platformAdminNav" style="display:none">
+        <div class="nav-section-label" style="color:#4D8A86;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:18px 16px 6px">Platform Admin</div>
         <div class="nav-items">
-          <button class="nav-item" data-view="superAdmin" onclick="show('superAdmin')" style="color:#204A43;font-weight:600">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="M8 2L3 4.5v4C3 11.5 5.2 14 8 15c2.8-1 5-3.5 5-6.5v-4L8 2z"/></svg>
-            Dashboard
+          <button class="nav-item" data-view="superAdmin" onclick="show('superAdmin')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px"><rect x="1" y="3" width="14" height="10" rx="2"/><path d="M1 7h14"/></svg>
+            Overview
           </button>
-          <button class="nav-item" data-view="settings" onclick="show('settings')" style="color:#5E6E6F">Platform Settings</button>
+          <button class="nav-item" data-view="gwTenants" onclick="show('gwTenants')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+            Tenants
+          </button>
+          <button class="nav-item" data-view="gwLeads" onclick="show('gwLeads')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+            Sales Pipeline
+          </button>
+          <button class="nav-item" data-view="gwSupport" onclick="show('gwSupport')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px"><path d="M8 2C4.7 2 2 4.7 2 8s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6z"/><path d="M6 6c0-1.1.9-2 2-2s2 .9 2 2c0 1.5-2 2-2 3"/><circle cx="8" cy="13" r=".5" fill="currentColor"/></svg>
+            Support &amp; Tickets
+          </button>
+          <button class="nav-item" data-view="gwAnnounce" onclick="show('gwAnnounce')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px"><path d="M13 3l-8 5H2v2h3l8 5V3z"/></svg>
+            Announcements
+          </button>
+          <button class="nav-item" data-view="gwBilling" onclick="show('gwBilling')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px"><rect x="1" y="4" width="14" height="9" rx="1.5"/><path d="M1 7.5h14"/><path d="M4 10.5h3"/></svg>
+            Billing &amp; Plans
+          </button>
+          <button class="nav-item" data-view="gwPlatformSettings" onclick="show('gwPlatformSettings')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/></svg>
+            Platform Settings
+          </button>
         </div>
-      </details>
+      </div>
 
     </nav>
     <div class="sidebar-footer" id="sidebarUserFooter">
@@ -1631,14 +1782,15 @@ function getHtml(): string {
 <div id="toast" class="toast" hidden role="alert" aria-live="assertive"></div>
 
 <script src="/static/gw-icons.js?v=20260628gw1"></script>
-<script src="/static/db.js?v=20260628gw8"></script>
-<script src="/static/data.js?v=20260628gw8"></script>
-<script src="/static/reps.js?v=20260628gw8"></script>
-<script src="/static/academy.js?v=20260628gw8"></script>
-<script src="/static/app_premium.js?v=20260628gw8"></script>
-<script src="/static/integrations.js?v=20260628gw8"></script>
-<script src="/static/import_clients_csv.js?v=20260628gw8"></script>
-<script src="/static/user_management.js?v=20260628gw8"></script>
+<script src="/static/db.js?v=20260628gw9"></script>
+<script src="/static/data.js?v=20260628gw9"></script>
+<script src="/static/reps.js?v=20260628gw9"></script>
+<script src="/static/academy.js?v=20260628gw9"></script>
+<script src="/static/app_premium.js?v=20260628gw9"></script>
+<script src="/static/integrations.js?v=20260628gw9"></script>
+<script src="/static/import_clients_csv.js?v=20260628gw9"></script>
+<script src="/static/user_management.js?v=20260628gw9"></script>
+<script src="/static/platform_admin.js?v=20260628gw9"></script>
 <script>
   // Service Worker registration
   if ('serviceWorker' in navigator) {

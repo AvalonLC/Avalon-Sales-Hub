@@ -1,17 +1,18 @@
 const data = window.AVALON_DATA;
 const view = document.getElementById('view');
-const navItems = [...document.querySelectorAll('.nav-item')];
+// navItems re-queried each call so dynamically added platform nav buttons are included
 function activateNav(viewName) {
-  navItems.forEach(b => {
+  document.querySelectorAll('.nav-item').forEach(b => {
     const isActive = b.dataset.view === viewName;
     b.classList.toggle('active', isActive);
     if (isActive) {
-      // auto-open the parent <details> group
+      // auto-open the parent <details> group if inside one
       const group = b.closest('details.nav-group');
       if (group) group.open = true;
     }
   });
 }
+const navItems = [...document.querySelectorAll('.nav-item')];
 const sidebar = document.getElementById('sidebar');
 const menuBtn = document.getElementById('menuBtn');
 const searchInput = document.getElementById('searchInput');
@@ -223,7 +224,12 @@ function fallbackCopy(text){
 }
 function show(viewName='today', param){
   // ── Permission gate (admin-configurable) ─────────────────
-  if (viewName !== 'settings' && !canViewTab(viewName)) {
+  // Platform super-admin bypasses all tenant permission gates
+  const _d1 = window._d1SessionRep;
+  const _isPlatformSA = _d1 &&
+    (_d1.is_super_admin === 1 || _d1.is_super_admin === true) &&
+    _d1.company_id === 'groundwork_platform';
+  if (!_isPlatformSA && viewName !== 'settings' && !canViewTab(viewName)) {
     const _rep = window.getCurrentRep ? window.getCurrentRep() : null;
     const _viewLabels = {today:'Today',myDashboard:'My Dashboard',pipeline:'Pipeline',lead:'Add Lead',clients:'Clients & Properties',process:'Sales Process',forms:'Forms & Checklists',scripts:'Scripts',templates:'Email Templates',objections:'Objection Handling',calculator:'Pricing Tools',academy:'Sales Academy',manager:'Manager Tools',revenueAdmin:'Financial Data Hub',integrations:'Integrations',userManagement:'User Management',settings:'Settings',ai:'AI Sales Assistant',ai:'AI Sales Assistant',ai:'AI Sales Assistant'};
     view.innerHTML = `<div style="text-align:center;padding:64px 24px;margin-top:40px;max-width:520px;margin-left:auto;margin-right:auto">
@@ -248,7 +254,16 @@ function show(viewName='today', param){
   const revenueRoute = (typeof revenueAdmin === 'function') ? {revenueAdmin} : {};
   const umRoute = (typeof userManagement === 'function') ? {userManagement} : {};
   const saRoute = (typeof superAdmin === 'function') ? {superAdmin} : {};
-  const routes = {today, pipeline, lead, clients, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute, ...repRoute, ...revenueRoute, ...umRoute, ...saRoute, ai};
+  // Platform admin module routes (loaded from platform_admin.js)
+  const paRoute = (typeof window.gwPlatformAdmin === 'object' && window.gwPlatformAdmin)
+    ? { gwTenants: () => window.gwPlatformAdmin.tenants(),
+        gwLeads:   () => window.gwPlatformAdmin.leads(),
+        gwSupport: () => window.gwPlatformAdmin.support(),
+        gwAnnounce:() => window.gwPlatformAdmin.announce(),
+        gwBilling: () => window.gwPlatformAdmin.billing(),
+        gwPlatformSettings: () => window.gwPlatformAdmin.platformSettings() }
+    : {};
+  const routes = {today, pipeline, lead, clients, process, forms, scripts, templates, objections, calculator, academy, manager, settings, ...intRoute, ...repRoute, ...revenueRoute, ...umRoute, ...saRoute, ...paRoute, ai};
   (routes[viewName] || today)(param);
   window.scrollTo({top:0, behavior:'smooth'});
   if (typeof window._avalonState !== 'undefined') window._avalonState = state;
@@ -8852,6 +8867,11 @@ window.revenueAdmin = revenueAdmin;
 
 // ── SUPER-ADMIN PLATFORM DASHBOARD ───────────────────────────────────────────
 async function superAdmin() {
+  // Delegate to the full platform admin module if loaded
+  if (window.gwPlatformAdmin && typeof window.gwPlatformAdmin.overview === 'function') {
+    return window.gwPlatformAdmin.overview();
+  }
+
   const view = document.getElementById('view');
   if (!view) return;
 
@@ -8860,7 +8880,7 @@ async function superAdmin() {
   const isSA = d1Rep && (d1Rep.is_super_admin === 1 || d1Rep.is_super_admin === true);
   if (!isSA) {
     view.innerHTML = `<div style="text-align:center;padding:80px 24px">
-      <div style="width:52px;height:52px;background:#EEF4F3;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">${gwIcon('lock',22,'#204A43')}</div>
+      <div style="width:52px;height:52px;background:#EEF4F3;border-radius:14px;display:flex;align-items:center;justify-content:justify;margin:0 auto 16px">${gwIcon('lock',22,'#204A43')}</div>
       <h2 style="color:#C97B6A;margin-bottom:8px">Access Denied</h2>
       <p style="color:#6F7E6A">Platform Admin is restricted to super-administrators.</p>
       <button class="secondary-btn" style="margin-top:24px" onclick="show('today')">← Back to Today</button>
@@ -9098,7 +9118,7 @@ window.superAdmin = superAdmin;
     try {
       const footer = document.querySelector('.sidebar-footer');
       if (footer) {
-        const logoutAction = `fetch('/api/auth/logout',{method:'POST'}).finally(()=>{window.location.href='/platform-login'})`;
+        const logoutAction = `fetch('/api/auth/logout',{method:'POST'}).finally(()=>{window.location.href='/'});`;
         footer.innerHTML = `
           <div style="width:32px;height:32px;border-radius:50%;background:rgba(77,138,134,.45);border:1px solid rgba(77,138,134,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;cursor:pointer;letter-spacing:-.01em" onclick="${logoutAction}" title="Sign out">TG</div>
           <div style="min-width:0;flex:1">
