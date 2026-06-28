@@ -1328,7 +1328,7 @@ function getHtml(): string {
           <button class="nav-item" data-view="integrations" onclick="show('integrations')">Integrations</button>
           <button class="nav-item" data-view="userManagement" onclick="show('userManagement')">User Management</button>
           <button class="nav-item" data-view="settings" onclick="show('settings')">Settings</button>
-          <button class="nav-item" data-view="superAdmin" id="superAdminNavBtn" onclick="show('superAdmin')" style="display:none;color:var(--gw-emerald);font-weight:700;border-top:1px solid rgba(255,255,255,.1);margin-top:6px;padding-top:10px">gwIcon('shield',16) Platform Admin</button>
+          <button class="nav-item" data-view="superAdmin" id="superAdminNavBtn" onclick="show('superAdmin')" style="display:none;color:var(--gw-emerald);font-weight:700;border-top:1px solid rgba(255,255,255,.1);margin-top:6px;padding-top:10px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.9"><path d="M8 2L3 4.5v4C3 11.5 5.2 14 8 15c2.8-1 5-3.5 5-6.5v-4L8 2z"/></svg> Platform Admin</button>
         </div>
       </details>
 

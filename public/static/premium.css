@@ -6594,3 +6594,184 @@ article [style*="color:#E8E4D9"] { color: var(--gw-ink) !important; }
 }
 
 /* ── END SECTION 35 ───────────────────────────────────────────────────────── */
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   SECTION 36 — UI Polish Pass (Screenshot Fixes — June 2026)
+   ══════════════════════════════════════════════════════════════════════════════
+
+   Fixes applied:
+   1. Search bar — icon no longer overlaps placeholder text (increase padding-left)
+   2. Sidebar footer (Tyler card) — proper dark background, high-contrast text
+   3. Super Admin nav button — flex layout, shield icon aligns with label
+   4. Add Lead category tiles — richer contrast, bolder active state
+   5. Kanban pipeline cards — min-width guard, proper overflow, no text squish
+   6. Opp-card h3 — allow wrap in narrow columns instead of going invisible
+*/
+
+/* ── 1. Search bar — push placeholder right of the magnifying-glass icon ── */
+.search-wrap input,
+.search-wrap #searchInput,
+#searchInput {
+  padding-left: 40px !important; /* icon sits at left:12px + 14px icon + 4px gap */
+}
+
+/* Ensure ::before icon is perfectly centered regardless of input height */
+.search-wrap::before {
+  left: 13px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 15px !important;
+  height: 15px !important;
+  z-index: 2;
+}
+
+/* ── 2. Sidebar footer / Tyler user card — high contrast dark treatment ── */
+.sidebar-footer {
+  background: rgba(0, 0, 0, 0.28) !important;   /* deep dark, clearly separate from sidebar */
+  border-top: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 10px !important;
+  margin: 8px 12px 12px !important;
+  padding: 12px 14px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.20) !important;
+  color: rgba(255,255,255,.90) !important;
+}
+.sidebar-footer strong,
+#sidebarUserName {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+}
+.sidebar-footer span,
+#sidebarUserRole {
+  color: rgba(255,255,255,.62) !important;
+  font-size: 11.5px !important;
+}
+
+/* Avatar initials circle inside footer */
+#sidebarAvatarInitials {
+  background: var(--gw-emerald, #2EAD6D) !important;
+  color: #fff !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.18) !important;
+}
+
+/* ── 3. Super Admin nav button — inline-flex so icon + text align ── */
+#superAdminNavBtn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  color: var(--gw-emerald, #2EAD6D) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  padding: 8px 10px 8px 20px !important;
+  border-top: 1px solid rgba(255,255,255,.10) !important;
+  margin-top: 6px !important;
+  border-radius: 6px !important;
+  transition: background .14s !important;
+}
+#superAdminNavBtn:hover {
+  background: rgba(46,173,109,.12) !important;
+}
+#superAdminNavBtn svg {
+  flex-shrink: 0;
+  opacity: .85;
+}
+
+/* ── 4. Add Lead — Project Category tiles: richer contrast ── */
+.cat-tile {
+  border: 1.5px solid rgba(30,70,56,.22) !important;
+  background: #fff !important;
+  color: var(--gw-ink, #1E2C2B) !important;
+  padding: 7px 16px !important;
+  border-radius: 999px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  transition: background .14s, border-color .14s, box-shadow .14s !important;
+  box-shadow: 0 1px 3px rgba(30,70,56,.06) !important;
+}
+.cat-tile:hover {
+  border-color: var(--gw-pine, #1E4638) !important;
+  background: rgba(30,70,56,.06) !important;
+  color: var(--gw-pine, #1E4638) !important;
+  box-shadow: 0 2px 6px rgba(30,70,56,.12) !important;
+}
+.cat-tile--active {
+  border-color: var(--gw-pine, #1E4638) !important;
+  background: var(--gw-pine, #1E4638) !important;
+  color: #fff !important;
+  box-shadow: 0 3px 10px rgba(30,70,56,.30) !important;
+}
+.cat-tile-label {
+  color: inherit !important;
+  font-weight: inherit !important;
+  font-size: inherit !important;
+}
+.cat-tile--active .cat-tile-label {
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+
+/* ── 5. Kanban — prevent column/card text squish, proper overflow ── */
+.kanban {
+  overflow-x: auto !important;   /* scroll instead of squishing */
+  min-width: 0;
+}
+
+/* Each column: enforce minimum width so cards never collapse to slivers */
+.kanban-col {
+  min-width: 260px !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* ── 6. Opp card heading — allow wrapping in narrow columns ── */
+.opp-card h3 {
+  white-space: normal !important;      /* allow wrap — no more vertical letter stacking */
+  overflow: hidden !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;    /* max 2 lines, then ellipsis */
+  -webkit-box-orient: vertical !important;
+  text-overflow: ellipsis !important;
+  word-break: break-word !important;
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+  color: var(--gw-ink) !important;
+}
+
+/* Project subtitle: allow wrap for long "Maintenance – Recurring Contract" */
+.opp-project {
+  white-space: normal !important;
+  overflow: hidden !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  word-break: break-word !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+  color: var(--gw-muted) !important;
+  margin-bottom: 8px !important;
+}
+
+/* Urgency badge: never shrink or wrap */
+.urgency-badge {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: .05em !important;
+}
+
+/* ── 7. Status badge in opp cards — make it crisp ── */
+.status-chip {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* ── END SECTION 36 ───────────────────────────────────────────────────────── */

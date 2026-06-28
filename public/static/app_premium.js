@@ -8852,7 +8852,7 @@ async function superAdmin() {
 
   // Loading state
   view.innerHTML = `<div style="padding:40px 24px;text-align:center;color:#6F7E6A">
-    <div style="font-size:32px;margin-bottom:12px">gwIcon('shield',16)</div>Loading Platform Data…</div>`;
+    <div style="margin-bottom:12px;opacity:.5">${gwIcon('shield',32,'#4D8A86')}</div>Loading Platform Data…</div>`;
 
   // Fetch stats + company list in parallel
   let stats = {}, companies = [];
@@ -8916,7 +8916,7 @@ async function superAdmin() {
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:16px">
       <div>
-        <h1 style="font-size:28px;font-weight:800;color:#E8E4D9;margin:0 0 4px">gwIcon('shield',16) Platform Admin</h1>
+        <h1 style="font-size:28px;font-weight:800;color:#E8E4D9;margin:0 0 4px;display:flex;align-items:center;gap:10px">${gwIcon('shield',24,'#7EC8A4')} Platform Admin</h1>
         <p style="color:#6F7E6A;margin:0;font-size:14px">Groundwork CRM · All tenants · Super-admin view</p>
       </div>
       <button onclick="superAdmin()" class="gw-admin-btn" style="padding:8px 18px">↺ Refresh</button>
