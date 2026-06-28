@@ -246,7 +246,7 @@ function userManagement(tab) {
   if (!currentRep || currentRep.role !== 'admin') {
     viewEl.innerHTML = `
       <div style="text-align:center;padding:64px 24px;margin-top:40px">
-        <div style="font-size:40px;margin-bottom:16px">🔒</div>
+        <div style="width:48px;height:48px;background:#FAE8E4;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7A2E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
         <h2 style="color:#C97B6A;margin-bottom:10px">Access Restricted</h2>
         <p style="color:#6F7E6A;max-width:420px;margin:0 auto 24px">User Management is restricted to Tyler (Owner / Admin). Ask Tyler if you need access changes.</p>
         <button class="secondary-btn" onclick="show('today')">← Back to Today</button>
@@ -256,9 +256,9 @@ function userManagement(tab) {
 
   const activeTab = tab || 'users';
   const tabs = [
-    { id:'users',  label:'👤 Users & Workspace' },
-    { id:'roles',  label:'🎭 Roles & Permissions' },
-    { id:'audit',  label:'🔍 Login Audit' }
+    { id:'users',  label:'Users & Workspace' },
+    { id:'roles',  label:'Roles & Permissions' },
+    { id:'audit',  label:'Login Audit' }
   ];
 
   viewEl.innerHTML = `
@@ -325,8 +325,8 @@ function umRenderUsers(container) {
   ${myConnected
     ? `<div style="font-size:13px;color:#2D7A55;margin-bottom:10px">Signed in as <strong>${umEscape(myEmail)}</strong></div>
        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-         ${[{icon:'✉️',l:'Gmail'},{icon:'📅',l:'Calendar'},{icon:'📁',l:'Drive'}].map(s=>`
-         <span style="font-size:12px;background:#2D7A5515;border:1px solid #2D7A5540;border-radius:6px;padding:3px 10px;color:#2D7A55">${s.icon} ${s.l}</span>`).join('')}
+         ${[{l:'Gmail'},{l:'Calendar'},{l:'Drive'}].map(s=>`
+         <span style="font-size:12px;background:#2D7A5515;border:1px solid #2D7A5540;border-radius:6px;padding:3px 10px;color:#2D7A55">${s.l}</span>`).join('')}
        </div>
        <div style="display:flex;gap:8px;flex-wrap:wrap">
          <button class="secondary-btn" style="font-size:12px" onclick="show('integrations')">Open Workspace Hub →</button>
@@ -346,7 +346,7 @@ function umRenderUsers(container) {
 <div class="gw-info-strip" style="border-radius:12px;padding:16px 18px;margin-bottom:24px">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div>
-      <div style="font-size:13px;font-weight:700;color:#E8E4D9;margin-bottom:2px">🔑 Google OAuth Client ID</div>
+      <div style="font-size:13px;font-weight:700;color:#E8E4D9;margin-bottom:2px">Google OAuth Client ID</div>
       <div style="font-size:11px;color:#5C6B58">Shared across all users. Set once — everyone can then connect their own account.</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1;min-width:260px;justify-content:flex-end">
@@ -381,7 +381,7 @@ function umRenderUsers(container) {
     try { st = JSON.parse(localStorage.getItem('avalonIntegrationsV1') || '{}'); } catch(e) {}
     st.googleClientId = val;
     localStorage.setItem('avalonIntegrationsV1', JSON.stringify(st));
-    umToast('Google Client ID saved ✅');
+    umToast('Google Client ID saved');
     umRenderUsers(container);
   };
 
@@ -634,7 +634,7 @@ function umUserRow(u, gc) {
     ${googleConnected
       ? `<span style="font-size:11px;color:#2D7A55;font-weight:600">● Google connected as ${umEscape(googleEmail)}</span>
          <div style="display:flex;gap:6px;margin-left:auto">
-           ${[['✉️','Gmail'],['📅','Cal'],['📁','Drive']].map(([ic,lb])=>`<span style="font-size:10px;color:#2D7A55;background:#2D7A5515;border:1px solid #2D7A5530;border-radius:4px;padding:1px 6px">${ic} ${lb}</span>`).join('')}
+           ${[['Gmail'],['Cal'],['Drive']].map(([lb])=>`<span style="font-size:10px;color:#2D7A55;background:#2D7A5515;border:1px solid #2D7A5530;border-radius:4px;padding:1px 6px">${lb}</span>`).join('')}
            <button onclick="window._umAdminDisconnectUser('${u.id}')" style="font-size:10px;font-weight:700;color:#C97B6A;background:#C97B6A15;border:1px solid #C97B6A40;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:4px">Disconnect</button>
          </div>`
       : `<span style="font-size:11px;color:#5C6B58">○ Google not connected</span>
@@ -782,7 +782,7 @@ function umRenderWorkspace(container) {
 
 <!-- Client ID config -->
 <div class="gw-um-form-card" style="border-radius:12px;padding:18px;margin-bottom:20px">
-  <div style="font-weight:700;font-size:14px;color:#E8E4D9;margin-bottom:8px">🔑 Shared Google OAuth Client ID</div>
+  <div style="font-weight:700;font-size:14px;color:#E8E4D9;margin-bottom:8px">Shared Google OAuth Client ID</div>
   <p style="color:#6F7E6A;font-size:12px;margin:0 0 12px">The same Google Cloud Client ID is used across all user connections. Set it once here and every user can connect their own account.</p>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
     <div style="flex:1;min-width:260px">
@@ -843,9 +843,9 @@ function umWorkspaceRow(u, gc, clientId) {
   const connectedAt = gc?.connectedAt ? umFormatDate(gc.connectedAt) : null;
 
   const services = [
-    { label:'Gmail',    icon:'✉️', key:'gmail',    connected: connected && gc?.gmail },
-    { label:'Calendar', icon:'📅', key:'calendar', connected: connected && gc?.calendar },
-    { label:'Drive',    icon:'📁', key:'drive',    connected: connected && gc?.drive }
+    { label:'Gmail',    icon:'G',  key:'gmail',    connected: connected && gc?.gmail },
+    { label:'Calendar', icon:'C',  key:'calendar', connected: connected && gc?.calendar },
+    { label:'Drive',    icon:'D',  key:'drive',    connected: connected && gc?.drive }
   ];
 
   return `
@@ -891,7 +891,7 @@ function umRenderAudit(container) {
     user_updated:             { icon:'✏️', label:'User Updated' },
     user_deactivated:         { icon:'🚫', label:'User Deactivated' },
     user_reactivated:         { icon:'♻️', label:'User Reactivated' },
-    pin_reset:                { icon:'🔑', label:'PIN Reset' },
+    pin_reset:                { icon:'',   label:'PIN Reset' },
     google_disconnected_by_admin: { icon:'🔌', label:'Google Disconnected (Admin)' },
     google_connected:         { icon:'🔗', label:'Google Connected' }
   };
@@ -970,7 +970,7 @@ function umRenderMyGoogleConnection(container) {
   ${connected
     ? `<div style="font-size:13px;color:#2D7A55;margin-bottom:12px">Connected as <strong>${umEscape(email)}</strong></div>
        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-         ${[{icon:'✉️',l:'Gmail'},{icon:'📅',l:'Calendar'},{icon:'📁',l:'Drive'}].map(s=>`
+         ${[{l:'Gmail'},{l:'Calendar'},{l:'Drive'}].map(s=>`
          <span style="font-size:12px;background:#2D7A5515;border:1px solid #2D7A5540;border-radius:6px;padding:3px 10px;color:#2D7A55">${s.icon} ${s.l}</span>`).join('')}
        </div>
        <button class="danger-btn" onclick="window._umMyDisconnect()">Disconnect My Google Account</button>`
@@ -1068,7 +1068,7 @@ async function umMyConnect() {
       };
       umSaveUserGoogle(map);
       umAddAuditEntry({ type: 'google_connected', userId: rep.id, userName: rep.name, by: rep.name });
-      umToast(`✅ Google connected as ${googleEmail}`);
+      umToast(`Google connected as ${googleEmail}`);
 
       // Refresh whatever view is currently visible
       if (typeof window.integrations === 'function') window.integrations();

@@ -226,11 +226,12 @@ function show(viewName='today', param){
   if (viewName !== 'settings' && !canViewTab(viewName)) {
     const _rep = window.getCurrentRep ? window.getCurrentRep() : null;
     const _viewLabels = {today:'Today',myDashboard:'My Dashboard',pipeline:'Pipeline',lead:'Add Lead',clients:'Clients & Properties',process:'Sales Process',forms:'Forms & Checklists',scripts:'Scripts',templates:'Email Templates',objections:'Objection Handling',calculator:'Pricing Tools',academy:'Sales Academy',manager:'Manager Tools',revenueAdmin:'Financial Data Hub',integrations:'Integrations',userManagement:'User Management',settings:'Settings',ai:'AI Sales Assistant',ai:'AI Sales Assistant',ai:'AI Sales Assistant'};
-    view.innerHTML = `<div style="text-align:center;padding:64px 24px;margin-top:40px">
-      <div style="font-size:32px;margin-bottom:18px;color:#6F7E6A;font-weight:300;letter-spacing:-2px">&#x2715;</div>
-      <h2 style="color:#C97B6A;margin-bottom:10px">${_viewLabels[viewName] || viewName} — Access Restricted</h2>
-      <p style="color:#6F7E6A;max-width:420px;margin:0 auto 24px">Tyler (Owner) has restricted access to this section for your role.<br>Ask Tyler to enable it in <strong style="color:#E8E4D9">Settings → Permission Controls</strong>.</p>
-      <button class="secondary-btn" onclick="show('today')">← Back to Today</button>
+    view.innerHTML = `<div style="text-align:center;padding:64px 24px;margin-top:40px;max-width:520px;margin-left:auto;margin-right:auto">
+      <div style="width:48px;height:48px;background:#FAE8E4;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7A2E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <h2 style="color:#1F2A2B;margin-bottom:10px;font-size:20px">${_viewLabels[viewName] || viewName}</h2>
+      <p style="font-size:14px;margin-bottom:8px;color:#1F2A2B;font-weight:600">Access Restricted</p>
+      <p style="color:#5E6E6F;max-width:380px;margin:0 auto 24px;font-size:13px;line-height:1.6">Tyler (Owner) has restricted access to this section for your role. Ask Tyler to enable it in <strong>Settings → Permission Controls</strong>.</p>
+      <button class="secondary-btn" onclick="show('today')">Back to Today</button>
     </div>`;
     activateNav(viewName);
     sidebar.classList.remove('open'); document.getElementById('sidebarScrim')?.classList.remove('visible');

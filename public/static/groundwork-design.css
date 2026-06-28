@@ -1,0 +1,1451 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   GROUNDWORK — Premium SaaS Design System v1.0
+   2026-06-28 · Product-wide visual redesign
+   
+   Load order: LAST — this file wins all specificity battles intentionally.
+   Approach: Override with precision. Preserve function, elevate form.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. DESIGN TOKENS ────────────────────────────────────────────────────── */
+:root {
+  /* Primary palette */
+  --gds-pine:        #204A43;   /* primary green — sidebar, CTAs              */
+  --gds-pine-deep:   #183B35;   /* pine pressed/hover depth                   */
+  --gds-pine-mid:    #2C5F57;   /* pine mid — active states, accents          */
+  --gds-pine-light:  #366158;   /* pine hover on dark bg                      */
+  --gds-teal:        #4D8A86;   /* interactive accent — links, focus, tags    */
+  --gds-teal-soft:   #EAF3F2;   /* teal tint surface                          */
+  --gds-clay:        #B8744F;   /* warm accent — sparingly, CTAs alt          */
+  --gds-emerald:     #2D7A55;   /* success, positive, connected               */
+
+  /* Neutrals */
+  --gds-ink:         #1F2A2B;   /* primary text                               */
+  --gds-ink-2:       #2D3E3F;   /* secondary text                             */
+  --gds-muted:       #5E6E6F;   /* tertiary text / metadata                   */
+  --gds-subtle:      #8C9E9E;   /* placeholder / disabled text                */
+  --gds-amber:       #7A5C10;   /* warning / caution                          */
+  --gds-rose:        #7A2E20;   /* danger / destructive                       */
+
+  /* Surfaces */
+  --gds-bg:          #F4F1EC;   /* warm off-white page background             */
+  --gds-bg-2:        #EDE9E2;   /* slightly deeper warm bg for contrast areas */
+  --gds-surface:     #FFFFFF;   /* card / panel — clean white                 */
+  --gds-surface-2:   #FAFAF8;   /* alt row / secondary surface                */
+  --gds-surface-3:   #F2EFE9;   /* hover surface / tertiary                  */
+
+  /* Borders */
+  --gds-line:        #E0DDD5;   /* default border                             */
+  --gds-line-2:      #CCC9C0;   /* stronger divider                           */
+  --gds-line-3:      #D4D0C7;   /* medium divider                             */
+
+  /* Shadows */
+  --gds-shadow-xs:   0 1px 3px rgba(31,42,43,.05);
+  --gds-shadow-sm:   0 3px 10px rgba(31,42,43,.07);
+  --gds-shadow-md:   0 8px 24px rgba(31,42,43,.09);
+  --gds-shadow-lg:   0 20px 52px rgba(31,42,43,.12);
+  --gds-shadow-card: 0 1px 3px rgba(31,42,43,.06), 0 4px 12px rgba(31,42,43,.05);
+
+  /* Radius */
+  --gds-r-xs: 5px;
+  --gds-r-sm: 8px;
+  --gds-r-md: 12px;
+  --gds-r-lg: 16px;
+  --gds-r-xl: 22px;
+
+  /* Typography */
+  --gds-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Sidebar */
+  --gds-sidebar-w:   264px;
+  --gds-sidebar-bg:  #204A43;
+  --gds-topbar-h:    56px;
+}
+
+/* ─── 2. GLOBAL RESET UPGRADES ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  font-family: var(--gds-font) !important;
+  background: var(--gds-bg) !important;
+  color: var(--gds-ink) !important;
+  margin: 0;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* Remove all emoji-font fallbacks from heading/body text */
+h1, h2, h3, h4, h5, h6, p, span, div, button, label {
+  font-family: var(--gds-font);
+}
+
+/* Typography scale */
+h1 { font-size: clamp(22px, 3vw, 32px); font-weight: 800; letter-spacing: -.03em; line-height: 1.15; margin: 0 0 8px; color: var(--gds-ink); }
+h2 { font-size: 20px; font-weight: 750; letter-spacing: -.025em; line-height: 1.25; margin: 0 0 10px; color: var(--gds-ink); }
+h3 { font-size: 16px; font-weight: 700; letter-spacing: -.02em; line-height: 1.3; margin: 0 0 8px; color: var(--gds-ink); }
+h4 { font-size: 14px; font-weight: 700; letter-spacing: -.01em; margin: 0 0 6px; color: var(--gds-ink); }
+p  { line-height: 1.6; margin: 0 0 10px; }
+
+/* ─── 3. APP SHELL ──────────────────────────────────────────────────────── */
+.app-shell {
+  display: grid !important;
+  grid-template-columns: var(--gds-sidebar-w) 1fr !important;
+  min-height: 100vh;
+}
+
+.main {
+  background: var(--gds-bg) !important;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 0;
+}
+
+/* ─── 4. SIDEBAR ────────────────────────────────────────────────────────── */
+.sidebar {
+  background: var(--gds-sidebar-bg) !important;
+  width: var(--gds-sidebar-w) !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: sticky !important;
+  top: 0 !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  border-right: none !important;
+  flex-shrink: 0;
+}
+
+/* Slim scrollbar */
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 3px; }
+
+/* Brand block */
+.brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 20px 16px 18px !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+  margin-bottom: 0 !important;
+  flex-shrink: 0;
+}
+
+.brand-mark {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 9px !important;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: transparent !important;
+  border: none !important;
+}
+.brand-mark img {
+  width: 36px !important;
+  height: 36px !important;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  /* Remove any brightness filter that makes logo invisible */
+  filter: none !important;
+}
+
+.brand-name {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.025em !important;
+  color: #FFFFFF !important;
+  line-height: 1.15 !important;
+}
+.brand-subtitle {
+  font-size: 10px !important;
+  color: rgba(255,255,255,.38) !important;
+  font-weight: 500 !important;
+  margin-top: 1px !important;
+  letter-spacing: .01em !important;
+}
+.brand-kicker {
+  display: none !important; /* remove decorative kicker text */
+}
+
+/* Nav container */
+.nav {
+  padding: 10px 10px 8px !important;
+  flex: 1;
+  gap: 0 !important;
+}
+
+/* Nav section headers */
+.nav-summary {
+  padding: 10px 8px 4px !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: .1em !important;
+  text-transform: uppercase !important;
+  color: rgba(255,255,255,.3) !important;
+  border-radius: 4px !important;
+  user-select: none;
+  cursor: default !important;
+}
+.nav-summary::-webkit-details-marker { display: none; }
+.nav-summary::after { display: none !important; } /* remove chevron */
+.nav-summary:hover { color: rgba(255,255,255,.42) !important; background: transparent !important; }
+.nav-group[open] > .nav-summary { color: rgba(255,255,255,.3) !important; }
+
+/* Nav items */
+.nav-items { padding: 0 0 6px !important; width: 100%; }
+
+.nav-item {
+  background: transparent !important;
+  border: none !important;
+  border-left: 2px solid transparent !important;
+  border-radius: 0 !important;
+  color: rgba(255,255,255,.55) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 7px 12px 7px 12px !important;
+  width: 100% !important;
+  text-align: left !important;
+  cursor: pointer;
+  transition: color .14s, background .14s, border-color .14s !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -.01em;
+  position: relative !important;
+}
+.nav-item:hover {
+  color: rgba(255,255,255,.85) !important;
+  background: rgba(255,255,255,.07) !important;
+  border-left-color: rgba(255,255,255,.15) !important;
+}
+.nav-item.active {
+  color: #FFFFFF !important;
+  background: rgba(255,255,255,.12) !important;
+  border-left: 2px solid #7EC8A4 !important;
+  font-weight: 650 !important;
+}
+.nav-item.active::before { display: none !important; } /* remove old pseudo bar */
+
+/* AI Assistant — subtle purple tint */
+.nav-item[data-view="ai"] {
+  color: rgba(147, 131, 220, .75) !important;
+}
+.nav-item[data-view="ai"]:hover {
+  color: rgba(167, 151, 240, .95) !important;
+}
+
+/* Nav group spacing */
+.nav-group { margin-bottom: 4px !important; }
+
+/* ─── 5. SIDEBAR FOOTER / USER CARD ─────────────────────────────────────── */
+.sidebar-footer {
+  margin-top: auto !important;
+  padding: 12px 12px !important;
+  border-top: 1px solid rgba(255,255,255,.07) !important;
+  background: rgba(0,0,0,.12) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-shrink: 0;
+  color: rgba(255,255,255,.45) !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  min-height: 0 !important;
+}
+#sidebarAvatarInitials {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: rgba(255,255,255,.14) !important;
+  color: rgba(255,255,255,.88) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  flex-shrink: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#sidebarUserName {
+  font-size: 12.5px !important;
+  font-weight: 650 !important;
+  color: rgba(255,255,255,.78) !important;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#sidebarUserRole {
+  font-size: 11px !important;
+  color: rgba(255,255,255,.38) !important;
+  display: block;
+}
+
+/* ─── 6. TOPBAR ──────────────────────────────────────────────────────────── */
+.topbar {
+  height: var(--gds-topbar-h) !important;
+  background: var(--gds-surface) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 15 !important;
+  box-shadow: 0 1px 0 rgba(31,42,43,.06) !important;
+}
+
+/* Search bar — constrained, refined */
+.search-wrap {
+  flex: 0 1 380px !important;
+  max-width: 380px !important;
+  min-width: 180px !important;
+  position: relative !important;
+}
+.search-wrap input,
+#searchInput {
+  width: 100% !important;
+  background: var(--gds-surface-2) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-sm) !important;
+  padding: 7px 12px 7px 34px !important;
+  font-size: 13px !important;
+  color: var(--gds-ink) !important;
+  transition: border-color .15s, box-shadow .15s !important;
+  outline: none !important;
+  height: 34px !important;
+  box-shadow: none !important;
+}
+.search-wrap input:focus,
+#searchInput:focus {
+  background: var(--gds-surface) !important;
+  border-color: var(--gds-teal) !important;
+  box-shadow: 0 0 0 3px rgba(77,138,134,.14) !important;
+}
+.search-wrap input::placeholder { color: var(--gds-subtle) !important; }
+.search-wrap::before {
+  left: 11px !important;
+  width: 13px !important;
+  height: 13px !important;
+}
+
+/* Topbar spacer */
+.topbar .search-wrap + * { margin-left: auto; }
+/* Override any flex:1 on search that made it expand to full width */
+.topbar > .search-wrap { flex: 0 1 380px !important; }
+/* Push right-side controls to far right */
+.topbar > *:not(.menu-btn):not(.search-wrap):first-of-type { margin-left: auto; }
+/* Actually: use a spacer approach */
+.search-wrap { margin-right: auto; }
+
+/* New button */
+.topbar-new-btn {
+  background: var(--gds-pine) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: var(--gds-r-sm) !important;
+  padding: 7px 13px !important;
+  font-size: 12.5px !important;
+  font-weight: 650 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  transition: background .14s !important;
+  box-shadow: 0 1px 4px rgba(32,74,67,.2) !important;
+  white-space: nowrap;
+  height: 32px;
+}
+.topbar-new-btn:hover {
+  background: var(--gds-pine-deep) !important;
+  box-shadow: 0 3px 10px rgba(32,74,67,.28) !important;
+}
+
+/* Settings button */
+.topbar-settings {
+  background: transparent !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-sm) !important;
+  padding: 6px 12px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: var(--gds-muted) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap;
+  height: 32px;
+  transition: background .12s, color .12s !important;
+}
+.topbar-settings:hover {
+  background: var(--gds-surface-2) !important;
+  color: var(--gds-ink) !important;
+  border-color: var(--gds-line-2) !important;
+}
+
+/* Dropdown */
+.topbar-new-dropdown {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-md) !important;
+  box-shadow: var(--gds-shadow-md) !important;
+  padding: 6px !important;
+}
+.tnd-item {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--gds-ink) !important;
+  border-radius: var(--gds-r-xs) !important;
+  padding: 8px 10px !important;
+  gap: 8px !important;
+}
+.tnd-item:hover {
+  background: var(--gds-surface-3) !important;
+  color: var(--gds-pine) !important;
+}
+.tnd-section-label {
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: .09em !important;
+  color: var(--gds-subtle) !important;
+  padding: 4px 10px 6px !important;
+}
+
+/* ─── 7. VIEW / PAGE CONTAINER ───────────────────────────────────────────── */
+.view {
+  padding: 28px 32px !important;
+  max-width: 1360px !important;
+  width: 100%;
+  flex: 1;
+}
+
+/* ─── 8. PAGE HEADER PATTERN ─────────────────────────────────────────────── */
+.pl-title,
+h1.pl-title,
+[class*="page-title"] {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.03em !important;
+  color: var(--gds-ink) !important;
+  line-height: 1.2 !important;
+}
+.pl-subtitle {
+  font-size: 13px !important;
+  color: var(--gds-muted) !important;
+  font-weight: 400 !important;
+  margin-top: 2px !important;
+  letter-spacing: 0 !important;
+}
+.eyebrow {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: .1em !important;
+  text-transform: uppercase !important;
+  color: var(--gds-teal) !important;
+  margin-bottom: 6px !important;
+}
+
+/* ─── 9. CARD SYSTEM ─────────────────────────────────────────────────────── */
+.card {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-card) !important;
+  padding: 20px !important;
+  overflow: hidden;
+}
+.card.clickable:hover {
+  box-shadow: var(--gds-shadow-md) !important;
+  border-color: var(--gds-line-2) !important;
+  transform: translateY(-1px) !important;
+}
+.app-card {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-card) !important;
+  overflow: hidden;
+}
+.app-card::before {
+  content: '' !important;
+  display: block !important;
+  height: 3px !important;
+  background: linear-gradient(90deg, var(--gds-pine), var(--gds-teal)) !important;
+  opacity: .7 !important;
+}
+.app-card h2, .card h2.today-h2 {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: -.015em !important;
+  color: var(--gds-ink) !important;
+  margin: 0 0 14px !important;
+}
+
+/* ─── 10. BUTTONS ────────────────────────────────────────────────────────── */
+/* Primary */
+.primary-btn, .gw-btn-primary {
+  background: var(--gds-pine) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--gds-r-sm) !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  white-space: nowrap;
+  transition: background .14s, box-shadow .14s, transform .1s !important;
+  box-shadow: 0 1px 4px rgba(32,74,67,.2) !important;
+  line-height: 1 !important;
+  letter-spacing: -.01em !important;
+  min-height: 34px !important;
+}
+.primary-btn:hover, .gw-btn-primary:hover {
+  background: var(--gds-pine-deep) !important;
+  box-shadow: 0 4px 14px rgba(32,74,67,.28) !important;
+  transform: translateY(-1px) !important;
+  filter: none !important;
+}
+.primary-btn:active, .gw-btn-primary:active {
+  transform: translateY(0) !important;
+  box-shadow: none !important;
+}
+.primary-btn:focus-visible, .gw-btn-primary:focus-visible {
+  outline: 3px solid rgba(32,74,67,.4) !important;
+  outline-offset: 2px !important;
+}
+.primary-btn:disabled, .primary-btn[disabled],
+.gw-btn-primary:disabled {
+  opacity: .4 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+/* Secondary */
+.secondary-btn, .gw-btn-secondary {
+  background: var(--gds-surface) !important;
+  color: var(--gds-ink) !important;
+  border: 1px solid var(--gds-line-2) !important;
+  border-radius: var(--gds-r-sm) !important;
+  padding: 8px 15px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s, transform .1s !important;
+  min-height: 34px !important;
+  letter-spacing: -.01em !important;
+  box-shadow: var(--gds-shadow-xs) !important;
+}
+.secondary-btn:hover, .gw-btn-secondary:hover {
+  background: var(--gds-surface-3) !important;
+  border-color: var(--gds-line-3) !important;
+}
+.secondary-btn:active { transform: translateY(0) !important; }
+.secondary-btn:disabled, .secondary-btn[disabled] {
+  opacity: .4 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+/* Danger */
+.danger-btn, .gw-btn-danger, .gw-btn-danger-ghost {
+  background: transparent !important;
+  color: #7A2E20 !important;
+  border: 1px solid rgba(122,46,32,.25) !important;
+  border-radius: var(--gds-r-sm) !important;
+  padding: 8px 15px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  transition: background .12s, border-color .12s !important;
+  min-height: 34px !important;
+}
+.danger-btn:hover, .gw-btn-danger:hover, .gw-btn-danger-ghost:hover {
+  background: rgba(122,46,32,.06) !important;
+  border-color: rgba(122,46,32,.4) !important;
+}
+.danger-btn:focus-visible {
+  outline: 3px solid rgba(122,46,32,.3) !important;
+  outline-offset: 2px !important;
+}
+
+/* Small modifier */
+.small.primary-btn, .small.secondary-btn, .small.danger-btn,
+.primary-btn.small, .secondary-btn.small, .danger-btn.small {
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  min-height: 30px !important;
+}
+
+/* ─── 11. FORM CONTROLS ──────────────────────────────────────────────────── */
+input[type=text],
+input[type=email],
+input[type=number],
+input[type=date],
+input[type=search],
+input[type=tel],
+input[type=url],
+input[type=password],
+select,
+textarea {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line-2) !important;
+  border-radius: var(--gds-r-sm) !important;
+  color: var(--gds-ink) !important;
+  font-size: 13px !important;
+  font-family: var(--gds-font) !important;
+  padding: 8px 12px !important;
+  outline: none !important;
+  transition: border-color .15s, box-shadow .15s !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gds-teal) !important;
+  box-shadow: 0 0 0 3px rgba(77,138,134,.14) !important;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--gds-subtle) !important;
+}
+label {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--gds-ink-2) !important;
+  display: block;
+  margin-bottom: 5px;
+}
+.form label span {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--gds-ink-2) !important;
+}
+
+/* ─── 12. STATUS CHIPS / BADGES ─────────────────────────────────────────── */
+.status-chip,
+.badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 9px !important;
+  border-radius: 5px !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  border: 1px solid transparent !important;
+  white-space: nowrap;
+  letter-spacing: -.005em !important;
+}
+.status-chip.sold    { background: #EAF1EE !important; color: #1A4740 !important; border-color: #C0DCCB !important; }
+.status-chip.active  { background: #EAF3F2 !important; color: #215E5A !important; border-color: #B4D4D2 !important; }
+.status-chip.overdue { background: #FAE8E4 !important; color: #7A2E20 !important; border-color: #EEC3B9 !important; }
+.status-chip.pending { background: #FAF6E8 !important; color: #7A5C10 !important; border-color: #EAD99C !important; }
+.status-chip.lost    { background: var(--gds-surface-3) !important; color: var(--gds-muted) !important; border-color: var(--gds-line-2) !important; }
+.badge {
+  background: var(--gds-teal-soft) !important;
+  color: var(--gds-pine) !important;
+  border-color: rgba(77,138,134,.2) !important;
+  border-radius: 5px !important;
+}
+
+/* ─── 13. TOAST NOTIFICATIONS ────────────────────────────────────────────── */
+.toast {
+  position: fixed !important;
+  right: 20px !important;
+  bottom: 20px !important;
+  background: var(--gds-ink) !important;
+  color: #F4F1EC !important;
+  border-radius: var(--gds-r-md) !important;
+  padding: 11px 18px !important;
+  box-shadow: var(--gds-shadow-lg) !important;
+  font-size: 13px !important;
+  font-weight: 550 !important;
+  z-index: 9999 !important;
+  max-width: 360px !important;
+  letter-spacing: -.01em !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255,255,255,.06) !important;
+}
+
+/* ─── 14. STAT TILES ─────────────────────────────────────────────────────── */
+.stat, .kpi-card, .gw-kpi-card, .dash-tile {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  padding: 18px 20px !important;
+  box-shadow: var(--gds-shadow-card) !important;
+  position: relative !important;
+  overflow: hidden;
+}
+.stat::before, .stat::after { display: none !important; }
+.stat span { font-size: 11px !important; font-weight: 700 !important; color: var(--gds-muted) !important; text-transform: uppercase !important; letter-spacing: .08em !important; display: block !important; margin-bottom: 6px !important; }
+.stat strong { font-size: 28px !important; font-weight: 900 !important; letter-spacing: -.04em !important; color: var(--gds-ink) !important; line-height: 1 !important; display: block !important; }
+.stat.bad strong { color: #7A2E20 !important; }
+.dash-tile strong { font-size: 24px !important; font-weight: 800 !important; color: var(--gds-ink) !important; }
+.dash-tile span { font-size: 11px !important; color: var(--gds-muted) !important; text-transform: uppercase !important; letter-spacing: .07em !important; }
+
+/* Dashboard KPI cards — light theme (override dark) */
+.kpi-card, .gw-kpi-card {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+}
+.kpi-card .kpi-label { color: var(--gds-muted) !important; }
+.kpi-card .kpi-value { color: var(--gds-ink) !important; font-size: 26px !important; }
+.kpi-card .kpi-value.green  { color: var(--gds-emerald) !important; }
+.kpi-card .kpi-value.red    { color: #7A2E20 !important; }
+.kpi-card .kpi-value.cyan   { color: var(--gds-teal) !important; }
+.kpi-card .kpi-value.amber  { color: var(--gds-amber) !important; }
+.kpi-card .kpi-sub { color: var(--gds-muted) !important; }
+.kpi-card:hover { border-color: var(--gds-line-2) !important; box-shadow: var(--gds-shadow-sm) !important; }
+
+/* ─── 15. EMPTY STATE COMPONENTS ─────────────────────────────────────────── */
+.empty-state {
+  background: var(--gds-surface) !important;
+  border: 1.5px dashed var(--gds-line-2) !important;
+  border-radius: var(--gds-r-xl) !important;
+  padding: 48px 28px !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: none !important;
+}
+.empty-state .empty-icon {
+  font-size: 0 !important; /* hide emoji icons */
+  width: 48px !important;
+  height: 48px !important;
+  background: var(--gds-surface-3) !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 16px !important;
+  color: var(--gds-muted) !important;
+}
+.empty-state .empty-icon svg { width: 22px !important; height: 22px !important; }
+.empty-state .empty-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: var(--gds-ink) !important;
+  margin-bottom: 6px !important;
+  letter-spacing: -.02em !important;
+}
+.empty-state .empty-body {
+  color: var(--gds-muted) !important;
+  font-size: 13.5px !important;
+  max-width: 300px !important;
+  line-height: 1.6 !important;
+  margin: 0 auto !important;
+}
+.empty-state .empty-cta { margin-top: 20px !important; }
+
+/* ─── 16. TABLES ──────────────────────────────────────────────────────────── */
+.gw-data-table, table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  font-size: 13px !important;
+}
+.gw-data-table th, table th {
+  background: var(--gds-surface-2) !important;
+  color: var(--gds-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: .07em !important;
+  text-transform: uppercase !important;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+  white-space: nowrap;
+}
+.gw-data-table td, table td {
+  padding: 11px 14px !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+  color: var(--gds-ink) !important;
+  vertical-align: middle !important;
+}
+.gw-table-row:hover td, .gw-data-table tr:hover td, table tbody tr:hover td {
+  background: var(--gds-surface-2) !important;
+}
+
+/* ─── 17. SECTION HEADS ──────────────────────────────────────────────────── */
+.section-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 16px !important;
+  padding-bottom: 12px !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+}
+.section-head h2 {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: -.015em !important;
+  color: var(--gds-ink) !important;
+  margin: 0 !important;
+}
+
+/* ─── 18. PIPELINE / KANBAN ──────────────────────────────────────────────── */
+/* Kanban view — preserve the flex layout from Section 37 */
+.kanban {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 14px !important;
+  align-items: flex-start !important;
+  overflow-x: auto !important;
+  padding-bottom: 12px !important;
+}
+.kanban-col {
+  flex: 0 0 300px !important;
+  min-width: 0;
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  padding: 14px !important;
+  box-shadow: var(--gds-shadow-xs) !important;
+}
+.kanban-col h3 {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .07em !important;
+  text-transform: uppercase !important;
+  color: var(--gds-muted) !important;
+  margin: 0 0 12px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  gap: 6px !important;
+}
+
+/* Opp cards inside kanban */
+.opp-card {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-md) !important;
+  padding: 12px 14px 12px 15px !important;
+  box-shadow: var(--gds-shadow-xs) !important;
+  margin-bottom: 8px !important;
+  cursor: pointer;
+  transition: box-shadow .14s, border-color .14s, transform .12s !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.opp-card:hover {
+  box-shadow: var(--gds-shadow-md) !important;
+  border-color: var(--gds-line-2) !important;
+  transform: translateY(-1px) !important;
+}
+.opp-card h3 {
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  color: var(--gds-ink) !important;
+  margin: 0 0 4px !important;
+  letter-spacing: -.01em !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+.opp-card p, .opp-card .muted {
+  color: var(--gds-muted) !important;
+  font-size: 12px !important;
+}
+
+/* ─── 19. PIPELINE LIST VIEW ─────────────────────────────────────────────── */
+.pl-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+/* Pipeline toolbar refinement */
+.pl-toolbar {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-xs) !important;
+  padding: 8px 12px !important;
+  gap: 8px !important;
+}
+
+/* ─── 20. MINI ROWS (Today page) ─────────────────────────────────────────── */
+.mini-row {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-md) !important;
+  margin-bottom: 6px !important;
+  padding: 11px 14px !important;
+}
+.mini-row:hover {
+  background: var(--gds-surface-2) !important;
+  border-color: var(--gds-line-2) !important;
+}
+.mini-row strong { color: var(--gds-ink) !important; font-size: 13px !important; font-weight: 650 !important; }
+.mini-row em     { color: var(--gds-muted) !important; font-size: 12px !important; }
+
+/* ─── 21. CHECK ITEMS ────────────────────────────────────────────────────── */
+.check-item {
+  border-bottom: 1px solid var(--gds-line) !important;
+  padding: 10px 4px !important;
+  transition: background .1s !important;
+}
+.check-item:hover { background: var(--gds-surface-2) !important; }
+.check-item input { accent-color: var(--gds-pine) !important; }
+
+/* ─── 22. MODALS ─────────────────────────────────────────────────────────── */
+.sold-modal, .gw-modal-card {
+  background: var(--gds-surface) !important;
+  border-radius: var(--gds-r-xl) !important;
+  box-shadow: var(--gds-shadow-lg) !important;
+  border: 1px solid var(--gds-line) !important;
+}
+.sold-modal h2 { color: var(--gds-ink) !important; font-weight: 800 !important; letter-spacing: -.03em !important; }
+.sold-modal-backdrop {
+  background: rgba(31,42,43,.55) !important;
+  backdrop-filter: blur(2px) !important;
+}
+
+/* ─── 23. HERO SECTION ───────────────────────────────────────────────────── */
+.hero {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-xl) !important;
+  box-shadow: var(--gds-shadow-sm) !important;
+  overflow: hidden;
+}
+.hero::before, .hero::after { display: none !important; }
+
+/* Hero panel (dark card inside hero) */
+.hero-panel {
+  background: var(--gds-pine) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-md) !important;
+}
+.hero-panel::after { opacity: .1 !important; }
+.hero-panel h3 { color: #fff !important; }
+.hero-panel .muted { color: rgba(255,255,255,.55) !important; }
+
+/* ─── 24. SCRIPT BOX ─────────────────────────────────────────────────────── */
+.script-box {
+  background: var(--gds-surface-2) !important;
+  border-left: 4px solid var(--gds-teal) !important;
+  border-radius: var(--gds-r-md) !important;
+  padding: 16px 18px !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+}
+
+/* ─── 25. TABS ───────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex !important;
+  gap: 4px !important;
+  border-bottom: 2px solid var(--gds-line) !important;
+  margin: 0 0 20px !important;
+  padding: 0 !important;
+  flex-wrap: wrap !important;
+}
+.tab {
+  border: none !important;
+  background: transparent !important;
+  color: var(--gds-muted) !important;
+  border-radius: 0 !important;
+  padding: 9px 14px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  cursor: pointer;
+  transition: color .14s !important;
+  border-bottom: 2px solid transparent !important;
+  margin-bottom: -2px !important;
+}
+.tab:hover { color: var(--gds-ink) !important; }
+.tab.active {
+  background: transparent !important;
+  color: var(--gds-pine) !important;
+  border-bottom-color: var(--gds-pine) !important;
+  font-weight: 700 !important;
+}
+
+/* Lead tab bar */
+.lead-tab-bar {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-md) !important;
+  padding: 4px !important;
+}
+.lead-tab {
+  color: var(--gds-muted) !important;
+  border-radius: var(--gds-r-sm) !important;
+  font-size: 12.5px !important;
+  font-weight: 550 !important;
+  padding: 7px 14px !important;
+  gap: 6px !important;
+}
+.lead-tab:hover { color: var(--gds-ink) !important; background: var(--gds-surface-2) !important; }
+.lead-tab-active {
+  background: var(--gds-pine) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(32,74,67,.25) !important;
+}
+.lead-tab-active:hover { color: #fff !important; background: var(--gds-pine) !important; }
+
+/* ─── 26. INTEGRATIONS PANELS ────────────────────────────────────────────── */
+.gw-int-panel {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-card) !important;
+}
+.gw-info-strip {
+  background: var(--gds-surface-2) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-md) !important;
+}
+.int-list-row {
+  background: var(--gds-surface-2) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-sm) !important;
+}
+.int-list-row:hover { background: var(--gds-surface-3) !important; }
+.int-list-row-title { color: var(--gds-ink) !important; }
+.int-list-row-meta  { color: var(--gds-muted) !important; }
+.int-list-row-link  { color: var(--gds-teal) !important; border-color: var(--gds-line) !important; }
+.int-list-row-link:hover { background: var(--gds-teal-soft) !important; }
+
+/* ─── 27. REVENUE / FINANCIAL PANELS ─────────────────────────────────────── */
+/* Override dark-only surfaces for financial hub */
+.rev-editor-table, .div-entry-table {
+  font-size: 13px !important;
+}
+.rev-editor-table thead tr,
+.div-entry-table th {
+  background: var(--gds-surface-2) !important;
+  color: var(--gds-muted) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+}
+.rev-editor-table tbody tr:hover,
+.div-entry-table tbody tr:hover {
+  background: var(--gds-surface-2) !important;
+}
+.rev-editor-table td,
+.div-entry-table td {
+  color: var(--gds-ink) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+}
+.rev-editor-input {
+  background: var(--gds-surface-2) !important;
+  border: 1px solid var(--gds-line-2) !important;
+  color: var(--gds-ink) !important;
+}
+.rev-editor-input:focus { border-color: var(--gds-teal) !important; }
+.rev-variance-pos { color: var(--gds-emerald) !important; }
+.rev-variance-neg { color: #7A2E20 !important; }
+.fin-tab-btn { border-radius: var(--gds-r-sm) !important; }
+.fin-tab-btn.active {
+  background: var(--gds-pine) !important;
+  border-color: var(--gds-pine) !important;
+  color: #fff !important;
+}
+.fin-tab-btn:not(.active) {
+  background: var(--gds-surface-2) !important;
+  border: 1px solid var(--gds-line) !important;
+  color: var(--gds-muted) !important;
+}
+.fin-tab-btn:hover:not(.active) {
+  background: var(--gds-surface-3) !important;
+  color: var(--gds-ink) !important;
+  border-color: var(--gds-line-2) !important;
+}
+
+/* P&L drop zone */
+.pnl-drop-zone {
+  background: var(--gds-surface-2) !important;
+  border-color: var(--gds-line-2) !important;
+}
+.pnl-drop-zone:hover { border-color: var(--gds-teal) !important; }
+
+/* ─── 28. COMMISSION PANELS ──────────────────────────────────────────────── */
+.gw-comm-panel, .gw-sim-panel {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-card) !important;
+}
+.gw-sim-header {
+  border-bottom: 1px solid var(--gds-line) !important;
+  background: var(--gds-surface-2) !important;
+  padding: 14px 18px !important;
+}
+
+/* Commission tables on white background — fix dark-themed text */
+.gw-comm-panel [style*="color:#E8E4D9"],
+.gw-comm-panel [style*="color: #E8E4D9"],
+.gw-sim-panel  [style*="color:#E8E4D9"],
+.gw-sim-panel  [style*="color: #E8E4D9"] {
+  color: var(--gds-ink) !important;
+}
+.gw-comm-panel [style*="color:#6F7E6A"],
+.gw-sim-panel  [style*="color:#6F7E6A"] {
+  color: var(--gds-muted) !important;
+}
+.gw-comm-panel [style*="color:#5C6B58"],
+.gw-sim-panel  [style*="color:#5C6B58"] {
+  color: var(--gds-muted) !important;
+}
+/* Commission panel background overrides — was dark surface */
+.gw-comm-panel [style*="background:#113931"],
+.gw-sim-panel  [style*="background:#113931"] {
+  background: var(--gds-surface-2) !important;
+}
+.gw-comm-panel [style*="background:var(--gw-surface-3)"],
+.gw-sim-panel  [style*="background:var(--gw-surface-3)"] {
+  background: var(--gds-surface-3) !important;
+}
+
+/* ─── 29. USER MANAGEMENT ────────────────────────────────────────────────── */
+.gw-um-user-row {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  margin-bottom: 8px !important;
+  overflow: hidden !important;
+}
+.gw-um-role-card {
+  background: var(--gds-surface) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-xs) !important;
+}
+.gw-um-tab-nav {
+  background: var(--gds-surface-2) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+}
+.gw-um-form-card {
+  background: var(--gds-surface) !important;
+  border-radius: var(--gds-r-xl) !important;
+  border: 1px solid var(--gds-line) !important;
+  box-shadow: var(--gds-shadow-md) !important;
+}
+
+/* ─── 30. PILL / TAG PATTERNS ────────────────────────────────────────────── */
+.pill {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line-2) !important;
+  border-radius: var(--gds-r-sm) !important;
+  color: var(--gds-ink-2) !important;
+  font-weight: 600 !important;
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+}
+
+/* ─── 31. TIMELINE (lead detail) ─────────────────────────────────────────── */
+.timeline::before { background: var(--gds-line-2) !important; }
+
+/* ─── 32. SPINNER ────────────────────────────────────────────────────────── */
+.spinner {
+  border-color: var(--gds-line-2) !important;
+  border-top-color: var(--gds-teal) !important;
+}
+
+/* ─── 33. TOOL LIST ──────────────────────────────────────────────────────── */
+.tool-list button {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-md) !important;
+  color: var(--gds-pine) !important;
+  font-weight: 600 !important;
+  box-shadow: var(--gds-shadow-xs) !important;
+}
+.tool-list button:hover {
+  background: var(--gds-surface-3) !important;
+  border-color: var(--gds-line-2) !important;
+}
+
+/* ─── 34. COMMS BOARD (dark surface — intentional exception) ─────────────── */
+/* Comms board stays dark — it's intentionally immersive */
+.comms-board { /* keep dark */ }
+
+/* ─── 35. SEARCH RESULTS ─────────────────────────────────────────────────── */
+.search-results {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-md) !important;
+}
+.result {
+  border-radius: var(--gds-r-sm) !important;
+  background: transparent !important;
+}
+.result:hover { background: var(--gds-surface-3) !important; }
+.result-type { color: var(--gds-teal) !important; }
+.result-title { color: var(--gds-ink) !important; font-weight: 700 !important; }
+.result-text  { color: var(--gds-muted) !important; }
+
+/* ─── 36. PAGE PADDING CONSISTENCY ──────────────────────────────────────── */
+/* Ensure content is always wrapped with consistent space */
+.view > * + * { margin-top: 20px; }
+
+/* ─── 37. RESTRICTED / ACCESS STATES ────────────────────────────────────── */
+/* These states should feel like premium cards, not floating text */
+.access-restricted-state,
+[class*="restricted"] > div:first-child,
+.rep-locked-view {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-xl) !important;
+  box-shadow: var(--gds-shadow-sm) !important;
+  padding: 48px 36px !important;
+  text-align: center !important;
+  max-width: 520px !important;
+  margin: 40px auto !important;
+}
+
+/* ─── 38. ACADEMY / TRAINING ─────────────────────────────────────────────── */
+/* Keep academy cards clean and structured */
+.academy-card, [class*="academy"] .card {
+  background: var(--gds-surface) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-card) !important;
+  border: 1px solid var(--gds-line) !important;
+}
+
+/* ─── 39. MUTED / META TEXT HELPERS ──────────────────────────────────────── */
+.muted, .meta, .small-text, .lede { color: var(--gds-muted) !important; }
+.lede { font-size: 15px !important; line-height: 1.65 !important; max-width: 620px !important; }
+.meta { font-size: 12px !important; }
+
+/* ─── 40. GRID HELPERS ───────────────────────────────────────────────────── */
+.grid-2, .grid-3, .grid-4 { display: grid !important; gap: 16px !important; }
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+
+/* ─── 41. DASHBOARD STRIP ────────────────────────────────────────────────── */
+.dashboard-strip { gap: 14px !important; }
+
+/* ─── 42. RESULT BOX ─────────────────────────────────────────────────────── */
+.result-box {
+  background: var(--gds-teal-soft) !important;
+  border: 1px solid rgba(77,138,134,.2) !important;
+  border-radius: var(--gds-r-md) !important;
+}
+
+/* ─── 43. GW-FLAG PANEL / DARK CARD OVERRIDES ───────────────────────────── */
+/* On light theme, dark surfaces should become light panels */
+.gw-flag-panel {
+  background: var(--gds-surface-2) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+}
+.gw-flag-panel [style*="color:#E8E4D9"] { color: var(--gds-ink) !important; }
+.gw-flag-panel [style*="color:#6F7E6A"] { color: var(--gds-muted) !important; }
+
+/* ─── 44. INPUT FOCUS RING CONSISTENCY ───────────────────────────────────── */
+button:focus-visible {
+  outline: 2px solid rgba(32,74,67,.45) !important;
+  outline-offset: 2px !important;
+}
+a:focus-visible {
+  outline: 2px solid rgba(32,74,67,.4) !important;
+  outline-offset: 2px !important;
+}
+
+/* ─── 45. SCROLLBAR REFINEMENT (global) ─────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gds-line-2); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gds-line-3); }
+
+/* ─── 46. LINK STYLING ───────────────────────────────────────────────────── */
+a { color: var(--gds-teal); text-decoration: none; }
+a:hover { color: var(--gds-pine); text-decoration: underline; }
+
+/* ─── 47. LOADING STATES ─────────────────────────────────────────────────── */
+.btn-loading {
+  position: relative !important;
+  pointer-events: none !important;
+  opacity: .75 !important;
+}
+.btn-loading::after {
+  content: '' !important;
+  position: absolute !important;
+  right: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 13px !important;
+  height: 13px !important;
+  border: 2px solid rgba(255,255,255,.3) !important;
+  border-top-color: #fff !important;
+  border-radius: 50% !important;
+  animation: gds-spin .7s linear infinite !important;
+}
+@keyframes gds-spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+/* ─── 48. FORM GRID ──────────────────────────────────────────────────────── */
+.form-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px 16px !important;
+}
+
+/* ─── 49. STAGE NUMBER BADGE ─────────────────────────────────────────────── */
+.stage-number {
+  background: var(--gds-pine) !important;
+  border-radius: var(--gds-r-sm) !important;
+  box-shadow: 0 2px 8px rgba(32,74,67,.2) !important;
+}
+
+/* ─── 50. CATEGORY TILE (Add Lead) ───────────────────────────────────────── */
+.cat-tile {
+  background: var(--gds-surface) !important;
+  border: 1.5px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-md) !important;
+  transition: border-color .14s, background .14s !important;
+}
+.cat-tile:hover {
+  border-color: var(--gds-line-2) !important;
+  background: var(--gds-surface-2) !important;
+}
+.cat-tile.active,
+.cat-tile[style*="background:#204A43"],
+.cat-tile[style*="border-color:#204A43"] {
+  background: var(--gds-pine) !important;
+  border-color: var(--gds-pine) !important;
+  color: #fff !important;
+}
+
+/* ─── 51. GW-BTN-PRIMARY (Settings pages) ───────────────────────────────── */
+.gw-btn-primary {
+  background: var(--gds-pine) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: var(--gds-r-sm) !important;
+}
+.gw-btn-primary:hover {
+  background: var(--gds-pine-deep) !important;
+}
+
+/* ─── 52. SUPER ADMIN BUTTON (in sidebar) ────────────────────────────────── */
+#superAdminNavBtn {
+  color: #7EC8A4 !important;
+  font-weight: 650 !important;
+  border-top: 1px solid rgba(255,255,255,.08) !important;
+  margin-top: 6px !important;
+  padding-top: 10px !important;
+}
+#superAdminNavBtn:hover {
+  background: rgba(126,200,164,.08) !important;
+  color: #A0D8BC !important;
+}
+
+/* ─── 53. NOTE CARDS ─────────────────────────────────────────────────────── */
+.note {
+  border-bottom: 1px solid var(--gds-line) !important;
+  padding: 12px 0 !important;
+}
+.note time { color: var(--gds-muted) !important; font-size: 11px !important; font-weight: 600 !important; }
+.note p { color: var(--gds-ink) !important; }
+
+/* ─── 54. DYNAMIC TAG / LOCKED BADGE ────────────────────────────────────── */
+.dynamic-tag {
+  background: var(--gds-teal-soft) !important;
+  color: var(--gds-teal) !important;
+  border-radius: 4px !important;
+}
+.rev-locked-badge {
+  background: var(--gds-surface-3) !important;
+  color: var(--gds-muted) !important;
+}
+
+/* ─── 55. MOBILE RESPONSIVE ──────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .kanban { /* already flex */ }
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .dashboard-strip { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+@media (max-width: 920px) {
+  :root { --gds-sidebar-w: 264px; }
+  .app-shell { grid-template-columns: 1fr !important; }
+  .sidebar {
+    position: fixed !important;
+    transform: translateX(-100%) !important;
+    transition: transform .22s ease !important;
+    z-index: 20 !important;
+    box-shadow: var(--gds-shadow-lg) !important;
+  }
+  .sidebar.open { transform: translateX(0) !important; }
+  .menu-btn { display: inline-flex !important; align-items: center !important; justify-content: center !important; }
+  .view { padding: 16px !important; }
+  .grid-2, .grid-3, .grid-4, .form-grid { grid-template-columns: 1fr !important; }
+  .primary-btn, .secondary-btn, .danger-btn { min-height: 44px !important; }
+  select, input[type=text], input[type=number], input[type=date], input[type=email], textarea {
+    font-size: 16px !important; /* prevent iOS zoom */
+  }
+  .search-wrap { flex: 1 !important; max-width: none !important; }
+}
+
+@media print {
+  .sidebar, .topbar, .toast { display: none !important; }
+  .app-shell { display: block !important; }
+  .view { max-width: none !important; padding: 0 !important; }
+  .card { box-shadow: none !important; break-inside: avoid !important; }
+}
+
+/* ─── 56. EMOJI SUPPRESSION ──────────────────────────────────────────────── */
+/* Hide emoji-only content that's purely decorative */
+.empty-state .empty-icon:not(:has(svg)) {
+  font-size: 0 !important;
+  line-height: 0 !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ─── 57. PIPELINE VIEW WRAPPER ───────────────────────────────────────────── */
+/* The pipeline view can expand past max-width because it needs horizontal scroll */
+.kanban-view-outer { overflow-x: auto !important; }
+
+/* ─── 58. GW-SELECT ──────────────────────────────────────────────────────── */
+.gw-select {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line-2) !important;
+  border-radius: var(--gds-r-sm) !important;
+  color: var(--gds-ink) !important;
+  font-size: 13px !important;
+  padding: 7px 10px !important;
+}
+.gw-select:focus { border-color: var(--gds-teal) !important; box-shadow: 0 0 0 3px rgba(77,138,134,.14) !important; }
+
+/* ─── 59. PERM TABLE ─────────────────────────────────────────────────────── */
+.perm-table thead th { background: var(--gds-surface-2) !important; color: var(--gds-muted) !important; }
+.perm-table .perm-group-row td { background: var(--gds-surface-2) !important; color: var(--gds-muted) !important; }
+.perm-table tbody tr.perm-row:nth-child(even) { background: var(--gds-surface-2) !important; }
+.perm-table tbody tr.perm-row:hover { background: var(--gds-teal-soft) !important; }
+.perm-check input[type=checkbox] { accent-color: var(--gds-pine) !important; }
+
+/* ─── 60. OVERRIDE: No more blue gradient buttons ─────────────────────────── */
+/* Kill all gradient buttons from old system */
+.primary-btn,
+.tab.active,
+.lead-tab-active {
+  background-image: none !important;
+}
+
+/* ─── END GROUNDWORK DESIGN SYSTEM v1.0 ─────────────────────────────────── */

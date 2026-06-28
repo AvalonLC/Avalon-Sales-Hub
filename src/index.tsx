@@ -1267,6 +1267,7 @@ function getHtml(): string {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/premium.css?v=20260628gw6">
   <link rel="stylesheet" href="/static/styles.css?v=20260628gw6">
+  <link rel="stylesheet" href="/static/groundwork-design.css?v=20260628gw1">
 </head>
 <body>
 <div id="sidebarScrim" class="sidebar-scrim"></div>
@@ -1309,7 +1310,7 @@ function getHtml(): string {
           <button class="nav-item" data-view="templates" onclick="show('templates')">Email Templates</button>
           <button class="nav-item" data-view="objections" onclick="show('objections')">Objection Handling</button>
           <button class="nav-item" data-view="calculator" onclick="show('calculator')">Pricing Tools</button>
-          <button class="nav-item" data-view="ai" onclick="show('ai')" style="color:#6366f1;font-weight:600">AI Sales Assistant</button>
+          <button class="nav-item" data-view="ai" onclick="show('ai')">AI Sales Assistant</button>
         </div>
       </details>
 
@@ -1334,9 +1335,9 @@ function getHtml(): string {
 
     </nav>
     <div class="sidebar-footer" id="sidebarUserFooter">
-      <div style="width:32px;height:32px;border-radius:50%;background:var(--gw-pine);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0" id="sidebarAvatarInitials">TJ</div>
-      <div style="min-width:0">
-        <strong id="sidebarUserName" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">Tyler Jones</strong>
+      <div id="sidebarAvatarInitials">TJ</div>
+      <div style="min-width:0;flex:1">
+        <strong id="sidebarUserName">Tyler Jones</strong>
         <span id="sidebarUserRole">Operations Director</span>
       </div>
     </div>

@@ -1272,7 +1272,7 @@ window.gwCalEventClick = function(eventId) {
   </div>
   ${ev.description?`<div style="font-size:13px;color:var(--gw-muted);background:var(--gw-surface-3);border-radius:8px;padding:12px;margin-bottom:14px;line-height:1.6">${escapeHtml(ev.description)}</div>`:''}
   ${ev.attendees?.length?`<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#5C6B58;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Attendees</div>
-    ${ev.attendees.map(a=>`<div style="font-size:12px;color:#6F7E6A;padding:3px 0">${escapeHtml(a.displayName||a.email)} ${a.responseStatus==='accepted'?gwIcon('success',16):a.responseStatus==='declined'?'❌':a.responseStatus==='tentative'?gwIcon('thinking',16):'⏳'}</div>`).join('')}</div>`:''}
+    ${ev.attendees.map(a=>`<div style="font-size:12px;color:#6F7E6A;padding:3px 0">${escapeHtml(a.displayName||a.email)} ${a.responseStatus==='accepted'?gwIcon('success',16):a.responseStatus==='declined'?gwIcon('close',16):a.responseStatus==='tentative'?gwIcon('thinking',16):''}</div>`).join('')}</div>`:''}
   <div style="display:flex;gap:8px;flex-wrap:wrap">
     ${ev.htmlLink?`<a href="${escapeHtml(ev.htmlLink)}" target="_blank" rel="noopener" class="secondary-btn" style="font-size:12px">Open in Google Calendar →</a>`:''}
     <button class="secondary-btn" style="font-size:12px" onclick="gwEditEvent('${escapeHtml(ev.id)}')">${gwIcon('pencil',16)} Edit</button>
