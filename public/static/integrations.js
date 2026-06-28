@@ -951,7 +951,7 @@ window.gwSendReply = async function(threadId, lastMessageId) {
     const btn = document.querySelector('#gw-reply-box .primary-btn');
     if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
     await gmailSendEmail({ to: toAddr, subject: replySubj, body: body.replace(/\n/g,'<br>'), replyToMessageId: lastMessageId });
-    showIntToast('Reply sent gwIcon('success',16)');
+    showIntToast('Reply sent');
     document.getElementById('gw-reply-body').value = '';
     // Refresh the thread
     setTimeout(() => gwOpenThread(threadId), 800);
@@ -1105,7 +1105,7 @@ function gwRenderAgendaDay() {
 
   if (!todayEvs.length) {
     return '<div style="text-align:center;padding:56px 20px;background:var(--gw-surface-2);border-radius:10px;border:1px solid var(--gw-line)">' +
-           '<div style="font-size:36px;margin-bottom:12px">gwIcon('calendar',16)</div>' +
+           `<div style="font-size:36px;margin-bottom:12px">${gwIcon('calendar',16)}</div>` +
            '<div style="font-size:15px;font-weight:700;color:#6F7E6A">No events today</div>' +
            '<div style="font-size:13px;margin-top:6px;color:#6F7E6A">Your calendar is clear — enjoy the day.</div>' +
            '</div>';
@@ -1133,7 +1133,7 @@ function gwRenderAgendaDay() {
         onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-3)'">
         <div style="flex:1;min-width:0">
           <div style="font-size:14px;font-weight:700;color:#EDEAE0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(ev.summary||'(No title)')}</div>
-          <div style="font-size:12px;color:#6F7E6A;margin-top:4px">${timeStr}${ev.location?' · gwIcon('pin',16)'+escapeHtml(ev.location.slice(0,50)):''}</div>
+          <div style="font-size:12px;color:#6F7E6A;margin-top:4px">${timeStr}${ev.location?' · '+gwIcon('pin',16)+escapeHtml(ev.location.slice(0,50)):''}</div>
           ${ev.description?`<div style="font-size:12px;color:#6F7E6A;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(ev.description.slice(0,100))}</div>`:''}
         </div>
         <span style="font-size:10px;font-weight:700;color:#fff;background:${color};border-radius:10px;padding:3px 10px;flex-shrink:0;align-self:center">TODAY</span>
@@ -1265,7 +1265,7 @@ window.gwCalEventClick = function(eventId) {
       <div>
         <div style="font-weight:800;font-size:17px;color:#E8E4D9">${escapeHtml(ev.summary||'(No title)')}</div>
         <div style="font-size:12px;color:#6F7E6A;margin-top:4px">${timeStr}</div>
-        ${ev.location?`<div style="font-size:12px;color:#6F7E6A;margin-top:2px">gwIcon('pin',16) ${escapeHtml(ev.location)}</div>`:''}
+        ${ev.location?`<div style="font-size:12px;color:#6F7E6A;margin-top:2px">${gwIcon('pin',16)} ${escapeHtml(ev.location)}</div>`:''}
       </div>
     </div>
     <button onclick="document.getElementById('gw-event-modal').remove()" style="background:none;border:none;color:#6F7E6A;cursor:pointer;font-size:20px;padding:0 4px;flex-shrink:0">✕</button>
@@ -1275,8 +1275,8 @@ window.gwCalEventClick = function(eventId) {
     ${ev.attendees.map(a=>`<div style="font-size:12px;color:#6F7E6A;padding:3px 0">${escapeHtml(a.displayName||a.email)} ${a.responseStatus==='accepted'?gwIcon('success',16):a.responseStatus==='declined'?'❌':a.responseStatus==='tentative'?gwIcon('thinking',16):'⏳'}</div>`).join('')}</div>`:''}
   <div style="display:flex;gap:8px;flex-wrap:wrap">
     ${ev.htmlLink?`<a href="${escapeHtml(ev.htmlLink)}" target="_blank" rel="noopener" class="secondary-btn" style="font-size:12px">Open in Google Calendar →</a>`:''}
-    <button class="secondary-btn" style="font-size:12px" onclick="gwEditEvent('${escapeHtml(ev.id)}')">gwIcon('pencil',16) Edit</button>
-    <button class="danger-btn" style="font-size:12px" onclick="gwDeleteEvent('${escapeHtml(ev.id)}')">gwIcon('trash',16) Delete</button>
+    <button class="secondary-btn" style="font-size:12px" onclick="gwEditEvent('${escapeHtml(ev.id)}')">${gwIcon('pencil',16)} Edit</button>
+    <button class="danger-btn" style="font-size:12px" onclick="gwDeleteEvent('${escapeHtml(ev.id)}')">${gwIcon('trash',16)} Delete</button>
   </div>
 </div>`;
   document.body.appendChild(modal);
@@ -1354,7 +1354,7 @@ window.gwSubmitEditEvent = async function(eventId, isAllDay) {
     const idx = _calEvents.findIndex(e=>e.id===eventId);
     if (idx>=0) _calEvents[idx]={..._calEvents[idx],...updated};
     document.getElementById('gw-edit-modal')?.remove();
-    showIntToast('Event updated gwIcon('success',16)');
+    showIntToast('Event updated');
     gwRenderCalBody();
   } catch(e) { showIntToast(e.message,'error'); }
 };
@@ -1515,7 +1515,7 @@ async function intSendEmail() {
     if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
     const htmlBody = body.replace(/\n/g, '<br>');
     await gmailSendEmail({ to, subject, body: htmlBody });
-    showIntToast('Email sent gwIcon('success',16)');
+    showIntToast('Email sent');
     document.getElementById('int-compose-modal').style.display = 'none';
     if (_gwTab === 'gmail') gwLoadGmail();
     if (btn) { btn.textContent = 'Send via Gmail'; btn.disabled = false; }
@@ -1557,7 +1557,7 @@ async function intSubmitCalEvent() {
   if (!isGoogleConnected()) { showIntToast('Connect Google first', 'warn'); return; }
   try {
     const ev = await calCreateEvent({ summary, description, startDate, startTime, durationHours, attendees: attendee ? [attendee] : [] });
-    showIntToast('Event created gwIcon('success',16)');
+    showIntToast('Event created');
     document.getElementById('int-cal-modal').style.display = 'none';
     // Add to local cache and re-render
     if (ev.id) {
@@ -1606,7 +1606,7 @@ function intSaveZapierUrl() {
   const url = document.getElementById('zapierWebhookInput')?.value?.trim();
   if (!url) { showIntToast('Paste a Zapier webhook URL first', 'warn'); return; }
   saveIntState({ zapierWebhookUrl: url });
-  showIntToast('Webhook URL saved gwIcon('success',16)');
+  showIntToast('Webhook URL saved');
   // Re-render to show connected state
   if (typeof gwRenderHomeworks === 'function') gwRenderHomeworks();
 }
@@ -1614,7 +1614,7 @@ function intSaveZapierUrl() {
 async function intTestZapier() {
   try {
     await sendToHomeworks('test_ping', { message: 'Test ping from Groundwork CRM', timestamp: new Date().toISOString() });
-    showIntToast('Test ping sent gwIcon('success',16)');
+    showIntToast('Test ping sent');
   } catch(e) { showIntToast(e.message, 'error'); }
 }
 
@@ -1624,7 +1624,7 @@ async function intPushLead(oppId) {
   if (!opp) { showIntToast('Opportunity not found', 'warn'); return; }
   try {
     await pushLeadToHomeworks(opp);
-    showIntToast(`${opp.client} pushed to Homeworks gwIcon('success',16)`);
+    showIntToast(`${opp.client} pushed to Homeworks`);
   } catch(e) { showIntToast(e.message, 'error'); }
 }
 
@@ -1656,7 +1656,7 @@ function renderHwOpps() {
         </div>
         <span style="font-size:11px;font-weight:700;color:${color};background:${color}22;border-radius:10px;padding:2px 8px;flex-shrink:0">${escapeHtml(opp.status||'Unknown')}</span>
         <div style="display:flex;gap:6px;flex-shrink:0">
-          <button onclick="intPushLead('${escapeHtml(opp.id||'')}');this.textContent='Pushed gwIcon('success',16)';this.disabled=true"
+          <button onclick="intPushLead('${escapeHtml(opp.id||'')}');this.textContent='Pushed';this.disabled=true"
             style="padding:5px 10px;background:var(--gw-surface-3);border:1px solid var(--gw-line);border-radius:6px;color:var(--gw-muted);font-size:11px;cursor:pointer;font-weight:600">
             Push Lead
           </button>
@@ -1685,7 +1685,7 @@ async function intSubmitVisit() {
     if (opp && isHomeworksConnected()) {
       await pushVisitToHomeworks(opp, date, time, notes);
     }
-    showIntToast('Visit scheduled gwIcon('success',16)');
+    showIntToast('Visit scheduled');
     const modal = document.getElementById('int-visit-modal');
     if (modal) modal.style.display = 'none';
   } catch(e) { showIntToast(e.message, 'error'); }
@@ -1700,7 +1700,7 @@ function intOpenEstimateModal(oppId) {
   const confirmed = window.confirm(`Push estimate for "${opp.client}" to Homeworks?`);
   if (!confirmed) return;
   pushEstimateToHomeworks(opp)
-    .then(() => showIntToast(`Estimate for ${opp.client} pushed gwIcon('success',16)`))
+    .then(() => showIntToast(`Estimate for ${opp.client} pushed`))
     .catch(e => showIntToast(e.message, 'error'));
 }
 
@@ -1712,7 +1712,7 @@ async function intSubmitEstimate() {
   if (!opp) { showIntToast('Opportunity not found'); return; }
   try {
     await pushEstimateToHomeworks(opp);
-    showIntToast('Estimate pushed gwIcon('success',16)');
+    showIntToast('Estimate pushed');
     const modal = document.getElementById('int-estimate-modal');
     if (modal) modal.style.display = 'none';
   } catch(e) { showIntToast(e.message, 'error'); }

@@ -6568,3 +6568,29 @@ article [style*="color:#E8E4D9"] { color: var(--gw-ink) !important; }
 }
 
 /* ── END SECTION 34 ──────────────────────────────────────────────────────── */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   SECTION 35 — Logo Visibility Fix + groundwork-crm.pages.dev → redirect notice
+   ══════════════════════════════════════════════════════════════════════════════
+
+   The logo PNG has a dark-green (#103830) background that matches the sidebar
+   (#113931). Without visual separation it appears as an invisible dark square.
+   Fix: add a subtle white ring (box-shadow) around the brand-mark so the logo
+   has clear edges, and a slightly lighter background to create depth.
+*/
+.brand-mark {
+  background: rgba(255,255,255,.08) !important;
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,.18), 0 2px 8px rgba(0,0,0,.28) !important;
+  border-radius: 10px !important;
+}
+.brand-mark img {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 8px !important;
+  object-fit: cover !important;
+  display: block !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* ── END SECTION 35 ───────────────────────────────────────────────────────── */

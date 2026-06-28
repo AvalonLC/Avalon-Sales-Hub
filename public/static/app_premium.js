@@ -2335,7 +2335,7 @@ function opportunityDetail(id){
           </div>
           ${(state.communications||[]).filter(c=>c.oppId===o.id).length === 0 ?
             `<div style="text-align:center;padding:40px;color:#6F7E6A">
-              <div style="font-size:28px;margin-bottom:12px">gwIcon('checklist',16)</div>
+              <div style="font-size:28px;margin-bottom:12px">${gwIcon('checklist',16)}</div>
               <p style="font-weight:600;margin:0 0 6px">No activity yet</p>
               <p style="font-size:12.5px;color:#5C6B58;margin:0">Activity will appear here as you log calls, emails, and notes.</p>
             </div>` :
@@ -2375,7 +2375,7 @@ function opportunityDetail(id){
           Next Follow-Up
         </div>
         <div class="ld-rail-follow-date ${_isOvd?'overdue':''}">${prettyDate(o.nextFollowUp)}</div>
-        ${_isOvd ? '<div class="ld-rail-overdue-badge">gwIcon('warning',16) Overdue</div>' : ''}
+        ${_isOvd ? `<div class="ld-rail-overdue-badge">${gwIcon('warning',16)} Overdue</div>` : ''}
         <input type="date" id="railFollowEdit" value="${escapeHtml(o.nextFollowUp||'')}" style="width:100%;margin-top:10px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-size:12px">
         <button class="ld-rail-btn" onclick="setOppField('${o.id}','nextFollowUp',document.getElementById('railFollowEdit').value);showToast('Follow-up updated')">Update</button>
       </div>
@@ -2509,7 +2509,7 @@ function commsBoardHtml(oppId, opp){
       '<div class="comm-bubble">' +
         '<div class="comm-meta-row">' +
           '<span class="comm-type-badge" style="background:'+meta.color+'22;color:'+meta.color+';border-color:'+meta.color+'44">'+meta.icon+' '+meta.label+'</span>' +
-          (m.gmailSent ? '<span class="comm-gmail-badge">gwIcon('success',16) Sent via Gmail</span>' : (m.type==='email'&&m.direction==='out' ? '<span class="comm-gmail-badge comm-gmail-local">gwIcon('checklist',16) Logged locally</span>' : '')) +
+          (m.gmailSent ? `<span class="comm-gmail-badge">${gwIcon('success',16)} Sent via Gmail</span>` : (m.type==='email'&&m.direction==='out' ? `<span class="comm-gmail-badge comm-gmail-local">${gwIcon('checklist',16)} Logged locally</span>` : '')) +
           (m.subject ? '<span class="comm-subject">'+escapeHtml(m.subject)+'</span>' : '') +
           '<span class="comm-time">'+fmt(m.ts)+'</span>' +
           '<button class="comm-delete-btn" title="Delete" onclick="deleteComm(\''+m.id+'\',\''+oppId+'\')">×</button>' +
@@ -2528,7 +2528,7 @@ function commsBoardHtml(oppId, opp){
   const groups = groupByDate(msgs);
   const threadHtml = Object.keys(groups).length === 0
     ? '<div class="comm-empty">' +
-        '<div class="comm-empty-icon">gwIcon('message',16)</div>' +
+        `<div class="comm-empty-icon">${gwIcon('message',16)}</div>` +
         '<p>No communications yet for '+clientName+'.</p>' +
         '<p style="color:#4A5947;font-size:12.5px;max-width:320px;line-height:1.6">Use the compose bar below to log a call, send an SMS, draft an email, or attach a proposal.</p>' +
       '</div>'
@@ -2637,7 +2637,7 @@ function filesTabHtml(oppId, opp){
 
   const fmt = dt => { try{ return new Date(dt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '';} };
 
-  if(!allFiles.length) return '<div class="comms-board"><div class="comm-empty"><div class="comm-empty-icon">gwIcon('folder',16)</div><p>No files attached yet.</p><p style="color:#4A5947;font-size:12.5px;max-width:300px;line-height:1.6">Attach photos, PDFs, proposals, and documents from the Communications tab.</p></div></div>';
+  if(!allFiles.length) return `<div class="comms-board"><div class="comm-empty"><div class="comm-empty-icon">${gwIcon('folder',16)}</div><p>No files attached yet.</p><p style="color:#4A5947;font-size:12.5px;max-width:300px;line-height:1.6">Attach photos, PDFs, proposals, and documents from the Communications tab.</p></div></div>`;
 
   const ext2icon = ext => {
     const e = (ext||'').toLowerCase();
@@ -2810,7 +2810,7 @@ window.sendComm = async function(oppId){
       try {
         const htmlBody = body.replace(/\n/g,'<br>');
         await gmailSendEmail({ to: toAddr, subject: subject.trim(), body: htmlBody });
-        showToast('Email sent via Gmail gwIcon('success',16) — from ' + (getGoogleUserEmail ? getGoogleUserEmail() : 'your Google account'));
+        showToast('Email sent via Gmail — from ' + (getGoogleUserEmail ? getGoogleUserEmail() : 'your Google account'));
       } catch(e){
         showToast('Gmail error: ' + (e.message||'Send failed') + ' — email logged locally.');
         if(sendBtn){ sendBtn.innerHTML = origHtml; sendBtn.disabled = false; }
