@@ -19,7 +19,7 @@ const REPS = [
     role: 'admin',
     pin: '1111',
     avatar: '',
-    color: '#00d4ff',
+    color: '#4D8A86',
     base: null, // owner — no base
     commissionPlan: 'admin'
   },
@@ -30,7 +30,7 @@ const REPS = [
     role: 'rep',
     pin: '2222',
     avatar: '',
-    color: '#4ade80',
+    color: '#2D7A55',
     base: { rateTraining: 20, ratePostTraining: 21 },
     commissionPlan: 'ryan'
   },
@@ -41,13 +41,13 @@ const REPS = [
     role: 'office_manager',
     pin: '3333',
     avatar: '',
-    color: '#f59e0b',
+    color: '#8B6914',
     email: 'admin@avalon-lc.com',
     base: null,
     commissionPlan: null
   }
   // Add new reps here — copy the Ryan structure and give them a unique id/pin
-  // { id: 'sarah', name: 'Sarah', title: 'Account Manager', role: 'rep', pin: '4444', avatar: '⭐', color: '#a78bfa', base: { rateTraining: 20, ratePostTraining: 21 }, commissionPlan: 'ryan' }
+  // { id: 'sarah', name: 'Sarah', title: 'Account Manager', role: 'rep', pin: '4444', avatar: '⭐', color: '#4D8A86', base: { rateTraining: 20, ratePostTraining: 21 }, commissionPlan: 'ryan' }
 ];
 
 // ── Commission Plans ───────────────────────────────────────────────────────────
@@ -129,14 +129,14 @@ window.getCommissionStatusLabel = getCommissionStatusLabel;
 
 function getCommissionStatusColor(status) {
   return {
-    estimated:          '#94a3b8',
-    pending_approval:   '#f59e0b',
-    pending_reapproval: '#f87171',
-    approved:           '#00d4ff',
-    paid:               '#4ade80',
-    rejected:           '#f87171',
-    on_hold:            '#f59e0b'
-  }[status] || '#94a3b8';
+    estimated:          '#6F7E6A',
+    pending_approval:   '#8B6914',
+    pending_reapproval: '#C97B6A',
+    approved:           '#4D8A86',
+    paid:               '#2D7A55',
+    rejected:           '#C97B6A',
+    on_hold:            '#8B6914'
+  }[status] || '#6F7E6A';
 }
 window.getCommissionStatusColor = getCommissionStatusColor;
 
@@ -535,7 +535,7 @@ function timeAgo(iso) {
 // ── LOGIN SCREEN ──────────────────────────────────────────────────────────────
 function renderLoginScreen() {
   document.body.innerHTML = `
-  <div style="min-height:100vh;background:linear-gradient(160deg,#152F26 0%,#1E4638 45%,#152F26 100%);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif">
+  <div style="min-height:100vh;background:linear-gradient(160deg,#204A43 0%,#1B3F38 45%,#204A43 100%);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif">
     <div style="width:min(420px,95vw);padding:0 20px">
 
       <!-- Logo / Brand — GW-003 Temporary Wordmark -->
@@ -586,7 +586,7 @@ function renderLoginScreen() {
             </button>
           `).join('')}
         </div>
-        <div id="pinError" style="color:#FCA5A5;font-size:13px;text-align:center;margin-top:12px;display:none">Incorrect PIN — try again</div>
+        <div id="pinError" style="color:#F5D5C8;font-size:13px;text-align:center;margin-top:12px;display:none">Incorrect PIN — try again</div>
         <button onclick="backToReps()" style="width:100%;margin-top:16px;padding:11px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:rgba(255,255,255,.55);font-size:14px;cursor:pointer;transition:all .12s"
           onmouseover="this.style.borderColor='rgba(255,255,255,.3)';this.style.color='rgba(255,255,255,.8)'"
           onmouseout="this.style.borderColor='rgba(255,255,255,.15)';this.style.color='rgba(255,255,255,.55)'">
@@ -606,11 +606,11 @@ function renderLoginScreen() {
           <input id="resetEmail" type="email" placeholder="your@email.com"
             style="width:100%;box-sizing:border-box;padding:12px 14px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#FFFFFF;font-size:14px;margin-bottom:12px;outline:none;font-family:inherit">
           <button onclick="sendResetCode()"
-            style="width:100%;padding:13px;background:#10B981;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.01em;transition:background .12s"
-            onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
+            style="width:100%;padding:13px;background:#2D7A55;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.01em;transition:background .12s"
+            onmouseover="this.style.background='#2D7A55'" onmouseout="this.style.background='#2D7A55'">
             Send Reset Code
           </button>
-          <div id="resetStep1Error" style="color:#FCA5A5;font-size:12px;text-align:center;margin-top:10px;display:none"></div>
+          <div id="resetStep1Error" style="color:#F5D5C8;font-size:12px;text-align:center;margin-top:10px;display:none"></div>
         </div>
         <div id="forgotPinStep2" style="display:none">
           <h3 style="color:#FFFFFF;font-size:16px;font-weight:800;margin:0 0 6px">Enter Reset Code</h3>
@@ -620,11 +620,11 @@ function renderLoginScreen() {
           <input id="resetNewPin" type="text" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN"
             style="width:100%;box-sizing:border-box;padding:12px 14px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#FFFFFF;font-size:18px;letter-spacing:.2em;text-align:center;margin-bottom:12px;outline:none;font-family:inherit">
           <button onclick="confirmPinReset()"
-            style="width:100%;padding:13px;background:#10B981;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;transition:background .12s"
-            onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
+            style="width:100%;padding:13px;background:#2D7A55;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;transition:background .12s"
+            onmouseover="this.style.background='#2D7A55'" onmouseout="this.style.background='#2D7A55'">
             Set New PIN
           </button>
-          <div id="resetStep2Error" style="color:#FCA5A5;font-size:12px;text-align:center;margin-top:10px;display:none"></div>
+          <div id="resetStep2Error" style="color:#F5D5C8;font-size:12px;text-align:center;margin-top:10px;display:none"></div>
         </div>
         <button onclick="hideForgotPin()" style="width:100%;margin-top:12px;padding:8px;background:transparent;border:none;color:rgba(255,255,255,.32);font-size:12px;cursor:pointer;transition:color .12s"
           onmouseover="this.style.color='rgba(255,255,255,.6)'" onmouseout="this.style.color='rgba(255,255,255,.32)'">
@@ -679,7 +679,7 @@ function renderLoginScreen() {
       const el = document.getElementById(`pin${i}`);
       if (el) {
         const rep = selectedRepId ? REPS.find(r => r.id === selectedRepId) : null;
-        el.style.background = i < pinBuffer.length ? '#10B981' : 'rgba(255,255,255,.12)';
+        el.style.background = i < pinBuffer.length ? '#2D7A55' : 'rgba(255,255,255,.12)';
       }
     }
   }
@@ -770,7 +770,7 @@ function renderLoginScreen() {
       pinBuffer = '';
       updatePinDisplay();
       document.getElementById('pinError').style.display = 'block';
-      document.querySelector('#pinEntry').style.borderColor = '#ef4444';
+      document.querySelector('#pinEntry').style.borderColor = '#8B3A2A';
       setTimeout(() => {
         document.getElementById('pinError').style.display = 'none';
         document.querySelector('#pinEntry').style.borderColor = 'rgba(255,255,255,.13)';
@@ -849,7 +849,7 @@ function renderLoginScreen() {
       document.getElementById('pinEntry').style.display = 'none';
       // Show brief success message
       const successBanner = document.createElement('div');
-      successBanner.style.cssText = 'background:#10b98122;border:1px solid #10b98144;border-radius:10px;color:#10b981;padding:12px 16px;font-size:13px;text-align:center;margin-top:12px;font-weight:600';
+      successBanner.style.cssText = 'background:#2D7A5522;border:1px solid #2D7A5544;border-radius:10px;color:#2D7A55;padding:12px 16px;font-size:13px;text-align:center;margin-top:12px;font-weight:600';
       successBanner.textContent = '✓ PIN reset successfully — you can now log in.';
       document.querySelector('.app-shell') || document.body;
       const container = document.getElementById('repCards')?.parentNode;
@@ -904,29 +904,29 @@ function renderRepDashboard(viewEl, rep) {
   viewEl.innerHTML = `
 <div class="eyebrow" style="color:${rep.color}">${rep.name}</div>
 <h1 style="margin-bottom:4px">My Dashboard</h1>
-<p class="lede" style="margin-bottom:24px">${rep.title} · <button onclick="logoutRep();renderLoginScreen()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;text-decoration:underline">Switch Rep</button></p>
+<p class="lede" style="margin-bottom:24px">${rep.title} · <button onclick="logoutRep();renderLoginScreen()" style="background:none;border:none;color:#6F7E6A;cursor:pointer;font-size:14px;text-decoration:underline">Switch Rep</button></p>
 
 <!-- Commission Summary -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px">
   <div class="gw-rep-tile-earned">
-    <div style="font-size:11px;font-weight:700;color:#86efac;letter-spacing:.06em;text-transform:uppercase">Commissions Earned</div>
-    <div style="font-size:28px;font-weight:800;color:#4ade80;margin-top:8px">${fmtCurrency(totalEarned)}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:4px">Collected & confirmed</div>
+    <div style="font-size:11px;font-weight:700;color:#B8DEC9;letter-spacing:.06em;text-transform:uppercase">Commissions Earned</div>
+    <div style="font-size:28px;font-weight:800;color:#2D7A55;margin-top:8px">${fmtCurrency(totalEarned)}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:4px">Collected & confirmed</div>
   </div>
   <div class="gw-rep-tile-pending">
-    <div style="font-size:11px;font-weight:700;color:#fde68a;letter-spacing:.06em;text-transform:uppercase">Pending Collection</div>
-    <div style="font-size:28px;font-weight:800;color:#fbbf24;margin-top:8px">${fmtCurrency(pendingCollection)}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:4px">Sold, awaiting payment</div>
+    <div style="font-size:11px;font-weight:700;color:#F5E8C0;letter-spacing:.06em;text-transform:uppercase">Pending Collection</div>
+    <div style="font-size:28px;font-weight:800;color:#8B6914;margin-top:8px">${fmtCurrency(pendingCollection)}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:4px">Sold, awaiting payment</div>
   </div>
   <div class="gw-rep-tile">
-    <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Open Opportunities</div>
-    <div style="font-size:28px;font-weight:800;color:#e2e8f0;margin-top:8px">${open.length}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:4px">${overdue.length > 0 ? `<span style="color:#f87171">${overdue.length} overdue</span>` : 'All current'}</div>
+    <div style="font-size:11px;font-weight:700;color:#6F7E6A;letter-spacing:.06em;text-transform:uppercase">Open Opportunities</div>
+    <div style="font-size:28px;font-weight:800;color:#E8E4D9;margin-top:8px">${open.length}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:4px">${overdue.length > 0 ? `<span style="color:#C97B6A">${overdue.length} overdue</span>` : 'All current'}</div>
   </div>
   <div class="gw-rep-tile">
-    <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Sold This Year</div>
-    <div style="font-size:28px;font-weight:800;color:#e2e8f0;margin-top:8px">${sold.length}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:4px">${fmtCurrency(sold.reduce((a,o) => a + parseFloat(o.jobValue || 0), 0))} total value</div>
+    <div style="font-size:11px;font-weight:700;color:#6F7E6A;letter-spacing:.06em;text-transform:uppercase">Sold This Year</div>
+    <div style="font-size:28px;font-weight:800;color:#E8E4D9;margin-top:8px">${sold.length}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:4px">${fmtCurrency(sold.reduce((a,o) => a + parseFloat(o.jobValue || 0), 0))} total value</div>
   </div>
 </div>
 
@@ -963,32 +963,32 @@ function renderRepDashboard(viewEl, rep) {
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead>
         <tr class="gw-table-row">
-          <th style="text-align:left;padding:8px 12px;color:#64748b;font-weight:600">Client</th>
-          <th style="text-align:left;padding:8px 12px;color:#64748b;font-weight:600">Type</th>
-          <th style="text-align:left;padding:8px 12px;color:#64748b;font-weight:600">Lead Source</th>
-          <th style="text-align:right;padding:8px 12px;color:#64748b;font-weight:600">Job Value</th>
-          <th style="text-align:right;padding:8px 12px;color:#64748b;font-weight:600">Rate</th>
-          <th style="text-align:right;padding:8px 12px;color:#64748b;font-weight:600">Commission</th>
-          <th style="text-align:center;padding:8px 12px;color:#64748b;font-weight:600">Status</th>
+          <th style="text-align:left;padding:8px 12px;color:#6F7E6A;font-weight:600">Client</th>
+          <th style="text-align:left;padding:8px 12px;color:#6F7E6A;font-weight:600">Type</th>
+          <th style="text-align:left;padding:8px 12px;color:#6F7E6A;font-weight:600">Lead Source</th>
+          <th style="text-align:right;padding:8px 12px;color:#6F7E6A;font-weight:600">Job Value</th>
+          <th style="text-align:right;padding:8px 12px;color:#6F7E6A;font-weight:600">Rate</th>
+          <th style="text-align:right;padding:8px 12px;color:#6F7E6A;font-weight:600">Commission</th>
+          <th style="text-align:center;padding:8px 12px;color:#6F7E6A;font-weight:600">Status</th>
         </tr>
       </thead>
       <tbody>
         ${breakdown.map(({ opp, result, lcStatus }) => {
           const statusColor = getCommissionStatusColor(lcStatus);
           const statusLabel = getCommissionStatusLabel(lcStatus);
-          const capBadge = result.capApplied ? `<span style="font-size:9px;background:#f87171;color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">CAPPED</span>` : '';
+          const capBadge = result.capApplied ? `<span style="font-size:9px;background:#C97B6A;color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">CAPPED</span>` : '';
           const bonusBadge = result.retentionBonus > 0 && lcStatus === 'paid'
-            ? `<span style="font-size:9px;background:#16a34a;color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">+${fmtCurrency(result.retentionBonus)} bonus</span>` : '';
+            ? `<span style="font-size:9px;background:#2D7A55;color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">+${fmtCurrency(result.retentionBonus)} bonus</span>` : '';
 
           // COMM-15: Collection gate display — show what they'd earn + clear gate message
           const gateInfo = window.getCollectionGateInfo ? window.getCollectionGateInfo(opp, result) : null;
           const gateRow = gateInfo && gateInfo.held ? `
         <tr>
           <td colspan="7" style="padding:2px 12px 10px">
-            <div style="display:inline-flex;align-items:center;gap:6px;background:#1c1412;border:1px solid #f59e0b40;border-radius:6px;padding:4px 10px">
-              <span style="font-size:10px;color:#f59e0b">⏳</span>
-              <span style="font-size:10px;color:#f59e0b">${gateInfo.reason}</span>
-              ${gateInfo.preview > 0 ? `<span style="font-size:10px;color:#64748b">Earns ${fmtCurrency(gateInfo.preview)} once collected.</span>` : ''}
+            <div style="display:inline-flex;align-items:center;gap:6px;background:#1F2A2B;border:1px solid rgba(139,105,20,.25);border-radius:6px;padding:4px 10px">
+              <span style="font-size:10px;color:#8B6914">⏳</span>
+              <span style="font-size:10px;color:#8B6914">${gateInfo.reason}</span>
+              ${gateInfo.preview > 0 ? `<span style="font-size:10px;color:#6F7E6A">Earns ${fmtCurrency(gateInfo.preview)} once collected.</span>` : ''}
             </div>
           </td>
         </tr>` : '';
@@ -997,8 +997,8 @@ function renderRepDashboard(viewEl, rep) {
         <tr style="border-bottom:1px solid var(--gw-line);cursor:pointer" onclick="show('pipeline','${opp.id}')"
           onmouseover="this.style.background='var(--gw-surface-2)'" onmouseout="this.style.background=''">
           <td style="padding:10px 12px;font-weight:600">${escapeHtml(opp.client)}</td>
-          <td style="padding:10px 12px;color:#94a3b8">${formatWorkType(opp.workType)}</td>
-          <td style="padding:10px 12px;color:#94a3b8">${formatLeadSource(opp.leadSource)}</td>
+          <td style="padding:10px 12px;color:#6F7E6A">${formatWorkType(opp.workType)}</td>
+          <td style="padding:10px 12px;color:#6F7E6A">${formatLeadSource(opp.leadSource)}</td>
           <td style="padding:10px 12px;text-align:right">${fmtCurrency(opp.jobValue)}</td>
           <td style="padding:10px 12px;text-align:right;color:${rep.color}">${fmtPercent(result.rate)}</td>
           <td style="padding:10px 12px;text-align:right;font-weight:700;color:${statusColor}">${fmtCurrency(result.amount)}${capBadge}${bonusBadge}</td>
@@ -1007,7 +1007,7 @@ function renderRepDashboard(viewEl, rep) {
           </td>
         </tr>
         <tr>
-          <td colspan="7" style="padding:0 12px 4px;font-size:11px;color:#64748b">${escapeHtml(result.note)}</td>
+          <td colspan="7" style="padding:0 12px 4px;font-size:11px;color:#6F7E6A">${escapeHtml(result.note)}</td>
         </tr>
         ${gateRow}`;
         }).join('')}
@@ -1019,22 +1019,22 @@ function renderRepDashboard(viewEl, rep) {
 <section class="card" style="margin-bottom:28px">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
     <h2 style="margin:0;font-size:16px">My Commission Payouts</h2>
-    <span style="font-size:11px;color:#64748b">YTD · All sold jobs</span>
+    <span style="font-size:11px;color:#6F7E6A">YTD · All sold jobs</span>
   </div>
 
   <!-- YTD Summary Chips -->
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px">
     ${[
-      { label:'Paid Out',        val: paidTotal,            color:'#4ade80', status:'paid' },
-      { label:'Approved',        val: approvedTotal,        color:'#00d4ff', status:'approved' },
-      { label:'Pending Approval',val: pendingApprovalTotal, color:'#f59e0b', status:'pending_approval' },
-      { label:'On Hold',         val: onHoldTotal,          color:'#f59e0b', status:'on_hold' },
-      { label:'Retention Bonus', val: retentionBonusTotal,  color:'#4ade80', status:null }
+      { label:'Paid Out',        val: paidTotal,            color:'#2D7A55', status:'paid' },
+      { label:'Approved',        val: approvedTotal,        color:'#4D8A86', status:'approved' },
+      { label:'Pending Approval',val: pendingApprovalTotal, color:'#8B6914', status:'pending_approval' },
+      { label:'On Hold',         val: onHoldTotal,          color:'#8B6914', status:'on_hold' },
+      { label:'Retention Bonus', val: retentionBonusTotal,  color:'#2D7A55', status:null }
     ].filter(b => b.val > 0).map(b => `
     <div style="background:${b.color}12;border:1px solid ${b.color}40;border-radius:10px;padding:12px;text-align:center">
       <div style="font-size:9px;font-weight:700;color:${b.color};text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${b.label}</div>
       <div style="font-size:20px;font-weight:800;color:${b.color}">${fmtCurrency(b.val)}</div>
-    </div>`).join('') || '<div style="color:#64748b;font-size:13px">No commissions yet — close your first deal!</div>'}
+    </div>`).join('') || '<div style="color:#6F7E6A;font-size:13px">No commissions yet — close your first deal!</div>'}
   </div>
 
   <!-- Buckets by status -->
@@ -1051,32 +1051,32 @@ function renderRepDashboard(viewEl, rep) {
       <span style="font-size:12px;font-weight:700;color:${color}">${fmtCurrency(subtotal)}</span>
     </div>
     ${items.map(({ opp, result, lcStatus: s }) => {
-      const capBadge = result.capApplied ? `<span style="font-size:9px;background:#f87171;color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">CAPPED</span>` : '';
+      const capBadge = result.capApplied ? `<span style="font-size:9px;background:#C97B6A;color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">CAPPED</span>` : '';
       const bonusEl = result.retentionBonus > 0
-        ? `<div style="font-size:10px;color:#4ade80;margin-top:2px">${s === 'paid' ? '✓' : '○'} ${fmtCurrency(result.retentionBonus)} retention bonus ${s === 'paid' ? 'earned' : 'after 90-day active'}</div>` : '';
+        ? `<div style="font-size:10px;color:#2D7A55;margin-top:2px">${s === 'paid' ? '✓' : '○'} ${fmtCurrency(result.retentionBonus)} retention bonus ${s === 'paid' ? 'earned' : 'after 90-day active'}</div>` : '';
       // COMM-15: collection gate badge on payout cards
       const gateInfo = window.getCollectionGateInfo ? window.getCollectionGateInfo(opp, result) : null;
       const gateEl   = gateInfo && gateInfo.held
-        ? `<div style="display:flex;align-items:center;gap:5px;margin-top:4px"><span style="font-size:10px;color:#f59e0b">⏳ ${gateInfo.reason}</span>${gateInfo.preview > 0 ? `<span style="font-size:10px;color:#64748b">Earns ${fmtCurrency(gateInfo.preview)} once collected.</span>` : ''}</div>` : '';
+        ? `<div style="display:flex;align-items:center;gap:5px;margin-top:4px"><span style="font-size:10px;color:#8B6914">⏳ ${gateInfo.reason}</span>${gateInfo.preview > 0 ? `<span style="font-size:10px;color:#6F7E6A">Earns ${fmtCurrency(gateInfo.preview)} once collected.</span>` : ''}</div>` : '';
       return `
     <div onclick="show('pipeline','${opp.id}')" class="gw-payout-card${gateInfo && gateInfo.held ? ' gate-held' : ''}" 
-      onmouseover="this.style.borderColor='${color}40'" onmouseout="this.style.borderColor='${gateInfo && gateInfo.held ? '#f59e0b30' : 'var(--gw-line)'}'">
+      onmouseover="this.style.borderColor='${color}40'" onmouseout="this.style.borderColor='${gateInfo && gateInfo.held ? 'rgba(139,105,20,.19)' : 'var(--gw-line)'}'">
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:13px">${escapeHtml(opp.client || 'Unnamed')}</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px">${formatWorkType(opp.workType)} · ${formatLeadSource(opp.leadSource)}</div>
-        <div style="font-size:10px;color:#475569;margin-top:3px">${escapeHtml(result.note)}</div>
+        <div style="font-size:11px;color:#6F7E6A;margin-top:2px">${formatWorkType(opp.workType)} · ${formatLeadSource(opp.leadSource)}</div>
+        <div style="font-size:10px;color:#5C6B58;margin-top:3px">${escapeHtml(result.note)}</div>
         ${bonusEl}${gateEl}
       </div>
       <div style="text-align:right;flex-shrink:0;margin-left:12px">
         <div style="font-size:14px;font-weight:800;color:${color}">${fmtCurrency(result.amount)}${capBadge}</div>
-        <div style="font-size:10px;color:#64748b">${fmtCurrency(opp.jobValue)}</div>
+        <div style="font-size:10px;color:#6F7E6A">${fmtCurrency(opp.jobValue)}</div>
       </div>
     </div>`;
     }).join('')}
   </div>`;
   }).join('')}
 
-  ${breakdown.length === 0 ? '<p style="color:#64748b;font-size:13px">No sold jobs yet.</p>' : ''}
+  ${breakdown.length === 0 ? '<p style="color:#6F7E6A;font-size:13px">No sold jobs yet.</p>' : ''}
 </section>
 
 <!-- Commission Plan Quick Reference -->
@@ -1089,12 +1089,12 @@ function renderRepDashboard(viewEl, rep) {
 <div id="weeklyTrackerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center">
   <div class="gw-diff-modal-box" style="width:min(480px,95vw)">
     <button onclick="document.getElementById('weeklyTrackerModal').style.display='none'"
-      style="position:absolute;top:12px;right:12px;background:transparent;border:none;color:#64748b;font-size:20px;cursor:pointer">×</button>
+      style="position:absolute;top:12px;right:12px;background:transparent;border:none;color:#6F7E6A;font-size:20px;cursor:pointer">×</button>
     <h2 style="margin:0 0 20px;font-size:18px">Log This Week's Activity</h2>
     <div style="display:flex;flex-direction:column;gap:14px">
       ${Object.entries(weekTargets).map(([key, target]) => `
       <div>
-        <label style="font-size:12px;font-weight:600;color:var(--muted)">${formatActivityKey(key)} <span style="color:#64748b;font-weight:400">(target: ${target})</span></label>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">${formatActivityKey(key)} <span style="color:#6F7E6A;font-weight:400">(target: ${target})</span></label>
         <input type="number" id="wa_${key}" min="0"
           value="${weeklyActivity[key] || ''}"
           placeholder="0"
@@ -1127,10 +1127,10 @@ function renderRepDashboard(viewEl, rep) {
 
 function repOppMiniCard(o) {
   const stageColors = {
-    'New Lead': '#6366f1', 'Contacted': '#8b5cf6', 'Meeting Set': '#3b82f6',
-    'Proposal / Estimate Sent': '#f59e0b', 'Negotiation': '#ef4444', 'Sold / Activation': '#10b981'
+    'New Lead': '#204A43', 'Contacted': '#4D8A86', 'Meeting Set': '#4D8A86',
+    'Proposal / Estimate Sent': '#8B6914', 'Negotiation': '#8B3A2A', 'Sold / Activation': '#2D7A55'
   };
-  const color = stageColors[o.status] || '#64748b';
+  const color = stageColors[o.status] || '#6F7E6A';
   const overdue = o.nextFollowUp && o.nextFollowUp < todayISO();
   return `
   <div onclick="show('pipeline','${o.id}')" class="gw-opp-mini${overdue ? ' overdue' : ''}">
@@ -1138,10 +1138,10 @@ function repOppMiniCard(o) {
     <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
     <div style="flex:1;min-width:0">
       <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client)}</div>
-      <div style="font-size:11px;color:#64748b;margin-top:1px">${escapeHtml(o.serviceLine || o.status)} · ${o.clientType || ''}${o.nextFollowUp ? ' · ' + formatDate(o.nextFollowUp) : ''}</div>
+      <div style="font-size:11px;color:#6F7E6A;margin-top:1px">${escapeHtml(o.serviceLine || o.status)} · ${o.clientType || ''}${o.nextFollowUp ? ' · ' + formatDate(o.nextFollowUp) : ''}</div>
     </div>
-    ${overdue ? '<span style="font-size:10px;color:#f87171;font-weight:700;flex-shrink:0">OVERDUE</span>' : ''}
-    ${o.jobValue ? `<span style="font-size:12px;color:#94a3b8;flex-shrink:0">${fmtCurrency(o.jobValue)}</span>` : ''}
+    ${overdue ? '<span style="font-size:10px;color:#C97B6A;font-weight:700;flex-shrink:0">OVERDUE</span>' : ''}
+    ${o.jobValue ? `<span style="font-size:12px;color:#6F7E6A;flex-shrink:0">${fmtCurrency(o.jobValue)}</span>` : ''}
   </div>`;
 }
 
@@ -1159,12 +1159,12 @@ function renderWeeklyScoreboard(repId, actual, targets) {
       const pct = isFloor
         ? (val === 0 ? 100 : Math.max(0, 100 - Math.round((val / Math.max(targetNum, 1)) * 100)))
         : (targetNum > 0 ? Math.min(100, Math.round((val / targetNum) * 100)) : 0);
-      const color = pct >= 100 ? '#4ade80' : pct >= 60 ? '#fbbf24' : '#f87171';
+      const color = pct >= 100 ? '#2D7A55' : pct >= 60 ? '#8B6914' : '#C97B6A';
       const displayTarget = isFloor ? '0 stale' : targetNum + '/wk';
       return `<div>
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:12px;color:#94a3b8">${label}</span>
-          <span style="font-size:12px;font-weight:700;color:${color}">${val} <span style="color:#334155;font-weight:400">/ ${displayTarget}</span></span>
+          <span style="font-size:12px;color:#6F7E6A">${label}</span>
+          <span style="font-size:12px;font-weight:700;color:${color}">${val} <span style="color:#4A5947;font-weight:400">/ ${displayTarget}</span></span>
         </div>
         <div class="gw-score-track"><div class="gw-score-fill" style="width:${pct}%;background:${color}"></div></div>
       </div>`;
@@ -1182,7 +1182,7 @@ function renderCommissionPlanRef(planId) {
   const thStyle = 'padding:9px 10px;text-align:center;border-bottom:1px solid var(--gw-line);font-size:11px;font-weight:700;letter-spacing:.04em';
   const tdStyle = 'padding:8px 10px;text-align:center;font-weight:700;font-size:13px';
   const rowStyle = 'border-bottom:1px solid var(--gw-line)';
-  const lStyle = 'padding:8px 10px;font-size:12px;color:#94a3b8';
+  const lStyle = 'padding:8px 10px;font-size:12px;color:#6F7E6A';
 
   // Landscape tiers
   const lTiers = plan.landscape.tiers;
@@ -1192,13 +1192,13 @@ function renderCommissionPlanRef(planId) {
   const landscapeRows = lTiers.map(t => {
     const label = t.max ? `$${t.min.toLocaleString()} – $${t.max.toLocaleString()}` : `$${t.min.toLocaleString()}+`;
     if (t.selfGen === null || t.selfGen === undefined) {
-      return `<tr style="${rowStyle}"><td style="${lStyle}">${label}</td><td colspan="3" style="${tdStyle};color:#f59e0b">Management approval — contact Tyler</td></tr>`;
+      return `<tr style="${rowStyle}"><td style="${lStyle}">${label}</td><td colspan="3" style="${tdStyle};color:#8B6914">Management approval — contact Tyler</td></tr>`;
     }
     return `<tr style="${rowStyle}">
       <td style="${lStyle}">${label}</td>
-      <td style="${tdStyle};color:#4ade80">${Math.round(t.selfGen*100)}%</td>
-      <td style="${tdStyle};color:#60a5fa">${Math.round(t.companyLead*100)}%</td>
-      <td style="${tdStyle};color:#94a3b8">${Math.round(t.assisted*100)}%</td>
+      <td style="${tdStyle};color:#2D7A55">${Math.round(t.selfGen*100)}%</td>
+      <td style="${tdStyle};color:#4D8A86">${Math.round(t.companyLead*100)}%</td>
+      <td style="${tdStyle};color:#6F7E6A">${Math.round(t.assisted*100)}%</td>
     </tr>`;
   }).join('');
 
@@ -1209,7 +1209,7 @@ function renderCommissionPlanRef(planId) {
     if (!r) return '';
     return `<tr style="${rowStyle}">
       <td style="${lStyle}">${label}</td>
-      <td style="${tdStyle};color:${color};font-size:11px">${Math.round(r.t1Rate*100)}% / ${Math.round(r.t2Rate*100)}% / ${Math.round(r.t3Rate*100)}%<br><span style="color:#64748b;font-weight:500">Cap $${r.cap} · +$${r.retentionBonus} bonus</span></td>
+      <td style="${tdStyle};color:${color};font-size:11px">${Math.round(r.t1Rate*100)}% / ${Math.round(r.t2Rate*100)}% / ${Math.round(r.t3Rate*100)}%<br><span style="color:#6F7E6A;font-weight:500">Cap $${r.cap} · +$${r.retentionBonus} bonus</span></td>
     </tr>`;
   }
 
@@ -1221,63 +1221,63 @@ function renderCommissionPlanRef(planId) {
 
     <!-- Landscape / Enhancement -->
     <div>
-      <div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Landscape / Enhancement / Hardscape</div>
+      <div style="font-size:10px;font-weight:700;color:#5C6B58;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Landscape / Enhancement / Hardscape</div>
       <table class="gw-data-table" style="width:100%;border-collapse:collapse;font-size:12px;border-radius:8px;overflow:hidden">
         <thead><tr style="background:var(--gw-surface-3)">
-          <th style="${thStyle};text-align:left;color:#64748b">Job Value Range</th>
-          <th style="${thStyle};color:#4ade80">Self-Generated</th>
-          <th style="${thStyle};color:#60a5fa">Company Lead</th>
-          <th style="${thStyle};color:#94a3b8">Assisted</th>
+          <th style="${thStyle};text-align:left;color:#6F7E6A">Job Value Range</th>
+          <th style="${thStyle};color:#2D7A55">Self-Generated</th>
+          <th style="${thStyle};color:#4D8A86">Company Lead</th>
+          <th style="${thStyle};color:#6F7E6A">Assisted</th>
         </tr></thead>
         <tbody>${landscapeRows}</tbody>
       </table>
-      <div style="font-size:11px;color:#475569;margin-top:6px;padding:0 2px">
-        Soft approval at <strong style="color:#f59e0b">$${softCap.toLocaleString()} payout</strong> · Hard cap <strong style="color:#f87171">$${hardCap.toLocaleString()}</strong> unless Tyler overrides
+      <div style="font-size:11px;color:#5C6B58;margin-top:6px;padding:0 2px">
+        Soft approval at <strong style="color:#8B6914">$${softCap.toLocaleString()} payout</strong> · Hard cap <strong style="color:#C97B6A">$${hardCap.toLocaleString()}</strong> unless Tyler overrides
       </div>
     </div>
 
     <!-- Maintenance One-Time -->
     <div>
-      <div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Maintenance — One-Time / Seasonal</div>
+      <div style="font-size:10px;font-weight:700;color:#5C6B58;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Maintenance — One-Time / Seasonal</div>
       <table class="gw-data-table" style="width:100%;border-collapse:collapse;font-size:12px;border-radius:8px;overflow:hidden">
         <thead><tr style="background:var(--gw-surface-3)">
-          <th style="${thStyle};text-align:left;color:#64748b">Type</th>
-          <th style="${thStyle};color:#4ade80">Self-Generated</th>
-          <th style="${thStyle};color:#60a5fa">Company Lead</th>
-          <th style="${thStyle};color:#94a3b8">Assisted</th>
+          <th style="${thStyle};text-align:left;color:#6F7E6A">Type</th>
+          <th style="${thStyle};color:#2D7A55">Self-Generated</th>
+          <th style="${thStyle};color:#4D8A86">Company Lead</th>
+          <th style="${thStyle};color:#6F7E6A">Assisted</th>
         </tr></thead>
         <tbody>
           <tr>
             <td style="${lStyle}">One-time / Seasonal</td>
-            <td style="${tdStyle};color:#4ade80">${Math.round(ot.selfGen*100)}%</td>
-            <td style="${tdStyle};color:#60a5fa">${Math.round(ot.companyLead*100)}%</td>
-            <td style="${tdStyle};color:#94a3b8">${Math.round(ot.assisted*100)}%</td>
+            <td style="${tdStyle};color:#2D7A55">${Math.round(ot.selfGen*100)}%</td>
+            <td style="${tdStyle};color:#4D8A86">${Math.round(ot.companyLead*100)}%</td>
+            <td style="${tdStyle};color:#6F7E6A">${Math.round(ot.assisted*100)}%</td>
           </tr>
         </tbody>
       </table>
-      <div style="font-size:11px;color:#475569;margin-top:6px;padding:0 2px">Approval required when payout exceeds <strong style="color:#f59e0b">$${(ot.approvalAbove||750).toLocaleString()}</strong></div>
+      <div style="font-size:11px;color:#5C6B58;margin-top:6px;padding:0 2px">Approval required when payout exceeds <strong style="color:#8B6914">$${(ot.approvalAbove||750).toLocaleString()}</strong></div>
     </div>
 
     <!-- Recurring Maintenance -->
     <div>
-      <div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Recurring Maintenance — First-Month Tiered Payout</div>
+      <div style="font-size:10px;font-weight:700;color:#5C6B58;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Recurring Maintenance — First-Month Tiered Payout</div>
       <table class="gw-data-table" style="width:100%;border-collapse:collapse;font-size:12px;border-radius:8px;overflow:hidden">
         <thead><tr style="background:var(--gw-surface-3)">
-          <th style="${thStyle};text-align:left;color:#64748b">Source</th>
-          <th style="${thStyle};color:#e2e8f0">First $1K / Next $1K / Above — Cap · Bonus</th>
+          <th style="${thStyle};text-align:left;color:#6F7E6A">Source</th>
+          <th style="${thStyle};color:#E8E4D9">First $1K / Next $1K / Above — Cap · Bonus</th>
         </tr></thead>
         <tbody>
-          ${recRow('selfGen',     'Self-Generated',  '#4ade80')}
-          ${recRow('companyLead', 'Company Lead',    '#60a5fa')}
-          ${recRow('assisted',    'Assisted',        '#94a3b8')}
+          ${recRow('selfGen',     'Self-Generated',  '#2D7A55')}
+          ${recRow('companyLead', 'Company Lead',    '#4D8A86')}
+          ${recRow('assisted',    'Assisted',        '#6F7E6A')}
         </tbody>
       </table>
-      <div style="font-size:11px;color:#475569;margin-top:6px;padding:0 2px">Retention bonus paid after client remains active 90+ days · Paid after 60-day active period</div>
+      <div style="font-size:11px;color:#5C6B58;margin-top:6px;padding:0 2px">Retention bonus paid after client remains active 90+ days · Paid after 60-day active period</div>
     </div>
 
     <p class="gw-info-strip" style="font-size:11px;color:var(--gw-muted);margin:0;padding:10px">
       Commission paid only on approved, sold, and collected work. Pricing must be management-approved.
-      ${override ? `<span style="color:#f59e0b"> ⚙ Custom rules active (edited ${new Date(override.updatedAt||'').toLocaleDateString()}).</span>` : ''}
+      ${override ? `<span style="color:#8B6914"> ⚙ Custom rules active (edited ${new Date(override.updatedAt||'').toLocaleDateString()}).</span>` : ''}
     </p>
   </div>`;
 }
@@ -1307,51 +1307,51 @@ function renderOMDashboard(viewEl, rep) {
   viewEl.innerHTML = `
 <div class="eyebrow" style="color:${rep.color}">${rep.name} · Office Manager</div>
 <h1 style="margin-bottom:4px">Sales Operations Dashboard</h1>
-<p class="lede" style="margin-bottom:24px">Pipeline health, follow-up queue, lead routing, and proposal status — for the whole team. <button onclick="logoutRep();renderLoginScreen()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;text-decoration:underline">Switch Account</button></p>
+<p class="lede" style="margin-bottom:24px">Pipeline health, follow-up queue, lead routing, and proposal status — for the whole team. <button onclick="logoutRep();renderLoginScreen()" style="background:none;border:none;color:#6F7E6A;cursor:pointer;font-size:14px;text-decoration:underline">Switch Account</button></p>
 
 <!-- Pipeline Health Tiles -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-bottom:28px">
   <div class="dash-card-clickable" onclick="show('pipeline')" title="View all open opportunities"
     style="background:var(--gw-surface-2);border:1px solid var(--gw-line);border-radius:12px;padding:16px;text-align:center;cursor:pointer"
     onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
-    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Open Opps</div>
-    <div style="font-size:26px;font-weight:800;color:#e2e8f0;margin-top:6px">${open.length}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:2px">Active pipeline</div>
+    <div style="font-size:10px;font-weight:700;color:#6F7E6A;letter-spacing:.06em;text-transform:uppercase">Open Opps</div>
+    <div style="font-size:26px;font-weight:800;color:#E8E4D9;margin-top:6px">${open.length}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:2px">Active pipeline</div>
   </div>
   <div class="dash-card-clickable" onclick="show('pipeline')" title="View overdue follow-ups"
-    style="background:${overdue.length > 0 ? 'linear-gradient(135deg,#2a0a0a,#0f172a)' : '#0f172a'};border:1px solid ${overdue.length > 0 ? '#7f1d1d' : '#1e293b'};border-radius:12px;padding:16px;text-align:center;cursor:pointer"
+    style="background:${overdue.length > 0 ? 'linear-gradient(135deg,#1F2A2B,#1F2A2B)' : '#1F2A2B'};border:1px solid ${overdue.length > 0 ? '#5C2318' : '#1F2A2B'};border-radius:12px;padding:16px;text-align:center;cursor:pointer"
     onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Overdue</div>
-    <div style="font-size:26px;font-weight:800;color:${overdue.length > 0 ? '#f87171' : '#4ade80'};margin-top:6px">${overdue.length}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:2px">Past follow-up date</div>
+    <div style="font-size:10px;font-weight:700;color:#6F7E6A;letter-spacing:.06em;text-transform:uppercase">Overdue</div>
+    <div style="font-size:26px;font-weight:800;color:${overdue.length > 0 ? '#C97B6A' : '#2D7A55'};margin-top:6px">${overdue.length}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:2px">Past follow-up date</div>
   </div>
   <div class="dash-card-clickable" onclick="show('pipeline')" title="View proposals awaiting response"
     style="background:var(--gw-surface-2);border:1px solid var(--gw-line);border-radius:12px;padding:16px;text-align:center;cursor:pointer"
     onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
-    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Proposals Out</div>
-    <div style="font-size:26px;font-weight:800;color:#fbbf24;margin-top:6px">${proposals.length}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:2px">Awaiting response</div>
+    <div style="font-size:10px;font-weight:700;color:#6F7E6A;letter-spacing:.06em;text-transform:uppercase">Proposals Out</div>
+    <div style="font-size:26px;font-weight:800;color:#8B6914;margin-top:6px">${proposals.length}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:2px">Awaiting response</div>
   </div>
   <div class="dash-card-clickable" onclick="show('pipeline')" title="View new leads not yet contacted"
     style="background:var(--gw-surface-2);border:1px solid var(--gw-line);border-radius:12px;padding:16px;text-align:center;cursor:pointer"
     onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
-    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">New Leads</div>
-    <div style="font-size:26px;font-weight:800;color:#60a5fa;margin-top:6px">${newLeads.length}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:2px">Not yet contacted</div>
+    <div style="font-size:10px;font-weight:700;color:#6F7E6A;letter-spacing:.06em;text-transform:uppercase">New Leads</div>
+    <div style="font-size:26px;font-weight:800;color:#4D8A86;margin-top:6px">${newLeads.length}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:2px">Not yet contacted</div>
   </div>
   <div class="dash-card-clickable" onclick="show('pipeline')" title="View unassigned leads"
-    style="background:var(--gw-surface-2);border:1px solid ${unassigned.length > 0 ? '#f59e0b60' : 'var(--gw-line)'};border-radius:12px;padding:16px;text-align:center;cursor:pointer"
+    style="background:var(--gw-surface-2);border:1px solid ${unassigned.length > 0 ? '#8B691460' : 'var(--gw-line)'};border-radius:12px;padding:16px;text-align:center;cursor:pointer"
     onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
-    <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Unassigned</div>
-    <div style="font-size:26px;font-weight:800;color:${unassigned.length > 0 ? '#f59e0b' : '#4ade80'};margin-top:6px">${unassigned.length}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:2px">No rep assigned</div>
+    <div style="font-size:10px;font-weight:700;color:#6F7E6A;letter-spacing:.06em;text-transform:uppercase">Unassigned</div>
+    <div style="font-size:26px;font-weight:800;color:${unassigned.length > 0 ? '#8B6914' : '#2D7A55'};margin-top:6px">${unassigned.length}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:2px">No rep assigned</div>
   </div>
   <div class="dash-card-clickable" onclick="show('pipeline')" title="View sold opportunities"
-    style="background:linear-gradient(135deg,#0c2a1a,#0f172a);border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;cursor:pointer"
+    style="background:linear-gradient(135deg,#1F2A2B,#1F2A2B);border:1px solid #2D7A55;border-radius:12px;padding:16px;text-align:center;cursor:pointer"
     onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-    <div style="font-size:10px;font-weight:700;color:#86efac;letter-spacing:.06em;text-transform:uppercase">Sold</div>
-    <div style="font-size:26px;font-weight:800;color:#4ade80;margin-top:6px">${sold.length}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:2px">${fmtCurrency(sold.reduce((a,o)=>a+parseFloat(o.jobValue||0),0))}</div>
+    <div style="font-size:10px;font-weight:700;color:#B8DEC9;letter-spacing:.06em;text-transform:uppercase">Sold</div>
+    <div style="font-size:26px;font-weight:800;color:#2D7A55;margin-top:6px">${sold.length}</div>
+    <div style="font-size:11px;color:#6F7E6A;margin-top:2px">${fmtCurrency(sold.reduce((a,o)=>a+parseFloat(o.jobValue||0),0))}</div>
   </div>
 </div>
 
@@ -1362,39 +1362,39 @@ function renderOMDashboard(viewEl, rep) {
   <section class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin:0;font-size:15px">Overdue Follow-Ups</h2>
-      <span style="font-size:11px;color:#f87171;font-weight:700">${overdueList.length} item${overdueList.length===1?'':'s'}</span>
+      <span style="font-size:11px;color:#C97B6A;font-weight:700">${overdueList.length} item${overdueList.length===1?'':'s'}</span>
     </div>
     ${overdueList.length === 0
-      ? '<p style="color:#4ade80;font-size:13px">No overdue follow-ups — pipeline is current.</p>'
+      ? '<p style="color:#2D7A55;font-size:13px">No overdue follow-ups — pipeline is current.</p>'
       : overdueList.slice(0, 8).map(o => `
-        <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--gw-surface-2);border:1px solid #7f1d1d;border-radius:9px;margin-bottom:7px;cursor:pointer"
+        <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--gw-surface-2);border:1px solid #5C2318;border-radius:9px;margin-bottom:7px;cursor:pointer"
           onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
-            <div style="font-size:11px;color:#64748b;margin-top:1px">${escapeHtml(o.status)} · Due ${o.nextFollowUp}</div>
+            <div style="font-size:11px;color:#6F7E6A;margin-top:1px">${escapeHtml(o.status)} · Due ${o.nextFollowUp}</div>
           </div>
-          ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:10px;font-weight:600;color:${_r.color||'#94a3b8'};background:${_r.color||'#94a3b8'}18;border:1px solid ${_r.color||'#94a3b8'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(_r.name)}</span>` : `<span style="font-size:10px;font-weight:600;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`; })()}
-          <span style="font-size:10px;color:#f87171;font-weight:700;white-space:nowrap">OVERDUE</span>
+          ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:10px;font-weight:600;color:${_r.color||'#6F7E6A'};background:${_r.color||'#6F7E6A'}18;border:1px solid ${_r.color||'#6F7E6A'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(_r.name)}</span>` : `<span style="font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`; })()}
+          <span style="font-size:10px;color:#C97B6A;font-weight:700;white-space:nowrap">OVERDUE</span>
         </div>`).join('')}
-    ${overdueList.length > 8 ? `<p style="font-size:12px;color:#64748b;text-align:center;margin-top:8px">+ ${overdueList.length - 8} more — <button class="link-btn" onclick="show('pipeline')" style="color:var(--accent);background:none;border:none;cursor:pointer;font-size:12px;padding:0">Open pipeline</button></p>` : ''}
+    ${overdueList.length > 8 ? `<p style="font-size:12px;color:#6F7E6A;text-align:center;margin-top:8px">+ ${overdueList.length - 8} more — <button class="link-btn" onclick="show('pipeline')" style="color:var(--accent);background:none;border:none;cursor:pointer;font-size:12px;padding:0">Open pipeline</button></p>` : ''}
   </section>
 
   <!-- Proposals to Chase -->
   <section class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin:0;font-size:15px">Proposals to Chase</h2>
-      <span style="font-size:11px;color:#fbbf24;font-weight:700">${chaseList.length} pending</span>
+      <span style="font-size:11px;color:#8B6914;font-weight:700">${chaseList.length} pending</span>
     </div>
     ${chaseList.length === 0
-      ? '<p style="color:#4ade80;font-size:13px">All proposals have a follow-up scheduled.</p>'
+      ? '<p style="color:#2D7A55;font-size:13px">All proposals have a follow-up scheduled.</p>'
       : chaseList.map(o => `
         <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--gw-surface-2);border:1px solid var(--gw-line);border-radius:9px;margin-bottom:7px;cursor:pointer"
           onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
-            <div style="font-size:11px;color:#64748b;margin-top:1px">${escapeHtml(o.serviceLine||o.status)}${o.repId ? ' · ' + ((window.REPS||[]).find(r=>r.id===o.repId)?.name||'') : ' · unassigned'}</div>
+            <div style="font-size:11px;color:#6F7E6A;margin-top:1px">${escapeHtml(o.serviceLine||o.status)}${o.repId ? ' · ' + ((window.REPS||[]).find(r=>r.id===o.repId)?.name||'') : ' · unassigned'}</div>
           </div>
-          ${o.jobValue ? `<span style="font-size:12px;color:#94a3b8;white-space:nowrap">${fmtCurrency(o.jobValue)}</span>` : ''}
+          ${o.jobValue ? `<span style="font-size:12px;color:#6F7E6A;white-space:nowrap">${fmtCurrency(o.jobValue)}</span>` : ''}
         </div>`).join('')}
   </section>
 
@@ -1408,16 +1408,16 @@ function renderOMDashboard(viewEl, rep) {
       <button class="primary-btn" onclick="show('lead')" style="font-size:12px;padding:6px 14px">+ New Lead</button>
     </div>
     ${unassigned.length === 0
-      ? '<p style="color:#4ade80;font-size:13px">All open leads have a rep assigned.</p>'
+      ? '<p style="color:#2D7A55;font-size:13px">All open leads have a rep assigned.</p>'
       : unassigned.map(o => `
-        <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--gw-surface-2);border:1px solid #f59e0b40;border-radius:9px;margin-bottom:7px;cursor:pointer"
+        <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--gw-surface-2);border:1px solid rgba(139,105,20,.25);border-radius:9px;margin-bottom:7px;cursor:pointer"
           onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
           
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
-            <div style="font-size:11px;color:#64748b;margin-top:1px">${escapeHtml(o.status)} · ${escapeHtml(o.serviceLine||'No service line')}</div>
+            <div style="font-size:11px;color:#6F7E6A;margin-top:1px">${escapeHtml(o.status)} · ${escapeHtml(o.serviceLine||'No service line')}</div>
           </div>
-          <span style="font-size:10px;color:#f59e0b;font-weight:700">ASSIGN</span>
+          <span style="font-size:10px;color:#8B6914;font-weight:700">ASSIGN</span>
         </div>`).join('')}
   </section>
 
@@ -1496,34 +1496,34 @@ function renderAdminDashboard(viewEl) {
   function fmtM(n) { return n != null ? n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}) : '—'; }
   function pbar(actual, target, color) {
     const pct = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
-    const c = color || (pct >= 100 ? '#4ade80' : pct >= 70 ? '#fbbf24' : '#f87171');
+    const c = color || (pct >= 100 ? '#2D7A55' : pct >= 70 ? '#8B6914' : '#C97B6A');
     return `<div style="height:5px;background:var(--gw-line);border-radius:3px;margin-top:6px"><div style="height:5px;width:${pct}%;background:${c};border-radius:3px;transition:width .5s"></div></div><div style="font-size:10px;color:var(--gw-muted);margin-top:2px">${pct}% of target</div>`;
   }
   const DIV_SVG_ICONS = {
-    landscape:   '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 15V9.5M9 9.5C9 9.5 5 9.5 3 5c3 0 6 2 6 4.5zm0 0c0 0 4 0 6-4.5-3 0-6 2-6 4.5z" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    maintenance: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M12.5 3a3 3 0 00-2.5 4.5L3.8 13.8a.8.8 0 001.2 1.2l6.5-5.7A3 3 0 0014 10a3 3 0 00-.5-1.5l-1.8 1.8-1.2-1.2 1.8-1.8A3 3 0 0012.5 3z" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    snow:        '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2.5v13M2.5 9h13M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="2.5" r="1" fill="#93c5fd"/><circle cx="9" cy="15.5" r="1" fill="#93c5fd"/><circle cx="2.5" cy="9" r="1" fill="#93c5fd"/><circle cx="15.5" cy="9" r="1" fill="#93c5fd"/></svg>',
+    landscape:   '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 15V9.5M9 9.5C9 9.5 5 9.5 3 5c3 0 6 2 6 4.5zm0 0c0 0 4 0 6-4.5-3 0-6 2-6 4.5z" stroke="#2D7A55" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    maintenance: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M12.5 3a3 3 0 00-2.5 4.5L3.8 13.8a.8.8 0 001.2 1.2l6.5-5.7A3 3 0 0014 10a3 3 0 00-.5-1.5l-1.8 1.8-1.2-1.2 1.8-1.8A3 3 0 0012.5 3z" stroke="#4D8A86" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    snow:        '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2.5v13M2.5 9h13M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="#B8C8C7" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="2.5" r="1" fill="#B8C8C7"/><circle cx="9" cy="15.5" r="1" fill="#B8C8C7"/><circle cx="2.5" cy="9" r="1" fill="#B8C8C7"/><circle cx="15.5" cy="9" r="1" fill="#B8C8C7"/></svg>',
   };
   function divCard(div, key) {
     if (!div || !div.target) return '';
     const abovePlan = div.remaining <= 0;
     const gmOk = div.grossMarginPct >= div.grossMarginFloor;
     const pct = Math.min(100, Math.round((div.actual / div.target) * 100));
-    const barColor = pct >= 100 ? '#4ade80' : pct >= 70 ? '#fbbf24' : '#f87171';
+    const barColor = pct >= 100 ? '#2D7A55' : pct >= 70 ? '#8B6914' : '#C97B6A';
     const divIconSvg = DIV_SVG_ICONS[key] || '';
-    return `<div style="background:var(--gw-surface-2);border:1px solid ${abovePlan ? '#16a34a' : 'var(--gw-line)'};border-radius:12px;padding:16px">
+    return `<div style="background:var(--gw-surface-2);border:1px solid ${abovePlan ? '#2D7A55' : 'var(--gw-line)'};border-radius:12px;padding:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px">${divIconSvg} ${div.name}</div>
-        ${abovePlan ? '<span style="background:#16a34a;color:#fff;font-size:9px;font-weight:700;border-radius:20px;padding:2px 7px">ABOVE PLAN</span>' : ''}
+        ${abovePlan ? '<span style="background:#2D7A55;color:#fff;font-size:9px;font-weight:700;border-radius:20px;padding:2px 7px">ABOVE PLAN</span>' : ''}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
-        <div><div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Target</div><div style="font-size:1.1rem;font-weight:800;color:#e2e8f0">${fmtM(div.target)}</div></div>
-        <div><div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Actual</div><div style="font-size:1.1rem;font-weight:800;color:${abovePlan ? '#4ade80' : '#00d4ff'}">${fmtM(div.actual)}</div></div>
-        <div><div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">GM Floor</div><div style="font-size:.95rem;font-weight:700;color:#f59e0b">${Math.round(div.grossMarginFloor * 100)}%</div></div>
-        <div><div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Actual GM</div><div style="font-size:.95rem;font-weight:700;color:${gmOk ? '#4ade80' : '#f87171'}">${Math.round(div.grossMarginPct * 100)}% ${gmOk ? '+' : '!'}</div></div>
+        <div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Target</div><div style="font-size:1.1rem;font-weight:800;color:#E8E4D9">${fmtM(div.target)}</div></div>
+        <div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Actual</div><div style="font-size:1.1rem;font-weight:800;color:${abovePlan ? '#2D7A55' : '#4D8A86'}">${fmtM(div.actual)}</div></div>
+        <div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">GM Floor</div><div style="font-size:.95rem;font-weight:700;color:#8B6914">${Math.round(div.grossMarginFloor * 100)}%</div></div>
+        <div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Actual GM</div><div style="font-size:.95rem;font-weight:700;color:${gmOk ? '#2D7A55' : '#C97B6A'}">${Math.round(div.grossMarginPct * 100)}% ${gmOk ? '+' : '!'}</div></div>
       </div>
       <div style="height:5px;background:var(--gw-line);border-radius:3px"><div style="height:5px;width:${pct}%;background:${barColor};border-radius:3px;transition:width .5s"></div></div>
-      <div style="font-size:10px;color:#64748b;margin-top:4px">${pct}% · ${abovePlan ? '<span style="color:#4ade80">+' + fmtM(Math.abs(div.remaining)) + ' over</span>' : fmtM(div.remaining) + ' remaining'}</div>
+      <div style="font-size:10px;color:#6F7E6A;margin-top:4px">${pct}% · ${abovePlan ? '<span style="color:#2D7A55">+' + fmtM(Math.abs(div.remaining)) + ' over</span>' : fmtM(div.remaining) + ' remaining'}</div>
     </div>`;
   }
 
@@ -1536,10 +1536,10 @@ function renderAdminDashboard(viewEl) {
 
   viewEl.innerHTML = `
 <!-- ── HEADER ── -->
-<div class="eyebrow" style="color:#00d4ff">Tyler · Owner / CEO</div>
+<div class="eyebrow" style="color:#4D8A86">Tyler · Owner / CEO</div>
 <h1 style="margin-bottom:4px">Owner Dashboard</h1>
 <p class="lede" style="margin-bottom:20px">FY2026 financials · Division P&L · Team performance · Commission queue · Pipeline health ·
-  <button onclick="logoutRep();renderLoginScreen()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;text-decoration:underline">Switch Account</button>
+  <button onclick="logoutRep();renderLoginScreen()" style="background:none;border:none;color:#6F7E6A;cursor:pointer;font-size:14px;text-decoration:underline">Switch Account</button>
 </p>
 
 <!-- ── EXEC SUMMARY: plain-language takeaways ── -->
@@ -1553,45 +1553,45 @@ ${(()=>{
 
   // Revenue vs plan
   if (isAheadBudget) {
-    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(74,222,128,.18);border:1px solid rgba(74,222,128,.4);color:#4ade80;flex-shrink:0" title="Positive"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`, color:'#4ade80', text:`Revenue is <strong style="color:#4ade80">+${fmtM(Math.abs(ytdVariance||0))} ahead of budget</strong> YTD — currently at ${pctOfBudget}% of annual plan.` });
+    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(74,222,128,.18);border:1px solid rgba(74,222,128,.4);color:#2D7A55;flex-shrink:0" title="Positive"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`, color:'#2D7A55', text:`Revenue is <strong style="color:#2D7A55">+${fmtM(Math.abs(ytdVariance||0))} ahead of budget</strong> YTD — currently at ${pctOfBudget}% of annual plan.` });
   } else {
-    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(248,113,113,.18);border:1px solid rgba(248,113,113,.4);color:#f87171;flex-shrink:0" title="Behind target"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 9V3M6 9l-2.5-3M6 9l2.5-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`, color:'#f87171', text:`Revenue is <strong style="color:#f87171">${fmtM(Math.abs(ytdVariance||0))} behind budget</strong> YTD (${pctOfBudget}% of plan) — needs ${fmtM(annual.avgNeededPerMonth)} per month to close gap.` });
+    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(248,113,113,.18);border:1px solid rgba(248,113,113,.4);color:#C97B6A;flex-shrink:0" title="Behind target"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 9V3M6 9l-2.5-3M6 9l2.5-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`, color:'#C97B6A', text:`Revenue is <strong style="color:#C97B6A">${fmtM(Math.abs(ytdVariance||0))} behind budget</strong> YTD (${pctOfBudget}% of plan) — needs ${fmtM(annual.avgNeededPerMonth)} per month to close gap.` });
   }
 
   // Overdue follow-ups
   if (overdueCount === 0) {
-    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(74,222,128,.18);border:1px solid rgba(74,222,128,.4);color:#4ade80;flex-shrink:0" title="Positive"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`, color:'#4ade80', text:'All follow-ups are current — no overdue leads.' });
+    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(74,222,128,.18);border:1px solid rgba(74,222,128,.4);color:#2D7A55;flex-shrink:0" title="Positive"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`, color:'#2D7A55', text:'All follow-ups are current — no overdue leads.' });
   } else {
-    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(251,191,36,.18);border:1px solid rgba(251,191,36,.4);color:#fbbf24;flex-shrink:0" title="Action needed"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="6" cy="9.5" r="1" fill="currentColor"/></svg></span>`, color:'#f87171', text:`<strong style="color:#f87171">${overdueCount} lead${overdueCount>1?'s are':' is'} overdue</strong> for follow-up — <span onclick="window._pipelineStatusFilter='overdue';show('pipeline')" style="color:#00d4ff;cursor:pointer;text-decoration:underline">review now →</span>` });
+    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(251,191,36,.18);border:1px solid rgba(251,191,36,.4);color:#8B6914;flex-shrink:0" title="Action needed"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="6" cy="9.5" r="1" fill="currentColor"/></svg></span>`, color:'#C97B6A', text:`<strong style="color:#C97B6A">${overdueCount} lead${overdueCount>1?'s are':' is'} overdue</strong> for follow-up — <span onclick="window._pipelineStatusFilter='overdue';show('pipeline')" style="color:#4D8A86;cursor:pointer;text-decoration:underline">review now →</span>` });
   }
 
   // Commission queue
   if (commQueueCount > 0) {
-    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(251,191,36,.18);border:1px solid rgba(251,191,36,.4);color:#fbbf24;flex-shrink:0" title="Commission"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v9M4 8c0 1 .9 1.5 2 1.5S8 9 8 8s-1-1.5-2-1.5S4 5 4 4s.9-1.5 2-1.5S8 3 8 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>`, color:'#f59e0b', text:`<strong style="color:#f59e0b">${commQueueCount} commission${commQueueCount>1?'s':''} pending approval</strong> — sold but not yet approved. <span onclick="show('repDashboard')" style="color:#00d4ff;cursor:pointer;text-decoration:underline">Review queue →</span>` });
+    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(251,191,36,.18);border:1px solid rgba(251,191,36,.4);color:#8B6914;flex-shrink:0" title="Commission"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v9M4 8c0 1 .9 1.5 2 1.5S8 9 8 8s-1-1.5-2-1.5S4 5 4 4s.9-1.5 2-1.5S8 3 8 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>`, color:'#8B6914', text:`<strong style="color:#8B6914">${commQueueCount} commission${commQueueCount>1?'s':''} pending approval</strong> — sold but not yet approved. <span onclick="show('repDashboard')" style="color:#4D8A86;cursor:pointer;text-decoration:underline">Review queue →</span>` });
   } else {
-    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(74,222,128,.18);border:1px solid rgba(74,222,128,.4);color:#4ade80;flex-shrink:0" title="Positive"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`, color:'#4ade80', text:'Commission queue is clear — all sold deals have been approved.' });
+    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(74,222,128,.18);border:1px solid rgba(74,222,128,.4);color:#2D7A55;flex-shrink:0" title="Positive"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`, color:'#2D7A55', text:'Commission queue is clear — all sold deals have been approved.' });
   }
 
   // Unassigned leads
   if (unassignedCount > 0) {
-    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(100,116,139,.18);border:1px solid rgba(100,116,139,.4);color:#94a3b8;flex-shrink:0" title="Note"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="1.5" fill="currentColor"/><path d="M6 2.5v2M6 7.5v2M2.5 6h2M7.5 6h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".5"/></svg></span>`, color:'#f59e0b', text:`<strong style="color:#f59e0b">${unassignedCount} unassigned lead${unassignedCount>1?'s':''}</strong> in pipeline — assign to Ryan or take directly.` });
+    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(100,116,139,.18);border:1px solid rgba(100,116,139,.4);color:#6F7E6A;flex-shrink:0" title="Note"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="1.5" fill="currentColor"/><path d="M6 2.5v2M6 7.5v2M2.5 6h2M7.5 6h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".5"/></svg></span>`, color:'#8B6914', text:`<strong style="color:#8B6914">${unassignedCount} unassigned lead${unassignedCount>1?'s':''}</strong> in pipeline — assign to Ryan or take directly.` });
   }
 
   // Stale check
   if (stale.length > 0) {
-    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(251,191,36,.18);border:1px solid rgba(251,191,36,.4);color:#fbbf24;flex-shrink:0" title="Stale"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6.5" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M6 4v3l1.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 1h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".5"/></svg></span>`, color:'#f59e0b', text:`<strong style="color:#f59e0b">${stale.length} stale lead${stale.length>1?'s':''}</strong> (14+ days no activity) — at risk of losing interest.` });
+    takeaways.push({ icon:`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:rgba(251,191,36,.18);border:1px solid rgba(251,191,36,.4);color:#8B6914;flex-shrink:0" title="Stale"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6.5" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M6 4v3l1.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 1h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".5"/></svg></span>`, color:'#8B6914', text:`<strong style="color:#8B6914">${stale.length} stale lead${stale.length>1?'s':''}</strong> (14+ days no activity) — at risk of losing interest.` });
   }
 
   const rows = takeaways.map(t => `
     <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;border-bottom:1px solid var(--gw-line)">
       <span style="font-size:1.1rem;min-width:24px">${t.icon}</span>
-      <p style="margin:0;font-size:13px;color:#e2e8f0;line-height:1.5">${t.text}</p>
+      <p style="margin:0;font-size:13px;color:#E8E4D9;line-height:1.5">${t.text}</p>
     </div>`).join('');
 
   return `<div class="gw-sky-card" style="border-radius:14px;margin-bottom:20px;overflow:hidden">
     <div class="gw-sky-card-header" style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#00d4ff">Executive Summary</span>
-      <span style="font-size:11px;color:#64748b">Key takeaways as of today</span>
+      <span style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#4D8A86">Executive Summary</span>
+      <span style="font-size:11px;color:#6F7E6A">Key takeaways as of today</span>
     </div>
     ${rows}
   </div>`;
@@ -1599,45 +1599,45 @@ ${(()=>{
 
 <!-- ── SECTION 1: FY2026 REVENUE BANNER ── -->
 <div class="gw-sky-card" style="border-radius:16px;padding:20px;margin-bottom:24px">
-  <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px">FY2026 · ${fy.budgetVersion || 'v2.2'} · As of ${fy.asOfDate || '—'}</div>
+  <div style="font-size:11px;font-weight:700;color:#6F7E6A;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px">FY2026 · ${fy.budgetVersion || 'v2.2'} · As of ${fy.asOfDate || '—'}</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
     <div style="text-align:center">
-      <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Annual Budget</div>
-      <div style="font-size:1.6rem;font-weight:900;color:#e2e8f0">${fmtM(annual.budgetedRevenue)}</div>
+      <div style="font-size:9px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.06em">Annual Budget</div>
+      <div style="font-size:1.6rem;font-weight:900;color:#E8E4D9">${fmtM(annual.budgetedRevenue)}</div>
     </div>
     <div style="text-align:center">
-      <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Actual Revenue</div>
-      <div style="font-size:1.6rem;font-weight:900;color:#00d4ff">${fmtM(annual.actualRevenue)}</div>
+      <div style="font-size:9px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.06em">Actual Revenue</div>
+      <div style="font-size:1.6rem;font-weight:900;color:#4D8A86">${fmtM(annual.actualRevenue)}</div>
     </div>
     <div style="text-align:center">
-      <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Remaining</div>
-      <div style="font-size:1.6rem;font-weight:900;color:#f87171">${fmtM(annual.remaining)}</div>
+      <div style="font-size:9px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.06em">Remaining</div>
+      <div style="font-size:1.6rem;font-weight:900;color:#C97B6A">${fmtM(annual.remaining)}</div>
     </div>
     <div style="text-align:center">
-      <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Needed / Mo</div>
-      <div style="font-size:1.6rem;font-weight:900;color:#f59e0b">${fmtM(annual.avgNeededPerMonth)}</div>
-      <div style="font-size:9px;color:#64748b">${annual.monthsLeft != null ? annual.monthsLeft : 7} months left (dynamic)</div>
+      <div style="font-size:9px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.06em">Needed / Mo</div>
+      <div style="font-size:1.6rem;font-weight:900;color:#8B6914">${fmtM(annual.avgNeededPerMonth)}</div>
+      <div style="font-size:9px;color:#6F7E6A">${annual.monthsLeft != null ? annual.monthsLeft : 7} months left (dynamic)</div>
     </div>
     <div style="text-align:center">
-      <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Operating GM</div>
-      <div style="font-size:1.6rem;font-weight:900;color:#a78bfa">${annual.grossMarginPct ? Math.round(annual.grossMarginPct * 100) + '%' : '—'}</div>
+      <div style="font-size:9px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.06em">Operating GM</div>
+      <div style="font-size:1.6rem;font-weight:900;color:#4D8A86">${annual.grossMarginPct ? Math.round(annual.grossMarginPct * 100) + '%' : '—'}</div>
     </div>
     <div style="text-align:center">
-      <div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">True Net Income</div>
-      <div style="font-size:1.3rem;font-weight:900;color:#4ade80">${fmtM(annual.trueNetIncome)}</div>
-      <div style="font-size:9px;color:#64748b">after ${fmtM(annual.loanMonthly)}/mo loans</div>
+      <div style="font-size:9px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.06em">True Net Income</div>
+      <div style="font-size:1.3rem;font-weight:900;color:#2D7A55">${fmtM(annual.trueNetIncome)}</div>
+      <div style="font-size:9px;color:#6F7E6A">after ${fmtM(annual.loanMonthly)}/mo loans</div>
     </div>
   </div>
   <!-- YTD progress bar -->
   <div style="margin-top:16px">
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:4px">
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#6F7E6A;margin-bottom:4px">
       <span>YTD Progress to Budget</span>
-      <span style="color:${ytdVariance >= 0 ? '#4ade80' : '#f87171'}">${ytdVariance >= 0 ? '+' : ''}${fmtM(ytdVariance)} vs budget</span>
+      <span style="color:${ytdVariance >= 0 ? '#2D7A55' : '#C97B6A'}">${ytdVariance >= 0 ? '+' : ''}${fmtM(ytdVariance)} vs budget</span>
     </div>
     <div style="height:8px;background:var(--gw-line);border-radius:4px">
-      <div style="height:8px;width:${Math.min(100, Math.round(((annual.actualRevenue||0)/(annual.budgetedRevenue||1))*100))}%;background:linear-gradient(90deg,#00d4ff,#4ade80);border-radius:4px;transition:width .5s"></div>
+      <div style="height:8px;width:${Math.min(100, Math.round(((annual.actualRevenue||0)/(annual.budgetedRevenue||1))*100))}%;background:linear-gradient(90deg,#4D8A86,#2D7A55);border-radius:4px;transition:width .5s"></div>
     </div>
-    <div style="font-size:10px;color:#64748b;margin-top:3px">${Math.round(((annual.actualRevenue||0)/(annual.budgetedRevenue||1))*100)}% of annual budget · ${fy.asOfDate || ''}</div>
+    <div style="font-size:10px;color:#6F7E6A;margin-top:3px">${Math.round(((annual.actualRevenue||0)/(annual.budgetedRevenue||1))*100)}% of annual budget · ${fy.asOfDate || ''}</div>
   </div>
 </div>
 
@@ -1661,15 +1661,15 @@ ${(()=>{
     <div style="display:flex;gap:8px;min-width:600px">
       ${months.map(m => {
         const hasActual = m.actual != null;
-        const varColor = !hasActual ? '#334155' : m.variance >= 0 ? '#4ade80' : '#f87171';
+        const varColor = !hasActual ? '#4A5947' : m.variance >= 0 ? '#2D7A55' : '#C97B6A';
         const barPct = hasActual ? Math.min(100, Math.round((m.actual / m.budgeted) * 100)) : 0;
-        return `<div style="flex:1;min-width:60px;background:var(--gw-surface-2);border:1px solid ${hasActual ? '#1e4d6b' : 'var(--gw-line)'};border-radius:10px;padding:10px 8px;text-align:center">
-          <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:6px">${m.month}</div>
-          <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:2px">${fmtM(m.budgeted)}</div>
-          ${hasActual ? `<div style="font-size:12px;font-weight:800;color:#00d4ff">${fmtM(m.actual)}</div>
+        return `<div style="flex:1;min-width:60px;background:var(--gw-surface-2);border:1px solid ${hasActual ? '#204A43' : 'var(--gw-line)'};border-radius:10px;padding:10px 8px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#6F7E6A;margin-bottom:6px">${m.month}</div>
+          <div style="font-size:11px;font-weight:600;color:#6F7E6A;margin-bottom:2px">${fmtM(m.budgeted)}</div>
+          ${hasActual ? `<div style="font-size:12px;font-weight:800;color:#4D8A86">${fmtM(m.actual)}</div>
           <div style="font-size:10px;color:${varColor};font-weight:700;margin-top:2px">${m.variance >= 0 ? '+' : ''}${fmtM(m.variance)}</div>
-          <div style="height:3px;background:var(--gw-line);border-radius:2px;margin-top:6px"><div style="height:3px;width:${barPct}%;background:${m.variance >= 0 ? '#4ade80' : '#f87171'};border-radius:2px"></div></div>`
-          : `<div style="font-size:10px;color:#334155;margin-top:4px">—</div>`}
+          <div style="height:3px;background:var(--gw-line);border-radius:2px;margin-top:6px"><div style="height:3px;width:${barPct}%;background:${m.variance >= 0 ? '#2D7A55' : '#C97B6A'};border-radius:2px"></div></div>`
+          : `<div style="font-size:10px;color:#4A5947;margin-top:4px">—</div>`}
         </div>`;
       }).join('')}
     </div>
@@ -1679,12 +1679,12 @@ ${(()=>{
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
     <div>
       <h2 style="margin:0;font-size:16px">Pipeline by Division</h2>
-      <div style="font-size:11px;color:#64748b;margin-top:3px">
-        <strong style="color:#a78bfa">Paper on the Street</strong>
+      <div style="font-size:11px;color:#6F7E6A;margin-top:3px">
+        <strong style="color:#4D8A86">Paper on the Street</strong>
         = active quoted propd value currently in front of customers, not yet sold or lost
       </div>
     </div>
-    <button onclick="show('manager')" style="padding:6px 14px;background:rgba(167,139,250,.12);border:1px solid rgba(124,58,237,.4);border-radius:8px;color:#a78bfa;font-size:11px;font-weight:700;cursor:pointer">
+    <button onclick="show('manager')" style="padding:6px 14px;background:rgba(167,139,250,.12);border:1px solid rgba(124,58,237,.4);border-radius:8px;color:#4D8A86;font-size:11px;font-weight:700;cursor:pointer">
       Full Drill-Down →
     </button>
   </div>
@@ -1705,68 +1705,68 @@ ${(()=>{
       <div class="dash-card-clickable" onclick="show('pipeline')" title="View all open opportunities"
         style="background:var(--gw-surface-2);border-radius:10px;padding:12px;text-align:center;cursor:pointer"
         onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
-        <div style="font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase">Open Opps</div>
-        <div style="font-size:22px;font-weight:800;color:#e2e8f0;margin-top:4px">${openOpps.length}</div>
-        <div style="font-size:10px;color:#64748b">${fmtM(totalPipelineValue)} value</div>
+        <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Open Opps</div>
+        <div style="font-size:22px;font-weight:800;color:#E8E4D9;margin-top:4px">${openOpps.length}</div>
+        <div style="font-size:10px;color:#6F7E6A">${fmtM(totalPipelineValue)} value</div>
       </div>
       <div class="dash-card-clickable" onclick="show('pipeline')" title="View overdue follow-ups"
-        style="background:${overdueList.length > 0 ? '#2a0a0a' : '#0f172a'};border:1px solid ${overdueList.length > 0 ? '#7f1d1d' : '#1e293b'};border-radius:10px;padding:12px;text-align:center;cursor:pointer"
+        style="background:${overdueList.length > 0 ? '#1F2A2B' : '#1F2A2B'};border:1px solid ${overdueList.length > 0 ? '#5C2318' : '#1F2A2B'};border-radius:10px;padding:12px;text-align:center;cursor:pointer"
         onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-        <div style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase">Overdue</div>
-        <div style="font-size:22px;font-weight:800;color:${overdueList.length > 0 ? '#f87171' : '#4ade80'};margin-top:4px">${overdueList.length}</div>
-        <div style="font-size:10px;color:#64748b">need follow-up</div>
+        <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Overdue</div>
+        <div style="font-size:22px;font-weight:800;color:${overdueList.length > 0 ? '#C97B6A' : '#2D7A55'};margin-top:4px">${overdueList.length}</div>
+        <div style="font-size:10px;color:#6F7E6A">need follow-up</div>
       </div>
       <div class="dash-card-clickable" onclick="show('pipeline')" title="View proposals awaiting decision"
         style="background:var(--gw-surface-2);border-radius:10px;padding:12px;text-align:center;cursor:pointer"
         onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
-        <div style="font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase">Proposals Out</div>
-        <div style="font-size:22px;font-weight:800;color:#fbbf24;margin-top:4px">${proposals.length}</div>
-        <div style="font-size:10px;color:#64748b">awaiting decision</div>
+        <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Proposals Out</div>
+        <div style="font-size:22px;font-weight:800;color:#8B6914;margin-top:4px">${proposals.length}</div>
+        <div style="font-size:10px;color:#6F7E6A">awaiting decision</div>
       </div>
       <div class="dash-card-clickable" onclick="show('pipeline')" title="View stale leads with no recent activity"
-        style="background:var(--gw-surface-2);border:1px solid ${stale.length > 0 ? '#f59e0b40' : 'var(--gw-line)'};border-radius:10px;padding:12px;text-align:center;cursor:pointer"
+        style="background:var(--gw-surface-2);border:1px solid ${stale.length > 0 ? 'rgba(139,105,20,.25)' : 'var(--gw-line)'};border-radius:10px;padding:12px;text-align:center;cursor:pointer"
         onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
-        <div style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase">Stale (14d+)</div>
-        <div style="font-size:22px;font-weight:800;color:${stale.length > 0 ? '#f59e0b' : '#4ade80'};margin-top:4px">${stale.length}</div>
-        <div style="font-size:10px;color:#64748b">no recent activity</div>
+        <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Stale (14d+)</div>
+        <div style="font-size:22px;font-weight:800;color:${stale.length > 0 ? '#8B6914' : '#2D7A55'};margin-top:4px">${stale.length}</div>
+        <div style="font-size:10px;color:#6F7E6A">no recent activity</div>
       </div>
       <div class="dash-card-clickable" onclick="show('pipeline')" title="View sold opportunities"
-        style="background:linear-gradient(135deg,#0c2a1a,#0f172a);border:1px solid #16a34a;border-radius:10px;padding:12px;text-align:center;cursor:pointer"
+        style="background:linear-gradient(135deg,#1F2A2B,#1F2A2B);border:1px solid #2D7A55;border-radius:10px;padding:12px;text-align:center;cursor:pointer"
         onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-        <div style="font-size:9px;color:#86efac;font-weight:600;text-transform:uppercase">Sold</div>
-        <div style="font-size:22px;font-weight:800;color:#4ade80;margin-top:4px">${soldOpps.length}</div>
-        <div style="font-size:10px;color:#64748b">${fmtM(soldValue)} value</div>
+        <div style="font-size:9px;color:#B8DEC9;font-weight:600;text-transform:uppercase">Sold</div>
+        <div style="font-size:22px;font-weight:800;color:#2D7A55;margin-top:4px">${soldOpps.length}</div>
+        <div style="font-size:10px;color:#6F7E6A">${fmtM(soldValue)} value</div>
       </div>
       <div class="dash-card-clickable" onclick="show('pipeline')" title="View unassigned leads"
-        style="background:var(--gw-surface-2);border:1px solid ${unassigned.length > 0 ? '#f59e0b60' : 'var(--gw-line)'};border-radius:10px;padding:12px;text-align:center;cursor:pointer"
+        style="background:var(--gw-surface-2);border:1px solid ${unassigned.length > 0 ? '#8B691460' : 'var(--gw-line)'};border-radius:10px;padding:12px;text-align:center;cursor:pointer"
         onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
-        <div style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase">Unassigned</div>
-        <div style="font-size:22px;font-weight:800;color:${unassigned.length > 0 ? '#f59e0b' : '#4ade80'};margin-top:4px">${unassigned.length}</div>
-        <div style="font-size:10px;color:#64748b">no rep assigned</div>
+        <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Unassigned</div>
+        <div style="font-size:22px;font-weight:800;color:${unassigned.length > 0 ? '#8B6914' : '#2D7A55'};margin-top:4px">${unassigned.length}</div>
+        <div style="font-size:10px;color:#6F7E6A">no rep assigned</div>
       </div>
     </div>
     ${overdueList.length > 0 ? `
     <div style="border-top:1px solid var(--gw-line);padding-top:12px">
-      <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:8px">Most Overdue</div>
+      <div style="font-size:11px;font-weight:700;color:#C97B6A;margin-bottom:8px">Most Overdue</div>
       ${overdueList.slice(0, 4).map(o => `
-        <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--gw-surface-2);border:1px solid #7f1d1d;border-radius:8px;margin-bottom:5px;cursor:pointer"
+        <div onclick="show('pipeline','${o.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--gw-surface-2);border:1px solid #5C2318;border-radius:8px;margin-bottom:5px;cursor:pointer"
           onmouseover="this.style.background='var(--gw-surface-3)'" onmouseout="this.style.background='var(--gw-surface-2)'">
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</div>
-            <div style="font-size:10px;color:#64748b">${escapeHtml(o.status)} · Due ${o.nextFollowUp}</div>
-            ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:9px;font-weight:600;color:${_r.color||'#94a3b8'};background:${_r.color||'#94a3b8'}18;border:1px solid ${_r.color||'#94a3b8'}40;border-radius:20px;padding:1px 6px;white-space:nowrap">${escapeHtml(_r.name)}</span>` : `<span style="font-size:9px;font-weight:600;color:#f59e0b;border:1px solid #f59e0b40;border-radius:20px;padding:1px 6px">⚠ Unassigned</span>`; })()}
+            <div style="font-size:10px;color:#6F7E6A">${escapeHtml(o.status)} · Due ${o.nextFollowUp}</div>
+            ${(()=>{ const _r=(window.REPS||[]).find(r=>r.id===o.repId); return _r ? `<span style="font-size:9px;font-weight:600;color:${_r.color||'#6F7E6A'};background:${_r.color||'#6F7E6A'}18;border:1px solid ${_r.color||'#6F7E6A'}40;border-radius:20px;padding:1px 6px;white-space:nowrap">${escapeHtml(_r.name)}</span>` : `<span style="font-size:9px;font-weight:600;color:#8B6914;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 6px">⚠ Unassigned</span>`; })()}
           </div>
-          <span style="font-size:9px;color:#f87171;font-weight:700">OVERDUE</span>
+          <span style="font-size:9px;color:#C97B6A;font-weight:700">OVERDUE</span>
         </div>`).join('')}
-      ${overdueList.length > 4 ? `<div style="font-size:11px;color:#64748b;text-align:center;margin-top:6px">+${overdueList.length - 4} more — <button class="link-btn" onclick="show('pipeline')" style="color:var(--accent);background:none;border:none;cursor:pointer;font-size:11px;padding:0">open pipeline</button></div>` : ''}
-    </div>` : '<p style="color:#4ade80;font-size:13px;margin-top:8px">No overdue follow-ups.</p>'}
+      ${overdueList.length > 4 ? `<div style="font-size:11px;color:#6F7E6A;text-align:center;margin-top:6px">+${overdueList.length - 4} more — <button class="link-btn" onclick="show('pipeline')" style="color:var(--accent);background:none;border:none;cursor:pointer;font-size:11px;padding:0">open pipeline</button></div>` : ''}
+    </div>` : '<p style="color:#2D7A55;font-size:13px;margin-top:8px">No overdue follow-ups.</p>'}
   </section>
 
   <!-- Commission Approval Queue (COMM-11/12/13: lifecycle-aware) -->
   <section class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin:0;font-size:16px">Commission Approval Queue</h2>
-      <span style="font-size:11px;color:${commQueue.length > 0 ? '#fbbf24' : '#4ade80'};font-weight:700">${commQueue.length} pending · ${commApproved.length} approved</span>
+      <span style="font-size:11px;color:${commQueue.length > 0 ? '#8B6914' : '#2D7A55'};font-weight:700">${commQueue.length} pending · ${commApproved.length} approved</span>
     </div>
 
     ${(()=>{
@@ -1785,7 +1785,7 @@ ${(()=>{
           approved:   isApproved,
           preview:    true
         });
-        const capBadge = cr.capApplied ? `<span style="font-size:9px;background:#f87171;color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">CAPPED</span>` : '';
+        const capBadge = cr.capApplied ? `<span style="font-size:9px;background:#C97B6A;color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">CAPPED</span>` : '';
         const srcLabel = o.leadSource === 'self_generated' ? 'Self-Gen' : o.leadSource === 'company_lead' ? 'Co. Lead' : o.leadSource === 'assisted' ? 'Assisted' : '—';
         const wt = o.workType ? o.workType.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—';
         return `
@@ -1797,31 +1797,31 @@ ${(()=>{
                 <span style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(o.client||'Unnamed')}</span>
                 <span style="font-size:9px;background:${scol}22;color:${scol};border:1px solid ${scol}40;border-radius:20px;padding:1px 7px;white-space:nowrap">${slbl}</span>
               </div>
-              <div style="font-size:11px;color:#64748b;margin-top:1px">${repObj ? `<span style="color:${repObj.color||'#94a3b8'}">${escapeHtml(repObj.name)}</span> · ` : ''}${wt} · ${srcLabel}</div>
+              <div style="font-size:11px;color:#6F7E6A;margin-top:1px">${repObj ? `<span style="color:${repObj.color||'#6F7E6A'}">${escapeHtml(repObj.name)}</span> · ` : ''}${wt} · ${srcLabel}</div>
             </div>
             <div style="text-align:right;flex-shrink:0">
-              <div style="font-size:13px;font-weight:800;color:#00d4ff">${fmtM(val)}</div>
-              <div style="font-size:10px;color:${o.collected?'#4ade80':'#f59e0b'}">${o.collected ? '✓ collected' : '⏳ uncollected'}</div>
+              <div style="font-size:13px;font-weight:800;color:#4D8A86">${fmtM(val)}</div>
+              <div style="font-size:10px;color:${o.collected?'#2D7A55':'#8B6914'}">${o.collected ? '✓ collected' : '⏳ uncollected'}</div>
             </div>
           </div>
           <div style="padding:8px 12px;background:var(--gw-surface);border-top:1px solid var(--gw-line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div>
-              <span style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.04em">Calculated Commission</span><br>
-              <span style="font-size:15px;font-weight:800;color:#fbbf24">${fmtM(cr.amount)}</span>${capBadge}
-              <div style="font-size:10px;color:#64748b;margin-top:2px;max-width:260px">${escapeHtml(cr.note)}</div>
-              ${cr.retentionBonus > 0 ? `<div style="font-size:10px;color:#4ade80;margin-top:2px">+${fmtM(cr.retentionBonus)} retention bonus after 90-day active</div>` : ''}
+              <span style="font-size:10px;color:#5C6B58;text-transform:uppercase;letter-spacing:.04em">Calculated Commission</span><br>
+              <span style="font-size:15px;font-weight:800;color:#8B6914">${fmtM(cr.amount)}</span>${capBadge}
+              <div style="font-size:10px;color:#6F7E6A;margin-top:2px;max-width:260px">${escapeHtml(cr.note)}</div>
+              ${cr.retentionBonus > 0 ? `<div style="font-size:10px;color:#2D7A55;margin-top:2px">+${fmtM(cr.retentionBonus)} retention bonus after 90-day active</div>` : ''}
             </div>
             <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
               ${!isApproved ? `
               <button onclick="event.stopPropagation();window._adminApproveComm('${o.id}')"
-                style="background:#16a34a;border:none;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">✓ Approve</button>
+                style="background:#2D7A55;border:none;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">✓ Approve</button>
               <button onclick="event.stopPropagation();window._adminHoldComm('${o.id}')"
-                style="background:#92400e;border:none;color:#fbbf24;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer">Hold</button>
+                style="background:#7A5C10;border:none;color:#8B6914;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer">Hold</button>
               <button onclick="event.stopPropagation();window._adminRejectComm('${o.id}')"
-                style="background:#450a0a;border:none;color:#f87171;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer">Reject</button>
+                style="background:#5C2318;border:none;color:#C97B6A;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer">Reject</button>
               ` : `
               <button onclick="event.stopPropagation();window._adminMarkCommPaid('${o.id}')"
-                style="background:#064e3b;border:none;color:#4ade80;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">$ Mark Paid</button>
+                style="background:#1B3F38;border:none;color:#2D7A55;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">$ Mark Paid</button>
               `}
               <button onclick="event.stopPropagation();show('pipeline','${o.id}')"
                 style="background:var(--gw-surface-2);border:1px solid var(--gw-line);color:var(--gw-muted);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">View →</button>
@@ -1831,12 +1831,12 @@ ${(()=>{
       }
 
       let html = commQueue.length === 0
-        ? '<p style="color:#4ade80;font-size:13px">No commissions pending approval. ✓</p>'
+        ? '<p style="color:#2D7A55;font-size:13px">No commissions pending approval. ✓</p>'
         : commQueue.map(o => queueCard(o, false)).join('');
-      if (commQueue.length > 0) html += `<p style="font-size:11px;color:#64748b;margin-top:4px">Approve → Approved. Mark Paid → closes lifecycle. Hold/Reject for review.</p>`;
+      if (commQueue.length > 0) html += `<p style="font-size:11px;color:#6F7E6A;margin-top:4px">Approve → Approved. Mark Paid → closes lifecycle. Hold/Reject for review.</p>`;
       if (commApproved.length > 0) html += `
         <div style="border-top:1px solid var(--gw-line);padding-top:14px;margin-top:10px">
-          <div style="font-size:12px;font-weight:700;color:#00d4ff;margin-bottom:8px">Approved — Ready to Pay (${commApproved.length})</div>
+          <div style="font-size:12px;font-weight:700;color:#4D8A86;margin-bottom:8px">Approved — Ready to Pay (${commApproved.length})</div>
           ${commApproved.map(o => queueCard(o, true)).join('')}
         </div>`;
       return html;
@@ -1844,14 +1844,14 @@ ${(()=>{
 
     <!-- Unassigned opps inline -->
     <div style="border-top:1px solid var(--gw-line);padding-top:14px;margin-top:8px">
-      <div style="font-size:12px;font-weight:700;color:#f59e0b;margin-bottom:8px">Unassigned Leads (${unassigned.length})</div>
+      <div style="font-size:12px;font-weight:700;color:#8B6914;margin-bottom:8px">Unassigned Leads (${unassigned.length})</div>
       ${unassigned.length === 0
-        ? '<p style="color:#4ade80;font-size:12px">All leads are assigned.</p>'
+        ? '<p style="color:#2D7A55;font-size:12px">All leads are assigned.</p>'
         : unassigned.slice(0, 5).map(o => `
           <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--gw-surface-2);border-radius:8px;margin-bottom:5px">
             <div>
               <div style="font-weight:600;font-size:12px">${escapeHtml(o.client||'Unnamed')}</div>
-              <div style="font-size:10px;color:#64748b">${escapeHtml(o.serviceLine || o.status)}</div>
+              <div style="font-size:10px;color:#6F7E6A">${escapeHtml(o.serviceLine || o.status)}</div>
             </div>
             <select onchange="assignRep('${o.id}', this.value)"
               style="padding:5px 8px;background:var(--gw-surface-3);border:1px solid var(--gw-line);border-radius:6px;color:var(--gw-ink);font-size:11px;cursor:pointer">
@@ -1877,55 +1877,55 @@ ${(()=>{
         <span style="font-size:16px;font-weight:700;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:${rep.color}22;border:2px solid ${rep.color}66;border-radius:10px;color:${rep.color};flex-shrink:0">${rep.name[0]}</span>
         <div style="flex:1">
           <div style="font-weight:700;font-size:16px;color:${rep.color}">${rep.name}</div>
-          <div style="font-size:11px;color:#64748b">${rep.title}</div>
+          <div style="font-size:11px;color:#6F7E6A">${rep.title}</div>
         </div>
-        ${overdue > 0 ? `<span style="font-size:10px;background:#7f1d1d;color:#f87171;padding:3px 8px;border-radius:20px;font-weight:700">${overdue} OVERDUE</span>` : '<span style="font-size:10px;background:#14532d;color:#4ade80;padding:3px 8px;border-radius:20px;font-weight:700">ON TRACK</span>'}
+        ${overdue > 0 ? `<span style="font-size:10px;background:#5C2318;color:#C97B6A;padding:3px 8px;border-radius:20px;font-weight:700">${overdue} OVERDUE</span>` : '<span style="font-size:10px;background:#2D7A55;color:#2D7A55;padding:3px 8px;border-radius:20px;font-weight:700">ON TRACK</span>'}
       </div>
       <!-- Stats grid -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
         <div style="background:var(--gw-surface-2);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase">Open</div>
-          <div style="font-size:20px;font-weight:800;color:#e2e8f0">${open}</div>
+          <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Open</div>
+          <div style="font-size:20px;font-weight:800;color:#E8E4D9">${open}</div>
         </div>
         <div style="background:var(--gw-surface-2);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase">Sold</div>
-          <div style="font-size:20px;font-weight:800;color:#4ade80">${sold}</div>
+          <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Sold</div>
+          <div style="font-size:20px;font-weight:800;color:#2D7A55">${sold}</div>
         </div>
         <div style="background:var(--gw-surface-2);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase">Proposals</div>
-          <div style="font-size:20px;font-weight:800;color:#fbbf24">${proposals}</div>
+          <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Proposals</div>
+          <div style="font-size:20px;font-weight:800;color:#8B6914">${proposals}</div>
         </div>
       </div>
       <!-- Sold value + close rate -->
       <div style="display:flex;gap:8px;margin-bottom:12px">
         <div style="flex:1;background:var(--gw-surface-2);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase">Sold Value</div>
-          <div style="font-size:14px;font-weight:800;color:#e2e8f0;margin-top:3px">${fmtM(soldValue)}</div>
+          <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Sold Value</div>
+          <div style="font-size:14px;font-weight:800;color:#E8E4D9;margin-top:3px">${fmtM(soldValue)}</div>
         </div>
         <div style="flex:1;background:var(--gw-surface-2);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase">Close Rate</div>
-          <div style="font-size:14px;font-weight:800;color:${closeRate !== null ? (closeRate >= 20 ? '#4ade80' : '#fbbf24') : '#334155'};margin-top:3px">${closeRate !== null ? closeRate + '%' : '—'}</div>
+          <div style="font-size:9px;color:#6F7E6A;font-weight:600;text-transform:uppercase">Close Rate</div>
+          <div style="font-size:14px;font-weight:800;color:${closeRate !== null ? (closeRate >= 20 ? '#2D7A55' : '#8B6914') : '#4A5947'};margin-top:3px">${closeRate !== null ? closeRate + '%' : '—'}</div>
         </div>
       </div>
       <!-- Quota progress bar -->
       <div style="background:var(--gw-surface-2);border-radius:8px;padding:10px;margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:#64748b;margin-bottom:5px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#6F7E6A;margin-bottom:5px">
           <span>Landscape Revenue Quota</span>
-          <span style="color:${quotaPct >= 100 ? '#4ade80' : '#fbbf24'}">${quotaPct}% · ${fmtM(soldValue)} / ${fmtM(525000)}</span>
+          <span style="color:${quotaPct >= 100 ? '#2D7A55' : '#8B6914'}">${quotaPct}% · ${fmtM(soldValue)} / ${fmtM(525000)}</span>
         </div>
         <div style="height:6px;background:var(--gw-line);border-radius:3px">
-          <div style="height:6px;width:${quotaPct}%;background:${quotaPct >= 100 ? '#4ade80' : quotaPct >= 60 ? '#fbbf24' : '#f87171'};border-radius:3px;transition:width .5s"></div>
+          <div style="height:6px;width:${quotaPct}%;background:${quotaPct >= 100 ? '#2D7A55' : quotaPct >= 60 ? '#8B6914' : '#C97B6A'};border-radius:3px;transition:width .5s"></div>
         </div>
       </div>
       <!-- Commission -->
-      <div style="background:#0a1a0a;border:1px solid #14532d;border-radius:8px;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#1F2A2B;border:1px solid #2D7A55;border-radius:8px;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
         <div style="text-align:center">
-          <div style="font-size:9px;color:#86efac;font-weight:600;text-transform:uppercase">Earned</div>
-          <div style="font-size:15px;font-weight:800;color:#4ade80;margin-top:2px">${fmtM(totalEarned)}</div>
+          <div style="font-size:9px;color:#B8DEC9;font-weight:600;text-transform:uppercase">Earned</div>
+          <div style="font-size:15px;font-weight:800;color:#2D7A55;margin-top:2px">${fmtM(totalEarned)}</div>
         </div>
         <div style="text-align:center">
-          <div style="font-size:9px;color:#fde68a;font-weight:600;text-transform:uppercase">Pending</div>
-          <div style="font-size:15px;font-weight:800;color:#fbbf24;margin-top:2px">${fmtM(pendingCollection)}</div>
+          <div style="font-size:9px;color:#F5E8C0;font-weight:600;text-transform:uppercase">Pending</div>
+          <div style="font-size:15px;font-weight:800;color:#8B6914;margin-top:2px">${fmtM(pendingCollection)}</div>
         </div>
       </div>
       <button class="secondary-btn" onclick="viewRepPipeline('${rep.id}')" style="width:100%;font-size:12px">
@@ -1944,45 +1944,45 @@ ${(()=>{
     var wrap = document.getElementById('dashDivPipeline');
     if (!wrap) return;
     if (typeof buildDivisionPipeline !== 'function') {
-      wrap.innerHTML = '<p style="color:#475569;font-size:12px;padding:12px">Division pipeline data will appear once leads are added.</p>';
+      wrap.innerHTML = '<p style="color:#5C6B58;font-size:12px;padding:12px">Division pipeline data will appear once leads are added.</p>';
       return;
     }
     var dp = buildDivisionPipeline();
     var KEYS = dp.keys;
     var divs = dp.divisions;
     function fm(n){ return n!=null?n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}):'\u2014'; }
-    function ageColor(d){ if(d==null)return'#475569'; if(d<=7)return'#4ade80'; if(d<=14)return'#fbbf24'; if(d<=30)return'#f97316'; return'#f87171'; }
+    function ageColor(d){ if(d==null)return'#5C6B58'; if(d<=7)return'#2D7A55'; if(d<=14)return'#8B6914'; if(d<=30)return'#8B6914'; return'#C97B6A'; }
     wrap.innerHTML = KEYS.map(function(k) {
       var d = divs[k];
-      var potsColor = d.paperOnStreet > 0 ? '#a78bfa' : '#475569';
+      var potsColor = d.paperOnStreet > 0 ? '#4D8A86' : '#5C6B58';
       var crStr = d.closeRatePct != null ? d.closeRatePct + '%' : '\u2014';
       var avgAgeStr = d.avgEstimateAge != null ? d.avgEstimateAge + 'd' : '\u2014';
       var oldestStr = d.oldestEstimateAge != null ? d.oldestEstimateAge + 'd' : '\u2014';
       return '<div class="gw-sky-card" style="border-radius:14px;padding:18px">'
         + '<div style="font-size:13px;font-weight:800;color:' + d.color + ';margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">' + d.label + '</div>'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Open Pipeline</div><div style="font-size:15px;font-weight:800;color:#e2e8f0">' + fm(d.openValue) + '</div></div>'
-          + '<div><div style="font-size:9px;color:#a78bfa;text-transform:uppercase;font-weight:600" title="Active quoted/proposed value not yet sold or lost">Paper on Street</div><div style="font-size:15px;font-weight:800;color:' + potsColor + '">' + fm(d.paperOnStreet) + '</div></div>'
-          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Weighted</div><div style="font-size:13px;font-weight:700;color:#94a3b8">' + fm(d.weightedPipeline) + '</div></div>'
-          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Sold This Mo.</div><div style="font-size:13px;font-weight:700;color:#4ade80">' + fm(d.soldThisMonth) + '</div></div>'
-          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Active Opps</div><div style="font-size:16px;font-weight:800;color:#e2e8f0">' + d.openCount + '</div></div>'
-          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Open Ests</div><div style="font-size:16px;font-weight:800;color:#e2e8f0">' + d.openEstimateCount + '</div></div>'
-          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Avg Est. Age</div><div style="font-size:13px;font-weight:700;color:' + ageColor(d.avgEstimateAge) + '">' + avgAgeStr + '</div></div>'
-          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Oldest Est.</div><div style="font-size:13px;font-weight:700;color:' + ageColor(d.oldestEstimateAge) + '">' + oldestStr + '</div></div>'
-          + '<div><div style="font-size:9px;color:#fbbf24;text-transform:uppercase;font-weight:600">7d Follow-Up Risk</div><div style="font-size:16px;font-weight:800;color:' + (d.sevenDayRisk>0?'#fbbf24':'#4ade80') + '">' + d.sevenDayRisk + '</div></div>'
-          + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Close Rate</div><div style="font-size:13px;font-weight:700;color:#00d4ff">' + crStr + '</div></div>'
+          + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Open Pipeline</div><div style="font-size:15px;font-weight:800;color:#E8E4D9">' + fm(d.openValue) + '</div></div>'
+          + '<div><div style="font-size:9px;color:#4D8A86;text-transform:uppercase;font-weight:600" title="Active quoted/proposed value not yet sold or lost">Paper on Street</div><div style="font-size:15px;font-weight:800;color:' + potsColor + '">' + fm(d.paperOnStreet) + '</div></div>'
+          + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Weighted</div><div style="font-size:13px;font-weight:700;color:#6F7E6A">' + fm(d.weightedPipeline) + '</div></div>'
+          + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Sold This Mo.</div><div style="font-size:13px;font-weight:700;color:#2D7A55">' + fm(d.soldThisMonth) + '</div></div>'
+          + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Active Opps</div><div style="font-size:16px;font-weight:800;color:#E8E4D9">' + d.openCount + '</div></div>'
+          + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Open Ests</div><div style="font-size:16px;font-weight:800;color:#E8E4D9">' + d.openEstimateCount + '</div></div>'
+          + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Avg Est. Age</div><div style="font-size:13px;font-weight:700;color:' + ageColor(d.avgEstimateAge) + '">' + avgAgeStr + '</div></div>'
+          + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Oldest Est.</div><div style="font-size:13px;font-weight:700;color:' + ageColor(d.oldestEstimateAge) + '">' + oldestStr + '</div></div>'
+          + '<div><div style="font-size:9px;color:#8B6914;text-transform:uppercase;font-weight:600">7d Follow-Up Risk</div><div style="font-size:16px;font-weight:800;color:' + (d.sevenDayRisk>0?'#8B6914':'#2D7A55') + '">' + d.sevenDayRisk + '</div></div>'
+          + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Close Rate</div><div style="font-size:13px;font-weight:700;color:#4D8A86">' + crStr + '</div></div>'
         + '</div>'
       + '</div>';
     }).join('') + '<div class="gw-sky-card" style="border-radius:14px;padding:18px">'
-      + '<div style="font-size:13px;font-weight:800;color:#e2e8f0;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Total</div>'
+      + '<div style="font-size:13px;font-weight:800;color:#E8E4D9;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Total</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Open Pipeline</div><div style="font-size:15px;font-weight:800;color:#e2e8f0">' + fm(divs.total.openValue) + '</div></div>'
-        + '<div><div style="font-size:9px;color:#a78bfa;text-transform:uppercase;font-weight:600">Paper on Street</div><div style="font-size:15px;font-weight:800;color:#a78bfa">' + fm(divs.total.paperOnStreet) + '</div></div>'
-        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Weighted</div><div style="font-size:13px;font-weight:700;color:#94a3b8">' + fm(divs.total.weightedPipeline) + '</div></div>'
-        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Sold This Mo.</div><div style="font-size:13px;font-weight:700;color:#4ade80">' + fm(divs.total.soldThisMonth) + '</div></div>'
-        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Active Opps</div><div style="font-size:16px;font-weight:800;color:#e2e8f0">' + divs.total.openCount + '</div></div>'
-        + '<div><div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600">Open Ests</div><div style="font-size:16px;font-weight:800;color:#e2e8f0">' + divs.total.openEstimateCount + '</div></div>'
-        + '<div><div style="font-size:9px;color:#fbbf24;text-transform:uppercase;font-weight:600">7d Risk Total</div><div style="font-size:16px;font-weight:800;color:' + (divs.total.sevenDayRisk>0?'#fbbf24':'#4ade80') + '">' + divs.total.sevenDayRisk + '</div></div>'
+        + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Open Pipeline</div><div style="font-size:15px;font-weight:800;color:#E8E4D9">' + fm(divs.total.openValue) + '</div></div>'
+        + '<div><div style="font-size:9px;color:#4D8A86;text-transform:uppercase;font-weight:600">Paper on Street</div><div style="font-size:15px;font-weight:800;color:#4D8A86">' + fm(divs.total.paperOnStreet) + '</div></div>'
+        + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Weighted</div><div style="font-size:13px;font-weight:700;color:#6F7E6A">' + fm(divs.total.weightedPipeline) + '</div></div>'
+        + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Sold This Mo.</div><div style="font-size:13px;font-weight:700;color:#2D7A55">' + fm(divs.total.soldThisMonth) + '</div></div>'
+        + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Active Opps</div><div style="font-size:16px;font-weight:800;color:#E8E4D9">' + divs.total.openCount + '</div></div>'
+        + '<div><div style="font-size:9px;color:#6F7E6A;text-transform:uppercase;font-weight:600">Open Ests</div><div style="font-size:16px;font-weight:800;color:#E8E4D9">' + divs.total.openEstimateCount + '</div></div>'
+        + '<div><div style="font-size:9px;color:#8B6914;text-transform:uppercase;font-weight:600">7d Risk Total</div><div style="font-size:16px;font-weight:800;color:' + (divs.total.sevenDayRisk>0?'#8B6914':'#2D7A55') + '">' + divs.total.sevenDayRisk + '</div></div>'
         + '<div></div>'
       + '</div>'
     + '</div>';
@@ -2004,7 +2004,7 @@ function renderUnassignedOpps(allOpps) {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--gw-surface-2);border-radius:10px;margin-bottom:8px">
       <div>
         <div style="font-weight:600;font-size:13px">${escapeHtml(o.client)}</div>
-        <div style="font-size:11px;color:#64748b">${escapeHtml(o.serviceLine || o.status)}</div>
+        <div style="font-size:11px;color:#6F7E6A">${escapeHtml(o.serviceLine || o.status)}</div>
       </div>
       <select onchange="assignRep('${o.id}', this.value)"
         style="padding:6px 10px;background:var(--gw-surface-3);border:1px solid var(--gw-line);border-radius:8px;color:var(--gw-ink);font-size:12px;cursor:pointer">

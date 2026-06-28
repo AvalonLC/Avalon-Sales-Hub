@@ -227,9 +227,9 @@ function show(viewName='today', param){
     const _rep = window.getCurrentRep ? window.getCurrentRep() : null;
     const _viewLabels = {today:'Today',myDashboard:'My Dashboard',pipeline:'Pipeline',lead:'Add Lead',clients:'Clients & Properties',process:'Sales Process',forms:'Forms & Checklists',scripts:'Scripts',templates:'Email Templates',objections:'Objection Handling',calculator:'Pricing Tools',academy:'Sales Academy',manager:'Manager Tools',revenueAdmin:'Financial Data Hub',integrations:'Integrations',userManagement:'User Management',settings:'Settings',ai:'AI Sales Assistant',ai:'AI Sales Assistant',ai:'AI Sales Assistant'};
     view.innerHTML = `<div style="text-align:center;padding:64px 24px;margin-top:40px">
-      <div style="font-size:32px;margin-bottom:18px;color:#64748b;font-weight:300;letter-spacing:-2px">&#x2715;</div>
-      <h2 style="color:#f87171;margin-bottom:10px">${_viewLabels[viewName] || viewName} — Access Restricted</h2>
-      <p style="color:#64748b;max-width:420px;margin:0 auto 24px">Tyler (Owner) has restricted access to this section for your role.<br>Ask Tyler to enable it in <strong style="color:#e2e8f0">Settings → Permission Controls</strong>.</p>
+      <div style="font-size:32px;margin-bottom:18px;color:#6F7E6A;font-weight:300;letter-spacing:-2px">&#x2715;</div>
+      <h2 style="color:#C97B6A;margin-bottom:10px">${_viewLabels[viewName] || viewName} — Access Restricted</h2>
+      <p style="color:#6F7E6A;max-width:420px;margin:0 auto 24px">Tyler (Owner) has restricted access to this section for your role.<br>Ask Tyler to enable it in <strong style="color:#E8E4D9">Settings → Permission Controls</strong>.</p>
       <button class="secondary-btn" onclick="show('today')">← Back to Today</button>
     </div>`;
     activateNav(viewName);
@@ -316,10 +316,10 @@ function buildSuggestedActions(currentRep){
   ).slice(0,3);
   const unassigned = (!isRep) ? state.opportunities.filter(o => !o.repId && !['Sold / Activation','Closed Lost'].includes(o.status)) : [];
 
-  if(staleOpps.length) suggestions.push({icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="10" r="6" stroke="#fbbf24" stroke-width="1.5"/><path d="M9 7v4l2 1.5" stroke="#fbbf24" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 2h6" stroke="#fbbf24" stroke-width="1.3" stroke-linecap="round" opacity=".5"/></svg>',title:`${staleOpps.length} stale lead${staleOpps.length>1?'s':''} with no recent activity`,cta:'Review',onclick:`show('pipeline')`});
-  if(proposalsPending.length) suggestions.push({icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="11" rx="1.5" stroke="#60a5fa" stroke-width="1.5"/><path d="M2 8h14" stroke="#60a5fa" stroke-width="1.3" opacity=".5"/><path d="M6 2v4M12 2v4" stroke="#60a5fa" stroke-width="1.4" stroke-linecap="round" opacity=".6"/><circle cx="13" cy="13" r="2.5" fill="#f87171" stroke="#0f172a" stroke-width="1"/><path d="M13 11.5v1.5M13 14h.01" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>',title:`${proposalsPending.length} proposal${proposalsPending.length>1?'s':''} awaiting a decision — follow up`,cta:'Open Proposals',onclick:`window._pipelineStatusFilter='proposals';show('pipeline')`});
-  if(noNextStep.length) suggestions.push({icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="11" rx="1.5" stroke="#f59e0b" stroke-width="1.5"/><path d="M2 8h14" stroke="#f59e0b" stroke-width="1.3" opacity=".5"/><path d="M6 2v4M12 2v4" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round" opacity=".6"/><path d="M7 12h4M9 10v4" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round" opacity=".7"/></svg>',title:`${noNextStep.length} lead${noNextStep.length>1?'s':''} missing a next follow-up date`,cta:'Set Follow-Up',onclick:`show('pipeline')`});
-  if(unassigned.length) suggestions.push({icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="7" r="3" stroke="#94a3b8" stroke-width="1.5"/><path d="M3 16c0-3 2.7-5 6-5s6 2 6 5" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4M12 6h4" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round"/></svg>',title:`${unassigned.length} unassigned lead${unassigned.length>1?'s':''} with no rep`,cta:'Assign Now',onclick:`show('pipeline')`});
+  if(staleOpps.length) suggestions.push({icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="10" r="6" stroke="#8B6914" stroke-width="1.5"/><path d="M9 7v4l2 1.5" stroke="#8B6914" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 2h6" stroke="#8B6914" stroke-width="1.3" stroke-linecap="round" opacity=".5"/></svg>',title:`${staleOpps.length} stale lead${staleOpps.length>1?'s':''} with no recent activity`,cta:'Review',onclick:`show('pipeline')`});
+  if(proposalsPending.length) suggestions.push({icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="11" rx="1.5" stroke="#4D8A86" stroke-width="1.5"/><path d="M2 8h14" stroke="#4D8A86" stroke-width="1.3" opacity=".5"/><path d="M6 2v4M12 2v4" stroke="#4D8A86" stroke-width="1.4" stroke-linecap="round" opacity=".6"/><circle cx="13" cy="13" r="2.5" fill="#C97B6A" stroke="#1F2A2B" stroke-width="1"/><path d="M13 11.5v1.5M13 14h.01" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>',title:`${proposalsPending.length} proposal${proposalsPending.length>1?'s':''} awaiting a decision — follow up`,cta:'Open Proposals',onclick:`window._pipelineStatusFilter='proposals';show('pipeline')`});
+  if(noNextStep.length) suggestions.push({icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="11" rx="1.5" stroke="#8B6914" stroke-width="1.5"/><path d="M2 8h14" stroke="#8B6914" stroke-width="1.3" opacity=".5"/><path d="M6 2v4M12 2v4" stroke="#8B6914" stroke-width="1.4" stroke-linecap="round" opacity=".6"/><path d="M7 12h4M9 10v4" stroke="#8B6914" stroke-width="1.4" stroke-linecap="round" opacity=".7"/></svg>',title:`${noNextStep.length} lead${noNextStep.length>1?'s':''} missing a next follow-up date`,cta:'Set Follow-Up',onclick:`show('pipeline')`});
+  if(unassigned.length) suggestions.push({icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="7" r="3" stroke="#6F7E6A" stroke-width="1.5"/><path d="M3 16c0-3 2.7-5 6-5s6 2 6 5" stroke="#6F7E6A" stroke-width="1.5" stroke-linecap="round"/><path d="M14 4v4M12 6h4" stroke="#8B6914" stroke-width="1.4" stroke-linecap="round"/></svg>',title:`${unassigned.length} unassigned lead${unassigned.length>1?'s':''} with no rep`,cta:'Assign Now',onclick:`show('pipeline')`});
 
   if(!suggestions.length) return '';
   return `<div class="suggested-actions">
@@ -407,14 +407,14 @@ function renderTodayActivityWidget(){
   if(!currentRep || currentRep.role === 'admin' || currentRep.role === 'office_manager') return '';
   const repTargets = targets[currentRep.id];
   if(!repTargets) return '';
-  return `<div class="card mt" style="border-left:3px solid ${currentRep.color||'#00d4ff'}">
+  return `<div class="card mt" style="border-left:3px solid ${currentRep.color||'#4D8A86'}">
     <h3>${escapeHtml(currentRep.name)}'s Weekly Activity Targets</h3>
     <p class="muted small-text">Track these weekly — activity creates opportunity. Log in daily.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:12px">
       ${Object.entries(repTargets).map(([k,v])=>`<div style="background:var(--bg2);border-radius:8px;padding:12px">
         <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">${escapeHtml(v.label)}</div>
-        <div style="font-size:1.2rem;font-weight:700;color:${currentRep.color||'#00d4ff'}">${v.target !== undefined ? (v.floor ? '0 stale' : v.target+(v.frequency==='daily'?'/day':'/wk')) : (v.min === v.max ? v.min : (v.min||'—')+'–'+(v.max||'—'))}</div>
-        ${v.description ? `<div style="font-size:.7rem;color:#64748b;margin-top:4px">${escapeHtml(v.description)}</div>` : ''}
+        <div style="font-size:1.2rem;font-weight:700;color:${currentRep.color||'#4D8A86'}">${v.target !== undefined ? (v.floor ? '0 stale' : v.target+(v.frequency==='daily'?'/day':'/wk')) : (v.min === v.max ? v.min : (v.min||'—')+'–'+(v.max||'—'))}</div>
+        ${v.description ? `<div style="font-size:.7rem;color:#6F7E6A;margin-top:4px">${escapeHtml(v.description)}</div>` : ''}
       </div>`).join('')}
     </div>
     <div class="footer-actions mt">
@@ -437,18 +437,18 @@ function oppMini(o){
   const _today = todayISO();
   const isOverdue = o.nextFollowUp && o.nextFollowUp < _today && !['Sold / Activation','Closed Lost'].includes(o.status);
   const daysSince = o.updatedAt ? Math.floor((Date.now()-new Date(o.updatedAt).getTime())/86400000) : null;
-  const urgencyDot = isOverdue ? `<span style="display:inline-block;width:7px;height:7px;background:#f87171;border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0"></span>` : '';
+  const urgencyDot = isOverdue ? `<span style="display:inline-block;width:7px;height:7px;background:#C97B6A;border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0"></span>` : '';
   const repObj = (window.REPS||[]).find(r => r.id === o.repId);
   const repPill = repObj
-    ? `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:${repObj.color||'#94a3b8'};background:${repObj.color||'#94a3b8'}18;border:1px solid ${repObj.color||'#94a3b8'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(repObj.name)}</span>`
-    : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`;
+    ? `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:${repObj.color||'#6F7E6A'};background:${repObj.color||'#6F7E6A'}18;border:1px solid ${repObj.color||'#6F7E6A'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(repObj.name)}</span>`
+    : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`;
   return `<button class="mini-row ${isOverdue?'mini-row-overdue':''}" onclick="show('pipeline','${o.id}')">
     <strong>${urgencyDot}${escapeHtml(o.client||'Unnamed')}</strong>
     <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px;padding:1px 6px">${escapeHtml(o.status||'New Lead')}</span>
     <em>${escapeHtml(o.project||o.serviceLine||'Opportunity')}</em>
     <span style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
       ${repPill}
-      ${daysSince !== null ? `<span style="font-size:10px;color:#475569">${daysSince===0?'Today':daysSince+'d ago'}</span>` : ''}
+      ${daysSince !== null ? `<span style="font-size:10px;color:#5C6B58">${daysSince===0?'Today':daysSince+'d ago'}</span>` : ''}
     </span>
   </button>`;
 }
@@ -474,8 +474,8 @@ function oppCard(o){
       ${o.nextFollowUp ? `<span class="opp-next">Next: ${prettyDate(o.nextFollowUp)}</span>` : ''}
       ${o.jobValue ? `<span class="opp-value">${money(Number(o.jobValue))}</span>` : ''}
       ${repObj
-        ? `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:${repObj.color||'#94a3b8'};background:${repObj.color||'#94a3b8'}18;border:1px solid ${repObj.color||'#94a3b8'}40;border-radius:20px;padding:1px 8px;white-space:nowrap;margin-left:auto">${escapeHtml(repObj.name)}</span>`
-        : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:1px 8px;white-space:nowrap;margin-left:auto">⚠ Unassigned</span>`}
+        ? `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:${repObj.color||'#6F7E6A'};background:${repObj.color||'#6F7E6A'}18;border:1px solid ${repObj.color||'#6F7E6A'}40;border-radius:20px;padding:1px 8px;white-space:nowrap;margin-left:auto">${escapeHtml(repObj.name)}</span>`
+        : `<span class="opp-rep-pill" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 8px;white-space:nowrap;margin-left:auto">⚠ Unassigned</span>`}
     </div>
   </article>`;
 }
@@ -648,7 +648,7 @@ function buildDivisionPipeline() {
 
   const divKeys = ['landscape','maintenance','snow'];
   const divLabels = { landscape:'Landscape', maintenance:'Maintenance', snow:'Snow & Ice' };
-  const divColors = { landscape:'#22d3ee', maintenance:'#4ade80', snow:'#60a5fa' };
+  const divColors = { landscape:'#4D8A86', maintenance:'#2D7A55', snow:'#4D8A86' };
 
   const result = {};
   divKeys.forEach(k => {
@@ -753,7 +753,7 @@ function buildDivisionPipeline() {
   // Totals row
   result.total = {
     label: 'Total',
-    color: '#e2e8f0',
+    color: '#E8E4D9',
     openValue:         divKeys.reduce((a,k) => a + result[k].openValue, 0),
     openEstimateValue: divKeys.reduce((a,k) => a + result[k].openEstimateValue, 0),
     paperOnStreet:     divKeys.reduce((a,k) => a + result[k].paperOnStreet, 0),
@@ -900,7 +900,7 @@ function clientTypeBadge(type) {
   return `<span class="cl-badge ${map[type]||'cl-badge-residential'}">${escapeHtml(type||'Residential')}</span>`;
 }
 function clientStatusDot(status) {
-  const color = status==='Active' ? '#22c55e' : status==='Inactive' ? '#94a3b8' : '#f59e0b';
+  const color = status==='Active' ? '#2D7A55' : status==='Inactive' ? '#6F7E6A' : '#8B6914';
   return `<span class="cl-status-dot" style="background:${color}" title="${escapeHtml(status||'Active')}"></span>`;
 }
 
@@ -968,7 +968,7 @@ function clients(selectedId) {
         </div>
       </td>
       <td>${clientTypeBadge(c.type)}</td>
-      <td>${clientStatusDot(c.status)} <span style="font-size:12px;color:#475569">${escapeHtml(c.status||'Active')}</span></td>
+      <td>${clientStatusDot(c.status)} <span style="font-size:12px;color:#5C6B58">${escapeHtml(c.status||'Active')}</span></td>
       <td class="cl-cell-addr">${addr ? escapeHtml(addr) : '<span class="cl-empty-cell">—</span>'}</td>
       <td class="cl-cell-contact">
         ${c.email ? `<a class="cl-link" href="mailto:${escapeHtml(c.email)}" onclick="event.stopPropagation()">${escapeHtml(c.email)}</a>` : ''}
@@ -976,9 +976,9 @@ function clients(selectedId) {
         ${escapeHtml(c.phone||c.mobile||(!c.email?'—':''))}
       </td>
       <td>${tagHtml}</td>
-      <td style="text-align:center">${linkedOpps ? `<span class="cl-opp-count">${linkedOpps}</span>` : '<span style="color:#94a3b8;font-size:12px">—</span>'}</td>
+      <td style="text-align:center">${linkedOpps ? `<span class="cl-opp-count">${linkedOpps}</span>` : '<span style="color:#6F7E6A;font-size:12px">—</span>'}</td>
     </tr>`;
-  }).join('') : `<tr><td colspan="7" style="text-align:center;padding:48px 24px;color:#94a3b8;font-size:14px">
+  }).join('') : `<tr><td colspan="7" style="text-align:center;padding:48px 24px;color:#6F7E6A;font-size:14px">
     ${q||typeFilter!=='all'||statusFilter!=='all' ? 'No clients match your filters.' : 'No clients yet — import from Homeworks or add manually.'}
   </td></tr>`;
 
@@ -1001,8 +1001,8 @@ function clients(selectedId) {
     <div class="pl-toolbar" style="margin-bottom:10px">
       <div class="cl-search-wrap">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.45">
-          <circle cx="5.5" cy="5.5" r="4" stroke="#475569" stroke-width="1.4"/>
-          <path d="M9 9l3 3" stroke="#475569" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="5.5" cy="5.5" r="4" stroke="#5C6B58" stroke-width="1.4"/>
+          <path d="M9 9l3 3" stroke="#5C6B58" stroke-width="1.4" stroke-linecap="round"/>
         </svg>
         <input id="clientSearchInput" class="cl-search-input" type="search" placeholder="Search clients, addresses, emails…"
           value="${escapeHtml(window._clientSearch||'')}"
@@ -1038,7 +1038,7 @@ function clients(selectedId) {
       </table>
     </div>
 
-    <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:right">
+    <div style="margin-top:10px;font-size:11px;color:#6F7E6A;text-align:right">
       ${filtered.length} client${filtered.length===1?'':'s'} shown
     </div>
   `;
@@ -1099,7 +1099,7 @@ window.showClientForm = function(clientIdToEdit) {
       </div>
       <div class="cl-modal-body">
         <div class="cl-form-grid">
-          <label class="cl-form-label full"><span>Name <span style="color:#dc2626">*</span></span>
+          <label class="cl-form-label full"><span>Name <span style="color:#8B3A2A">*</span></span>
             <input id="clf-name" class="cl-input" value="${escapeHtml(c?.name||'')}" placeholder="Full name or company name">
           </label>
           <label class="cl-form-label"><span>First Name</span>
@@ -1137,7 +1137,7 @@ window.showClientForm = function(clientIdToEdit) {
             <div><span>State</span><input id="clf-state" class="cl-input" value="${escapeHtml(c?.state||'VA')}" placeholder="VA" maxlength="2"></div>
             <div><span>Zip</span><input id="clf-zip" class="cl-input" value="${escapeHtml(c?.zip||'')}" placeholder="22180"></div>
           </label>
-          <label class="cl-form-label full"><span>Tags <span style="color:#94a3b8;font-weight:400">(comma-separated)</span></span>
+          <label class="cl-form-label full"><span>Tags <span style="color:#6F7E6A;font-weight:400">(comma-separated)</span></span>
             <input id="clf-tags" class="cl-input" value="${escapeHtml((c?.tags||[]).join(', '))}" placeholder="Annual Maintenance Client, HOA, etc.">
           </label>
           <label class="cl-form-label full"><span>Notes</span>
@@ -1234,15 +1234,15 @@ function clientDetail(id) {
   const oppsHtml = linkedOpps.length ? linkedOpps.map(o => {
     const _repO = (window.REPS||[]).find(r => r.id === o.repId);
     const _repPill = _repO
-      ? `<span style="font-size:10px;font-weight:600;color:${_repO.color||'#94a3b8'};background:${_repO.color||'#94a3b8'}18;border:1px solid ${_repO.color||'#94a3b8'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(_repO.name)}</span>`
-      : `<span style="font-size:10px;font-weight:600;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`;
+      ? `<span style="font-size:10px;font-weight:600;color:${_repO.color||'#6F7E6A'};background:${_repO.color||'#6F7E6A'}18;border:1px solid ${_repO.color||'#6F7E6A'}40;border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">${escapeHtml(_repO.name)}</span>`
+      : `<span style="font-size:10px;font-weight:600;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:1px 7px;white-space:nowrap;flex-shrink:0">⚠ Unassigned</span>`;
     return `<button class="mini-row" onclick="show('pipeline','${o.id}')">
       <strong>${escapeHtml(o.client||'Unnamed')}</strong>
       <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px">${escapeHtml(o.status||'New Lead')}</span>
       <em>${escapeHtml(o.project||o.serviceLine||'Opportunity')}</em>
       <span style="display:flex;align-items:center;gap:5px;margin-left:auto;flex-shrink:0">
         ${_repPill}
-        ${o.nextFollowUp ? `<span style="font-size:10px;color:#475569">${prettyDate(o.nextFollowUp)}</span>` : ''}
+        ${o.nextFollowUp ? `<span style="font-size:10px;color:#5C6B58">${prettyDate(o.nextFollowUp)}</span>` : ''}
       </span>
     </button>`;
   }).join('')
@@ -1270,7 +1270,7 @@ function clientDetail(id) {
           ${c.phone  ? `<dt>Phone</dt><dd>${escapeHtml(c.phone)}</dd>` : ''}
           ${c.mobile ? `<dt>Mobile</dt><dd>${escapeHtml(c.mobile)}</dd>` : ''}
           ${addr     ? `<dt>Address</dt><dd>${escapeHtml(addr)}</dd>` : ''}
-          ${c.homeworksId ? `<dt>Homeworks ID</dt><dd style="color:#64748b;font-size:12px">${escapeHtml(c.homeworksId)}</dd>` : ''}
+          ${c.homeworksId ? `<dt>Homeworks ID</dt><dd style="color:#6F7E6A;font-size:12px">${escapeHtml(c.homeworksId)}</dd>` : ''}
         </dl>
         ${tagHtml ? `<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">${tagHtml}</div>` : ''}
         ${c.notes ? `<div class="cl-notes-block">${escapeHtml(c.notes)}</div>` : ''}
@@ -1389,15 +1389,15 @@ function lead(){
 
   // Project category tile data
   const _cats = [
-    {v:'Landscape / Enhancement', icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 17V10M10 10C10 10 5 10 3 5c3.5 0 7 2 7 5zm0 0c0 0 5 0 7-5-3.5 0-7 2-7 5z" stroke="#4ade80" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 17c-2 0-3.5-.5-4-1" stroke="#4ade80" stroke-width="1.4" stroke-linecap="round" opacity=".5"/></svg>', short:'Landscape'},
-    {v:'Maintenance - Recurring',  icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 4a3.5 3.5 0 00-3 5.2L4.6 15.6a1 1 0 001.4 1.4l6.4-6.4A3.5 3.5 0 0016 7.5a3.5 3.5 0 00-.5-1.8l-2 2-1.5-1.5 2-2A3.5 3.5 0 0014 4z" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', short:'Recurring Maint.'},
-    {v:'Maintenance - One Time',   icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 4a3.5 3.5 0 00-3 5.2L4.6 15.6a1 1 0 001.4 1.4l6.4-6.4A3.5 3.5 0 0016 7.5a3.5 3.5 0 00-.5-1.8l-2 2-1.5-1.5 2-2A3.5 3.5 0 0014 4z" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', short:'One-Time Maint.'},
-    {v:'Hardscape',                icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="6" height="3" rx=".5" stroke="#f59e0b" stroke-width="1.4"/><rect x="11" y="4" width="6" height="3" rx=".5" stroke="#f59e0b" stroke-width="1.4"/><rect x="6.5" y="9" width="7" height="3" rx=".5" stroke="#f59e0b" stroke-width="1.4"/><rect x="3" y="14" width="4" height="3" rx=".5" stroke="#f59e0b" stroke-width="1.4" opacity=".7"/><rect x="9" y="14" width="5" height="3" rx=".5" stroke="#f59e0b" stroke-width="1.4" opacity=".7"/></svg>', short:'Hardscape'},
-    {v:'Drainage',                 icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3L13 8a3.5 3.5 0 11-6 0L10 3z" stroke="#60a5fa" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 16h12" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/><path d="M7 16l1.5-3M13 16l-1.5-3" stroke="#60a5fa" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg>', short:'Drainage'},
-    {v:'Design / Build',           icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 16L15 5" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/><path d="M13 3l4 4-2 2-4-4 2-2z" stroke="#a78bfa" stroke-width="1.3" stroke-linejoin="round"/><path d="M4 16l-1 1 1-1zm0 0l2-1-1 1z" stroke="#a78bfa" stroke-width="1.3" stroke-linecap="round"/><rect x="3" y="12" width="8" height="2.5" rx=".5" transform="rotate(-45 3 12)" stroke="#a78bfa" stroke-width="1.3" opacity=".5"/></svg>', short:'Design / Build'},
-    {v:'Irrigation',               icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 15 Q8 8 14 6" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="6" r="1.3" fill="#60a5fa"/><path d="M10 4 Q12 3 14 4" stroke="#60a5fa" stroke-width="1.3" stroke-linecap="round" opacity=".6"/><path d="M12 7 Q15 5 17 6" stroke="#60a5fa" stroke-width="1.3" stroke-linecap="round" opacity=".6"/><path d="M11 10 Q14 9 16 10" stroke="#60a5fa" stroke-width="1.3" stroke-linecap="round" opacity=".4"/><path d="M3 16 Q4 14 5 15" stroke="#60a5fa" stroke-width="1.4" stroke-linecap="round"/></svg>', short:'Irrigation'},
-    {v:'Outdoor Lighting',         icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3a5 5 0 014 8l-1 1v1H7v-1L6 11a5 5 0 014-8z" stroke="#fbbf24" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 16h4" stroke="#fbbf24" stroke-width="1.4" stroke-linecap="round"/><path d="M8.5 16.5 Q10 18 11.5 16.5" stroke="#fbbf24" stroke-width="1.3" stroke-linecap="round"/><circle cx="3" cy="5" r="1" fill="#fbbf24" opacity=".4"/><circle cx="17" cy="5" r="1" fill="#fbbf24" opacity=".4"/><circle cx="10" cy="1.5" r="1" fill="#fbbf24" opacity=".4"/></svg>', short:'Lighting'},
-    {v:'Other',                    icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="7" stroke="#64748b" stroke-width="1.4"/><circle cx="7" cy="10" r="1.2" fill="#64748b"/><circle cx="10" cy="10" r="1.2" fill="#64748b"/><circle cx="13" cy="10" r="1.2" fill="#64748b"/></svg>', short:'Other'},
+    {v:'Landscape / Enhancement', icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 17V10M10 10C10 10 5 10 3 5c3.5 0 7 2 7 5zm0 0c0 0 5 0 7-5-3.5 0-7 2-7 5z" stroke="#2D7A55" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 17c-2 0-3.5-.5-4-1" stroke="#2D7A55" stroke-width="1.4" stroke-linecap="round" opacity=".5"/></svg>', short:'Landscape'},
+    {v:'Maintenance - Recurring',  icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 4a3.5 3.5 0 00-3 5.2L4.6 15.6a1 1 0 001.4 1.4l6.4-6.4A3.5 3.5 0 0016 7.5a3.5 3.5 0 00-.5-1.8l-2 2-1.5-1.5 2-2A3.5 3.5 0 0014 4z" stroke="#4D8A86" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', short:'Recurring Maint.'},
+    {v:'Maintenance - One Time',   icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 4a3.5 3.5 0 00-3 5.2L4.6 15.6a1 1 0 001.4 1.4l6.4-6.4A3.5 3.5 0 0016 7.5a3.5 3.5 0 00-.5-1.8l-2 2-1.5-1.5 2-2A3.5 3.5 0 0014 4z" stroke="#4D8A86" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', short:'One-Time Maint.'},
+    {v:'Hardscape',                icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="6" height="3" rx=".5" stroke="#8B6914" stroke-width="1.4"/><rect x="11" y="4" width="6" height="3" rx=".5" stroke="#8B6914" stroke-width="1.4"/><rect x="6.5" y="9" width="7" height="3" rx=".5" stroke="#8B6914" stroke-width="1.4"/><rect x="3" y="14" width="4" height="3" rx=".5" stroke="#8B6914" stroke-width="1.4" opacity=".7"/><rect x="9" y="14" width="5" height="3" rx=".5" stroke="#8B6914" stroke-width="1.4" opacity=".7"/></svg>', short:'Hardscape'},
+    {v:'Drainage',                 icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3L13 8a3.5 3.5 0 11-6 0L10 3z" stroke="#4D8A86" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 16h12" stroke="#4D8A86" stroke-width="1.5" stroke-linecap="round"/><path d="M7 16l1.5-3M13 16l-1.5-3" stroke="#4D8A86" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg>', short:'Drainage'},
+    {v:'Design / Build',           icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 16L15 5" stroke="#4D8A86" stroke-width="1.5" stroke-linecap="round"/><path d="M13 3l4 4-2 2-4-4 2-2z" stroke="#4D8A86" stroke-width="1.3" stroke-linejoin="round"/><path d="M4 16l-1 1 1-1zm0 0l2-1-1 1z" stroke="#4D8A86" stroke-width="1.3" stroke-linecap="round"/><rect x="3" y="12" width="8" height="2.5" rx=".5" transform="rotate(-45 3 12)" stroke="#4D8A86" stroke-width="1.3" opacity=".5"/></svg>', short:'Design / Build'},
+    {v:'Irrigation',               icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 15 Q8 8 14 6" stroke="#4D8A86" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="6" r="1.3" fill="#4D8A86"/><path d="M10 4 Q12 3 14 4" stroke="#4D8A86" stroke-width="1.3" stroke-linecap="round" opacity=".6"/><path d="M12 7 Q15 5 17 6" stroke="#4D8A86" stroke-width="1.3" stroke-linecap="round" opacity=".6"/><path d="M11 10 Q14 9 16 10" stroke="#4D8A86" stroke-width="1.3" stroke-linecap="round" opacity=".4"/><path d="M3 16 Q4 14 5 15" stroke="#4D8A86" stroke-width="1.4" stroke-linecap="round"/></svg>', short:'Irrigation'},
+    {v:'Outdoor Lighting',         icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3a5 5 0 014 8l-1 1v1H7v-1L6 11a5 5 0 014-8z" stroke="#8B6914" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 16h4" stroke="#8B6914" stroke-width="1.4" stroke-linecap="round"/><path d="M8.5 16.5 Q10 18 11.5 16.5" stroke="#8B6914" stroke-width="1.3" stroke-linecap="round"/><circle cx="3" cy="5" r="1" fill="#8B6914" opacity=".4"/><circle cx="17" cy="5" r="1" fill="#8B6914" opacity=".4"/><circle cx="10" cy="1.5" r="1" fill="#8B6914" opacity=".4"/></svg>', short:'Lighting'},
+    {v:'Other',                    icon:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="7" stroke="#6F7E6A" stroke-width="1.4"/><circle cx="7" cy="10" r="1.2" fill="#6F7E6A"/><circle cx="10" cy="10" r="1.2" fill="#6F7E6A"/><circle cx="13" cy="10" r="1.2" fill="#6F7E6A"/></svg>', short:'Other'},
   ];
   const catTilesHtml = _cats.map(c =>
     '<button type="button" class="cat-tile" data-cat="' + c.v + '">'
@@ -1494,7 +1494,7 @@ function lead(){
             + '<input name="jobValue" type="number" class="lf-input lf-input--value" placeholder="0" min="0" step="100">'
           + '</label>'
           + '<div id="commPreview" class="lf-comm-preview" style="display:none">'
-            + '<span class="lf-comm-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#4ade80" stroke-width="1.3"/><path d="M8 3v10M6 11c0 1 .9 1.5 2 1.5S10 12 10 11s-1-1.5-2-1.5S6 8 6 7s.9-1.5 2-1.5S10 5 10 6" stroke="#4ade80" stroke-width="1.2" stroke-linecap="round"/></svg></span>'
+            + '<span class="lf-comm-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#2D7A55" stroke-width="1.3"/><path d="M8 3v10M6 11c0 1 .9 1.5 2 1.5S10 12 10 11s-1-1.5-2-1.5S6 8 6 7s.9-1.5 2-1.5S10 5 10 6" stroke="#2D7A55" stroke-width="1.2" stroke-linecap="round"/></svg></span>'
             + '<span id="commPreviewText"></span>'
           + '</div>'
           + '<label class="lf-field">'
@@ -1562,7 +1562,7 @@ function lead(){
       // ── Section 4: Estimate (optional, collapsible) ──
       + '<div class="lf-section">'  
         + '<div class="lf-section-header">'  
-          + '<span class="lf-section-num" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">4</span>'  
+          + '<span class="lf-section-num" style="background:linear-gradient(135deg,#B8744F,#204A43)">4</span>'  
           + '<div>'  
             + '<div class="lf-section-title">Estimate</div>'  
             + '<div class="lf-section-sub">Track what\'s on the street — formal quotes and proposals</div>'  
@@ -1920,7 +1920,7 @@ function lead(){
       const warn = document.createElement('div');
       warn.id = 'dup-warn'; warn.className = 'dup-warn';
       warn.innerHTML = '<strong>Possible duplicate' + (dupes.length > 1 ? 's' : '') + '</strong> — similar lead already in pipeline:<br>'
-        + dupes.map(o => '<span onclick="show(\'pipeline\',\'' + o.id + '\')" style="cursor:pointer;color:#00d4ff;text-decoration:underline">' + escapeHtml(o.client||'—') + ' · ' + escapeHtml(o.status||'') + '</span>').join('<br>');
+        + dupes.map(o => '<span onclick="show(\'pipeline\',\'' + o.id + '\')" style="cursor:pointer;color:#4D8A86;text-decoration:underline">' + escapeHtml(o.client||'—') + ' · ' + escapeHtml(o.status||'') + '</span>').join('<br>');
       const form = document.getElementById('leadForm');
       if (form) form.prepend(warn);
     }
@@ -1996,8 +1996,8 @@ function opportunityDetail(id){
           <div class="ld-sticky-name">${escapeHtml(o.client||'Unnamed Lead')}</div>
           <div class="ld-sticky-sub">
             <span class="status-chip ${statusCssClass(o.status||'')}" style="font-size:10px;padding:2px 8px">${escapeHtml(o.status||'New Lead')}</span>
-            <span style="color:#64748b;font-size:12px">${escapeHtml(_repName)}</span>
-            ${o.jobValue ? `<span style="color:#16a34a;font-size:12px;font-weight:700">${money(Number(o.jobValue))}</span>` : ''}
+            <span style="color:#6F7E6A;font-size:12px">${escapeHtml(_repName)}</span>
+            ${o.jobValue ? `<span style="color:#2D7A55;font-size:12px;font-weight:700">${money(Number(o.jobValue))}</span>` : ''}
           </div>
         </div>
       </div>
@@ -2156,7 +2156,7 @@ function opportunityDetail(id){
           </div>
           <div class="ld-card ld-card-sm">
             <div class="ld-card-label">Stage Guide</div>
-            <p style="font-size:12px;color:#64748b;margin:6px 0 10px;line-height:1.5">See what this stage requires before moving forward.</p>
+            <p style="font-size:12px;color:#6F7E6A;margin:6px 0 10px;line-height:1.5">See what this stage requires before moving forward.</p>
             <button class="ld-inline-btn" onclick="show('process',${Math.min(stageGuess,12)})">Open Stage ${stageGuess} Guide</button>
           </div>
         </div>
@@ -2274,7 +2274,7 @@ function opportunityDetail(id){
           const _commApprovedHtml = _isAdm
             ? `<label class="ld-toggle-row"><input type="checkbox" id="commApproved" ${_ca.commissionApproved?'checked':''} onchange="setOppField('${o.id}','commissionApproved',this.checked);showToast('Commission approval updated')"><span>Commission Approved</span></label>`
             : `<div class="ld-locked-field">Commission Approved — Tyler (Owner) only</div>`;
-          const _borderColor = _isAdm ? '#06b6d4' : '#f59e0b';
+          const _borderColor = _isAdm ? '#4D8A86' : '#8B6914';
           const _panelTitle  = _isAdm ? 'Admin Controls' : 'Office Controls';
           return `<div class="ld-section-head" style="margin-top:20px;border-color:${_borderColor}40">
             <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M7 1l5.5 3v4c0 2.8-2 5-5.5 6C2 14 0 11.8 0 9V4L7 1z" stroke="${_borderColor}" stroke-width="1.3" stroke-linejoin="round"/></svg>
@@ -2292,7 +2292,7 @@ function opportunityDetail(id){
                 </select>
               </div>
             </div>
-            <p style="font-size:11.5px;color:#94a3b8;margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line)">Commission paid only when both Approved + Collected are checked. Approval is Tyler's decision.</p>
+            <p style="font-size:11.5px;color:#6F7E6A;margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line)">Commission paid only when both Approved + Collected are checked. Approval is Tyler's decision.</p>
           </div>`;
         })()}
 
@@ -2329,17 +2329,17 @@ function opportunityDetail(id){
             Full Activity Log
           </div>
           ${(state.communications||[]).filter(c=>c.oppId===o.id).length === 0 ?
-            `<div style="text-align:center;padding:40px;color:#64748b">
+            `<div style="text-align:center;padding:40px;color:#6F7E6A">
               <div style="font-size:28px;margin-bottom:12px">📋</div>
               <p style="font-weight:600;margin:0 0 6px">No activity yet</p>
-              <p style="font-size:12.5px;color:#475569;margin:0">Activity will appear here as you log calls, emails, and notes.</p>
+              <p style="font-size:12.5px;color:#5C6B58;margin:0">Activity will appear here as you log calls, emails, and notes.</p>
             </div>` :
             (state.communications||[]).filter(c=>c.oppId===o.id)
               .sort((a,b)=>new Date(b.ts)-new Date(a.ts))
               .map(m => {
                 const fmt = dt => { try{ return new Date(dt).toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '';} };
-                const typeColors = {sms:'#10b981',email:'#6366f1',call:'#f59e0b',note:'#64748b',proposal:'#a855f7'};
-                const tc = typeColors[m.type]||'#64748b';
+                const typeColors = {sms:'#2D7A55',email:'#204A43',call:'#8B6914',note:'#6F7E6A',proposal:'#B8744F'};
+                const tc = typeColors[m.type]||'#6F7E6A';
                 return `<div class="ld-activity-item">
                   <div class="ld-act-dot" style="background:${tc}22;border-color:${tc}44;color:${tc}">${TYPE_ICON[m.type]||'📋'}</div>
                   <div class="ld-act-content">
@@ -2397,7 +2397,7 @@ function opportunityDetail(id){
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7.5L5.5 11 12 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Stage ${stageGuess} Checklist
         </div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:8px">${escapeHtml(stageChecklist.title)}</div>
+        <div style="font-size:12px;color:#6F7E6A;margin-bottom:8px">${escapeHtml(stageChecklist.title)}</div>
         ${renderChecklist(stageChecklist, true, o.id)}
       </div>` : ''}
 
@@ -2467,11 +2467,11 @@ function commsBoardHtml(oppId, opp){
   const clientPhone = escapeHtml(opp.phone||'');
 
   const TYPE_META = {
-    sms:   { label:'SMS',      color:'#10b981', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' },
-    email: { label:'Email',    color:'#6366f1', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 5l5.5 3.5L12.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>' },
-    call:  { label:'Call',     color:'#f59e0b', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4.5 2C4.5 2 5 4 4 5S2 5.5 2 5.5C2 8 6 12 8.5 12c0 0 .5-2 1.5-2s3 .5 3 .5-.5 2-2 2C7 13 1 7 1 3.5c0 0 2 .5 3-1S4.5 2 4.5 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' },
-    note:  { label:'Note',     color:'#64748b', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' },
-    proposal:{ label:'Proposal', color:'#a855f7', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2h5.5L11 4.5V12H3V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 2v3h3" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" opacity=".6"/></svg>' },
+    sms:   { label:'SMS',      color:'#2D7A55', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' },
+    email: { label:'Email',    color:'#204A43', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 5l5.5 3.5L12.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>' },
+    call:  { label:'Call',     color:'#8B6914', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4.5 2C4.5 2 5 4 4 5S2 5.5 2 5.5C2 8 6 12 8.5 12c0 0 .5-2 1.5-2s3 .5 3 .5-.5 2-2 2C7 13 1 7 1 3.5c0 0 2 .5 3-1S4.5 2 4.5 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' },
+    note:  { label:'Note',     color:'#6F7E6A', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2.5A.5.5 0 012.5 2h9a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H8L5.5 12V9H2.5A.5.5 0 012 8.5v-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' },
+    proposal:{ label:'Proposal', color:'#B8744F', icon:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2h5.5L11 4.5V12H3V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 2v3h3" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" opacity=".6"/></svg>' },
   };
 
   // Group messages by date
@@ -2525,7 +2525,7 @@ function commsBoardHtml(oppId, opp){
     ? '<div class="comm-empty">' +
         '<div class="comm-empty-icon">💬</div>' +
         '<p>No communications yet for '+clientName+'.</p>' +
-        '<p style="color:#334155;font-size:12.5px;max-width:320px;line-height:1.6">Use the compose bar below to log a call, send an SMS, draft an email, or attach a proposal.</p>' +
+        '<p style="color:#4A5947;font-size:12.5px;max-width:320px;line-height:1.6">Use the compose bar below to log a call, send an SMS, draft an email, or attach a proposal.</p>' +
       '</div>'
     : Object.keys(groups).map(date =>
         '<div class="comm-date-divider"><span>'+date+'</span></div>' +
@@ -2632,7 +2632,7 @@ function filesTabHtml(oppId, opp){
 
   const fmt = dt => { try{ return new Date(dt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){return '';} };
 
-  if(!allFiles.length) return '<div class="comms-board"><div class="comm-empty"><div class="comm-empty-icon">📁</div><p>No files attached yet.</p><p style="color:#334155;font-size:12.5px;max-width:300px;line-height:1.6">Attach photos, PDFs, proposals, and documents from the Communications tab.</p></div></div>';
+  if(!allFiles.length) return '<div class="comms-board"><div class="comm-empty"><div class="comm-empty-icon">📁</div><p>No files attached yet.</p><p style="color:#4A5947;font-size:12.5px;max-width:300px;line-height:1.6">Attach photos, PDFs, proposals, and documents from the Communications tab.</p></div></div>';
 
   const ext2icon = ext => {
     const e = (ext||'').toLowerCase();
@@ -2648,7 +2648,7 @@ function filesTabHtml(oppId, opp){
     '<div class="comms-header">' +
       '<div class="comms-header-top">' +
         '<div class="comms-header-identity">' +
-          '<div class="comms-avatar" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">'+clientInitials+'</div>' +
+          '<div class="comms-avatar" style="background:linear-gradient(135deg,#4D8A86,#4D8A86)">'+clientInitials+'</div>' +
           '<div>' +
             '<div class="comms-header-name">Files &amp; Attachments</div>' +
             '<div class="comms-header-sub">'+allFiles.length+' file'+(allFiles.length!==1?'s':'')+' &middot; '+escapeHtml(opp.client||'Lead')+'</div>' +
@@ -2661,7 +2661,7 @@ function filesTabHtml(oppId, opp){
       const ext = (f.name||'').split('.').pop();
       const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext.toLowerCase());
       return '<div class="file-card">' +
-        '<div class="file-card-icon">'+(isImg&&f.dataUrl?'<img src="'+f.dataUrl+'" alt="'+escapeHtml(f.name)+'" style="width:100%;height:80px;object-fit:cover;border-radius:6px;">':ext2icon(ext)+'<span style="font-size:.65rem;color:#64748b;display:block;margin-top:4px">'+ext.toUpperCase()+'</span>')+'</div>' +
+        '<div class="file-card-icon">'+(isImg&&f.dataUrl?'<img src="'+f.dataUrl+'" alt="'+escapeHtml(f.name)+'" style="width:100%;height:80px;object-fit:cover;border-radius:6px;">':ext2icon(ext)+'<span style="font-size:.65rem;color:#6F7E6A;display:block;margin-top:4px">'+ext.toUpperCase()+'</span>')+'</div>' +
         '<div class="file-card-name" title="'+escapeHtml(f.name)+'">'+escapeHtml(f.name)+'</div>' +
         '<div class="file-card-meta">'+fmt(f.ts)+'</div>' +
         (f.dataUrl ? '<a class="file-card-dl" href="'+f.dataUrl+'" download="'+escapeHtml(f.name)+'" target="_blank">Download</a>' : '<span class="file-card-dl muted" style="opacity:.4">No preview</span>') +
@@ -2695,11 +2695,11 @@ function wireCommsCompose(oppId){
     const googleConnected = (typeof isGoogleConnected === 'function') && isGoogleConnected();
     const fromEmail = (typeof getGoogleUserEmail === 'function') ? getGoogleUserEmail() : '';
     if(googleConnected && fromEmail){
-      banner.style.cssText = 'padding:8px 14px;background:#10b98118;border:1px solid #10b98144;border-radius:8px;font-size:12px;color:#34d399;display:flex;align-items:center;gap:8px;margin-bottom:2px';
-      banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 5l5.5 3.5L12.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Emails will be sent from <strong style="margin-left:4px;color:#6ee7b7">' + escapeHtml(fromEmail) + '</strong> via Gmail &nbsp;<span style="opacity:.6;font-size:11px">— to lead\'s email address on file</span>';
+      banner.style.cssText = 'padding:8px 14px;background:#2D7A5518;border:1px solid #2D7A5544;border-radius:8px;font-size:12px;color:#2D7A55;display:flex;align-items:center;gap:8px;margin-bottom:2px';
+      banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 5l5.5 3.5L12.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Emails will be sent from <strong style="margin-left:4px;color:#B8DEC9">' + escapeHtml(fromEmail) + '</strong> via Gmail &nbsp;<span style="opacity:.6;font-size:11px">— to lead\'s email address on file</span>';
     } else {
-      banner.style.cssText = 'padding:8px 14px;background:#f59e0b18;border:1px solid #f59e0b44;border-radius:8px;font-size:12px;color:#fbbf24;display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap';
-      banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2l5.5 10H1.5L7 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7 6v3M7 10.5h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Google not connected — email will be <strong style="margin:0 4px">logged locally only</strong> and not actually sent. <button onclick="show(\'integrations\')" style="background:#f59e0b30;border:1px solid #f59e0b66;border-radius:6px;color:#fbbf24;padding:2px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">Connect Google →</button>';
+      banner.style.cssText = 'padding:8px 14px;background:#8B691418;border:1px solid #8B691444;border-radius:8px;font-size:12px;color:#8B6914;display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap';
+      banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2l5.5 10H1.5L7 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7 6v3M7 10.5h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Google not connected — email will be <strong style="margin:0 4px">logged locally only</strong> and not actually sent. <button onclick="show(\'integrations\')" style="background:rgba(139,105,20,.19);border:1px solid #8B691466;border-radius:6px;color:#8B6914;padding:2px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">Connect Google →</button>';
     }
   }
 
@@ -3154,9 +3154,9 @@ function renderChecklist(c, persist=false, scopeId=''){
   const total = c.items.length;
   const done  = persist ? c.items.filter((_,i)=>localStorage.getItem(`${prefix}-${i}`)==='1').length : 0;
   const pct   = total ? Math.round((done/total)*100) : 0;
-  const barColor = pct===100?'#10b981':pct>=50?'#f59e0b':'#3b82f6';
-  const chipBg   = pct===100?'#d1fae5':pct>=50?'#fef3c7':'#dbeafe';
-  const chipTxt  = pct===100?'#065f46':pct>=50?'#92400e':'#1e40af';
+  const barColor = pct===100?'#2D7A55':pct>=50?'#8B6914':'#4D8A86';
+  const chipBg   = pct===100?'#EAF1EE':pct>=50?'#FAF6E8':'#E5F0EF';
+  const chipTxt  = pct===100?'#204A43':pct>=50?'#7A5C10':'#204A43';
 
   const progressBlock = persist ? `
     <div class="ld-cl-progress">
@@ -3206,9 +3206,9 @@ function wireChecks(){
       const total = allBoxes.length;
       const done  = [...allBoxes].filter(x=>x.checked).length;
       const pct   = Math.round((done/total)*100);
-      const color = pct===100?'#10b981':pct>=50?'#f59e0b':'#3b82f6';
-      const chipBg  = pct===100?'#d1fae5':pct>=50?'#fef3c7':'#dbeafe';
-      const chipTxt = pct===100?'#065f46':pct>=50?'#92400e':'#1e40af';
+      const color = pct===100?'#2D7A55':pct>=50?'#8B6914':'#4D8A86';
+      const chipBg  = pct===100?'#EAF1EE':pct>=50?'#FAF6E8':'#E5F0EF';
+      const chipTxt = pct===100?'#204A43':pct>=50?'#7A5C10':'#204A43';
       const barEl   = document.getElementById('cpbar-'+prefix);
       const lblEl   = document.getElementById('cplabel-'+prefix);
       const progress = barEl ? barEl.closest('.ld-cl-progress') : null;
@@ -3228,7 +3228,7 @@ function openLeadPicker(onSelect){
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding-top:80px';
   modal.innerHTML = `
     <div class="gw-modal-card" style="max-width:480px;margin:0 16px;border-color:var(--gw-sky)">
-      <h3 style="margin:0 0 14px;color:#f1f5f9;font-size:1.1rem">Select a Lead</h3>
+      <h3 style="margin:0 0 14px;color:#EDEAE0;font-size:1.1rem">Select a Lead</h3>
       <input id="lpSearch" type="text" placeholder="Search by client or project..."
         class="gw-input-sm" style="width:100%;margin-bottom:12px;box-sizing:border-box;font-size:14px;outline:none">
       <div id="lpList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
@@ -3285,7 +3285,7 @@ window.mergeTemplate = mergeTemplate;
 function process(stageId){
   const sp = data.salesProcess;
   if(stageId){ const s = data.stages.find(x=>x.id===Number(stageId)); if(s) return renderStage(s); }
-  const stepColors = ['#6366f1','#10b981','#f59e0b','#ef4444','#a855f7','#ec4899'];
+  const stepColors = ['#204A43','#2D7A55','#8B6914','#8B3A2A','#B8744F','#B8744F'];
   view.innerHTML = `
 <div class="eyebrow">Operating System</div>
 <h1 style="color:var(--ink)">Avalon Sales Process</h1>
@@ -3341,7 +3341,7 @@ ${data.stages.map(s=>{
 }).join('')}
 </div>`;
 
-  const stepColors2 = ['#6366f1','#10b981','#f59e0b','#ef4444','#a855f7','#ec4899'];
+  const stepColors2 = ['#204A43','#2D7A55','#8B6914','#8B3A2A','#B8744F','#B8744F'];
   window.processShowStep = function(idx){
     const s = sp.steps[idx];
     const panel = document.getElementById('stepDetailPanel');
@@ -3470,7 +3470,7 @@ function forms(formId){
 ${data.forms.map(f=>{
   const prog = formProgress(f);
   const stageNum = f.stage ? ` · Stage ${f.stage}` : '';
-  const barColor = prog ? (prog.pct===100?'#10b981':prog.pct>=50?'#f59e0b':'#3b82f6') : '#3b82f6';
+  const barColor = prog ? (prog.pct===100?'#2D7A55':prog.pct>=50?'#8B6914':'#4D8A86') : '#4D8A86';
   return `<article class="card clickable" onclick="show('forms','${f.id}')" style="transition:transform .15s,box-shadow .15s"
     onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'"
     onmouseleave="this.style.transform='';this.style.boxShadow=''">
@@ -3501,7 +3501,7 @@ ${data.forms.map(f=>{
 <div class="grid grid-2" style="gap:12px">
 ${stageChecklists.map(c=>{
   const p = checklistProgress(c);
-  const barColor = p.pct===100?'#10b981':p.pct>=50?'#f59e0b':'#3b82f6';
+  const barColor = p.pct===100?'#2D7A55':p.pct>=50?'#8B6914':'#4D8A86';
   return `<article class="card clickable" onclick="show('forms','${c.id}')" style="border-left:3px solid ${barColor};transition:transform .15s,box-shadow .15s"
     onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'"
     onmouseleave="this.style.transform='';this.style.boxShadow=''">
@@ -3525,7 +3525,7 @@ ${stageChecklists.map(c=>{
 <div class="grid grid-2" style="gap:12px">
 ${utilChecklists.map(c=>{
   const p = checklistProgress(c);
-  const barColor = p.pct===100?'#10b981':p.pct>=50?'#f59e0b':'#10b981';
+  const barColor = p.pct===100?'#2D7A55':p.pct>=50?'#8B6914':'#2D7A55';
   return `<article class="card clickable" onclick="show('forms','${c.id}')" style="border-left:3px solid ${barColor};transition:transform .15s,box-shadow .15s"
     onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'"
     onmouseleave="this.style.transform='';this.style.boxShadow=''">
@@ -3651,12 +3651,12 @@ function scripts(){
       const favs = loadFavs();
       const isFav = favs.includes(s.title);
       const verbatim = s.category && s.category.toLowerCase().includes('verbatim');
-      return `<article class="card" style="position:relative;border:1px solid var(--line);border-top:3px solid ${verbatim?'#f59e0b':'var(--blue)'}">
-        <button onclick="toggleScriptFav('${escapeForJs(s.title)}')" style="position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;font-size:1rem;color:${isFav?'#f59e0b':'var(--muted)'}" title="${isFav?'Remove from favorites':'Add to favorites'}">${isFav?'★':'☆'}</button>
-        ${verbatim?`<div style="display:inline-block;font-size:.68rem;font-weight:700;background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b44;border-radius:4px;padding:2px 7px;margin-bottom:6px">VERBATIM — Do Not Deviate</div>`:''}
+      return `<article class="card" style="position:relative;border:1px solid var(--line);border-top:3px solid ${verbatim?'#8B6914':'var(--blue)'}">
+        <button onclick="toggleScriptFav('${escapeForJs(s.title)}')" style="position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;font-size:1rem;color:${isFav?'#8B6914':'var(--muted)'}" title="${isFav?'Remove from favorites':'Add to favorites'}">${isFav?'★':'☆'}</button>
+        ${verbatim?`<div style="display:inline-block;font-size:.68rem;font-weight:700;background:#8B691422;color:#8B6914;border:1px solid #8B691444;border-radius:4px;padding:2px 7px;margin-bottom:6px">VERBATIM — Do Not Deviate</div>`:''}
         <span class="badge" style="display:block;margin-bottom:6px">${escapeHtml(s.category)}</span>
         <h3 style="color:var(--ink);margin:0 0 6px;padding-right:28px">${escapeHtml(s.title)}</h3>
-        ${s.situation?`<p style="font-size:.8rem;color:#6366f1;font-weight:600;margin:0 0 8px;font-style:italic">When: ${escapeHtml(s.situation)}</p>`:''}
+        ${s.situation?`<p style="font-size:.8rem;color:#204A43;font-weight:600;margin:0 0 8px;font-style:italic">When: ${escapeHtml(s.situation)}</p>`:''}
         <div class="script-box" style="font-size:.84rem">${nl2br(s.body)}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
           <button class="secondary-btn" style="font-size:.78rem" onclick="copyText('${escapeForJs(s.body)}',this)">Copy Script</button>
@@ -3678,8 +3678,8 @@ function scripts(){
   });
   document.getElementById('favToggle').addEventListener('click',()=>{
     showFavs = !showFavs;
-    document.getElementById('favToggle').style.color = showFavs ? '#f59e0b' : '';
-    document.getElementById('favToggle').style.borderColor = showFavs ? '#f59e0b' : '';
+    document.getElementById('favToggle').style.color = showFavs ? '#8B6914' : '';
+    document.getElementById('favToggle').style.borderColor = showFavs ? '#8B6914' : '';
     render();
   });
 
@@ -3736,7 +3736,7 @@ function templates(){
     if(!list.length){ box.innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted)">No templates match.</div>`; return; }
 
     box.innerHTML = list.map(t=>`
-      <article class="card" style="border:1px solid var(--line);border-top:3px solid #10b981">
+      <article class="card" style="border:1px solid var(--line);border-top:3px solid #2D7A55">
         <span class="badge" style="display:block;margin-bottom:6px">${escapeHtml(t.category)}</span>
         <h3 style="color:var(--ink);margin:0 0 6px">${escapeHtml(t.title)}</h3>
         <p style="font-size:.82rem;margin:0 0 10px"><strong style="color:var(--muted)">Subject:</strong> <span style="color:var(--ink)">${escapeHtml(t.subject)}</span></p>
@@ -3795,7 +3795,7 @@ function templates(){
 // ─── Objection Handling ───────────────────────────────────────────────────────
 function objections(){
   const SEVERITY = { 'Your price is too high.':'high', 'I got a cheaper quote.':'high', 'Can you do it cheaper?':'high', 'I need to think about it.':'medium', 'I\'m not sure this is the right time.':'medium', 'I want to get a few more quotes.':'low' };
-  const SEVERITY_COLORS = { high:'#ef4444', medium:'#f59e0b', low:'#10b981' };
+  const SEVERITY_COLORS = { high:'#8B3A2A', medium:'#8B6914', low:'#2D7A55' };
   const SEVERITY_LABELS = { high:'Price/Budget', medium:'Timing/Commitment', low:'Shopping' };
 
   view.innerHTML = `
@@ -3805,9 +3805,9 @@ function objections(){
 
 <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
   <button class="tab active" data-sev="all">All Objections</button>
-  <button class="tab" data-sev="high" style="border-color:#ef444444">Price / Budget</button>
-  <button class="tab" data-sev="medium" style="border-color:#f59e0b44">Timing / Commitment</button>
-  <button class="tab" data-sev="low" style="border-color:#10b98144">Shopping</button>
+  <button class="tab" data-sev="high" style="border-color:#8B3A2A44">Price / Budget</button>
+  <button class="tab" data-sev="medium" style="border-color:#8B691444">Timing / Commitment</button>
+  <button class="tab" data-sev="low" style="border-color:#2D7A5544">Shopping</button>
 </div>
 
 <div id="objList" class="grid grid-2" style="gap:14px"></div>`;
@@ -3908,7 +3908,7 @@ window.calcMargin = function(){
     <strong>Suggested sales price:</strong> ${money(price)}<br>
     <strong>Gross profit:</strong> ${money(gp)}<br>
     <strong>Markup on cost:</strong> ${Math.round((price/cost-1)*100)}%<br>
-    <strong style="color:#10b981">Est. commission (~7%):</strong> <span style="color:#10b981">${money(estComm)}</span>
+    <strong style="color:#2D7A55">Est. commission (~7%):</strong> <span style="color:#2D7A55">${money(estComm)}</span>
     <div style="margin-top:10px">
       <button class="primary-btn small" onclick="window.saveCalcToLead()">Save to Lead</button>
     </div>`;
@@ -3939,15 +3939,15 @@ function ai(){
   window._aiPreload = null; // consume
 
   const SITUATIONS = [
-    { id:'reply_email',     label:'Reply to a Client Email',        icon:'✉️',  color:'#6366f1' },
-    { id:'follow_up',       label:'Follow-Up After No Response',    icon:'🔄',  color:'#3b82f6' },
-    { id:'proposal_intro',  label:'Proposal Introduction Email',    icon:'📋',  color:'#10b981' },
-    { id:'objection_reply', label:'Handle an Objection',            icon:'🛡️',  color:'#f59e0b' },
-    { id:'discovery_prep',  label:'Discovery Call Prep',            icon:'🎯',  color:'#a855f7' },
-    { id:'site_walk_recap', label:'Post-Site Walk Summary',         icon:'📍',  color:'#ec4899' },
-    { id:'closing_email',   label:'Closing / Decision Ask',         icon:'🤝',  color:'#ef4444' },
-    { id:'referral_ask',    label:'Ask for a Referral',             icon:'⭐',  color:'#f97316' },
-    { id:'custom',          label:'Custom Situation',               icon:'✦',   color:'#64748b' },
+    { id:'reply_email',     label:'Reply to a Client Email',        icon:'✉️',  color:'#204A43' },
+    { id:'follow_up',       label:'Follow-Up After No Response',    icon:'🔄',  color:'#4D8A86' },
+    { id:'proposal_intro',  label:'Proposal Introduction Email',    icon:'📋',  color:'#2D7A55' },
+    { id:'objection_reply', label:'Handle an Objection',            icon:'🛡️',  color:'#8B6914' },
+    { id:'discovery_prep',  label:'Discovery Call Prep',            icon:'🎯',  color:'#B8744F' },
+    { id:'site_walk_recap', label:'Post-Site Walk Summary',         icon:'📍',  color:'#B8744F' },
+    { id:'closing_email',   label:'Closing / Decision Ask',         icon:'🤝',  color:'#8B3A2A' },
+    { id:'referral_ask',    label:'Ask for a Referral',             icon:'⭐',  color:'#8B6914' },
+    { id:'custom',          label:'Custom Situation',               icon:'✦',   color:'#6F7E6A' },
   ];
 
   const openLeads = (state.opportunities||[]).filter(o=>!['Sold / Activation','Closed Lost'].includes(o.status));
@@ -4021,7 +4021,7 @@ function ai(){
     </div>
 
     <div class="card" style="padding:14px;background:rgba(99,102,241,.04);border-color:rgba(99,102,241,.2)" id="aiPromptCard">
-      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6366f1;margin-bottom:8px">Prompt Preview</div>
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#204A43;margin-bottom:8px">Prompt Preview</div>
       <div id="aiPromptPreview" style="font-size:.78rem;color:var(--muted);font-family:monospace;white-space:pre-wrap;max-height:160px;overflow:auto">
         Your prompt will appear here before generation. You can copy and paste it into ChatGPT, Claude, or any AI tool.
       </div>
@@ -4089,7 +4089,7 @@ function ai(){
       if(sitId===id){
         btn.classList.add('ai-sit-active');
         btn.style.borderColor = sit?.color||'var(--blue)';
-        btn.style.background  = (sit?.color||'#6366f1')+'18';
+        btn.style.background  = (sit?.color||'#204A43')+'18';
         btn.style.fontWeight  = '700';
       } else {
         btn.classList.remove('ai-sit-active');
@@ -4385,8 +4385,8 @@ function academy(param) {
     return academyHome();
   } catch(e) {
     console.error('[Academy] render error:', e);
-    view.innerHTML = `<div class="card mt" style="border-color:#ef4444">
-      <h3 style="color:#ef4444;margin-top:0">Academy Error</h3>
+    view.innerHTML = `<div class="card mt" style="border-color:#8B3A2A">
+      <h3 style="color:#8B3A2A;margin-top:0">Academy Error</h3>
       <p style="color:var(--muted);font-family:monospace;font-size:.8rem">${escapeHtml(e.message)}</p>
       <button class="secondary-btn" onclick="localStorage.removeItem('avalonAcademyContentV1');location.reload()">Clear Cache &amp; Reload</button>
     </div>`;
@@ -4413,7 +4413,7 @@ const ACAD_STYLES = `
 
 /* Level badge */
 .acad-level-badge{display:inline-flex;align-items:center;gap:9px;border-radius:12px;padding:8px 16px;font-size:.88rem;font-weight:700;border:1.5px solid;transition:box-shadow .2s}
-.acad-streak-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(249,115,22,.08);border:1.5px solid rgba(249,115,22,.3);border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:700;color:#f97316}
+.acad-streak-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(139,105,20,.08);border:1.5px solid rgba(139,105,20,.3);border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:700;color:#8B6914}
 
 /* Stat row */
 .acad-stat-row{display:flex;gap:0;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap}
@@ -4480,13 +4480,13 @@ const ACAD_STYLES = `
 /* SA-204 Status chips */
 .sa-chip{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:3px 10px;font-size:.67rem;font-weight:700;letter-spacing:.03em;white-space:nowrap}
 .sa-chip-not-started{background:var(--line);color:var(--muted)}
-.sa-chip-in-progress{background:rgba(245,158,11,.1);color:#b45309;border:1px solid rgba(245,158,11,.3)}
-.sa-chip-complete{background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.3)}
-.sa-chip-locked{background:rgba(100,116,139,.08);color:#94a3b8;border:1px solid rgba(100,116,139,.2)}
-.sa-chip-certified{background:rgba(245,158,11,.12);color:#d97706;border:1px solid rgba(245,158,11,.35)}
-.sa-chip-beginner{background:rgba(99,102,241,.08);color:#6366f1;border:1px solid rgba(99,102,241,.2)}
-.sa-chip-intermediate{background:rgba(14,165,233,.08);color:#0ea5e9;border:1px solid rgba(14,165,233,.2)}
-.sa-chip-advanced{background:rgba(239,68,68,.07);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.sa-chip-in-progress{background:rgba(245,158,11,.1);color:#7A5C10;border:1px solid rgba(245,158,11,.3)}
+.sa-chip-complete{background:rgba(16,185,129,.1);color:#2D7A55;border:1px solid rgba(16,185,129,.3)}
+.sa-chip-locked{background:rgba(100,116,139,.08);color:#6F7E6A;border:1px solid rgba(100,116,139,.2)}
+.sa-chip-certified{background:rgba(245,158,11,.12);color:#7A5C10;border:1px solid rgba(245,158,11,.35)}
+.sa-chip-beginner{background:rgba(99,102,241,.08);color:#204A43;border:1px solid rgba(99,102,241,.2)}
+.sa-chip-intermediate{background:rgba(14,165,233,.08);color:#4D8A86;border:1px solid rgba(14,165,233,.2)}
+.sa-chip-advanced{background:rgba(239,68,68,.07);color:#8B3A2A;border:1px solid rgba(239,68,68,.2)}
 
 /* SA-204 CTA Buttons */
 .sa-btn-primary{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:10px;padding:10px 20px;font-size:.88rem;font-weight:700;cursor:pointer;background:var(--blue);color:#fff;transition:opacity .15s,transform .1s,box-shadow .15s;box-shadow:0 2px 8px rgba(0,167,225,.2)}
@@ -4512,7 +4512,7 @@ const ACAD_STYLES = `
 .acad-recent-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;transition:opacity .15s}
 .acad-recent-row:last-child{border-bottom:none}
 .acad-recent-row:hover{opacity:.78}
-.acad-recent-check{width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,.1);border:1.5px solid #10b981;display:flex;align-items:center;justify-content:center;color:#10b981;flex-shrink:0}
+.acad-recent-check{width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,.1);border:1.5px solid #2D7A55;display:flex;align-items:center;justify-content:center;color:#2D7A55;flex-shrink:0}
 
 /* Onboarding path */
 .acad-onboarding{background:rgba(0,167,225,.04);border:1.5px solid rgba(0,167,225,.18);border-radius:14px;padding:22px;margin-bottom:0}
@@ -4599,10 +4599,10 @@ const ACAD_STYLES = `
 .ws-nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px 11px 12px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:.82rem;color:var(--muted);line-height:1.3}
 .ws-nav-item:hover{background:rgba(0,167,225,.04);color:var(--ink)}
 .ws-nav-item.active-section{background:rgba(0,167,225,.07);border-left-color:var(--blue);color:var(--ink);font-weight:700}
-.ws-nav-item.done-section{color:#059669}
+.ws-nav-item.done-section{color:#2D7A55}
 .ws-nav-item.done-section:hover{background:rgba(16,185,129,.04)}
 .ws-nav-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;flex-shrink:0;background:var(--line);color:var(--muted);border:2px solid var(--line);transition:all .2s}
-.ws-nav-dot.done{background:rgba(16,185,129,.12);color:#059669;border-color:#10b981}
+.ws-nav-dot.done{background:rgba(16,185,129,.12);color:#2D7A55;border-color:#2D7A55}
 .ws-nav-dot.active{background:rgba(0,167,225,.12);color:var(--blue);border-color:var(--blue)}
 .ws-nav-type-badge{font-size:.55rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;opacity:.6}
 
@@ -4623,16 +4623,16 @@ const ACAD_STYLES = `
 
 .ws-callout{border-radius:12px;padding:16px 20px;margin:20px 0;border-left:4px solid}
 .ws-callout.principle{background:rgba(0,167,225,.05);border-color:var(--blue)}
-.ws-callout.warning{background:rgba(239,68,68,.04);border-color:#ef4444}
-.ws-callout.list{background:rgba(16,185,129,.04);border-color:#10b981}
+.ws-callout.warning{background:rgba(239,68,68,.04);border-color:#8B3A2A}
+.ws-callout.list{background:rgba(16,185,129,.04);border-color:#2D7A55}
 .ws-callout-title{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px}
 .ws-callout.principle .ws-callout-title{color:var(--blue)}
-.ws-callout.warning .ws-callout-title{color:#ef4444}
-.ws-callout.list .ws-callout-title{color:#10b981}
+.ws-callout.warning .ws-callout-title{color:#8B3A2A}
+.ws-callout.list .ws-callout-title{color:#2D7A55}
 .ws-callout-body{font-size:.88rem;color:var(--ink);line-height:1.65}
 .ws-callout-list{margin:0;padding-left:0;list-style:none}
 .ws-callout-list li{padding:6px 0;font-size:.87rem;color:var(--ink);line-height:1.55;border-bottom:1px solid rgba(0,0,0,.05);display:flex;align-items:flex-start;gap:8px}
-.ws-callout-list li::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;flex-shrink:0;margin-top:7px}
+.ws-callout-list li::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#2D7A55;flex-shrink:0;margin-top:7px}
 .ws-callout-list li:last-child{border-bottom:none}
 
 .ws-examples{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
@@ -4649,7 +4649,7 @@ const ACAD_STYLES = `
 .ws-complete-btn{display:inline-flex;align-items:center;gap:9px;border:none;border-radius:11px;padding:12px 24px;font-size:.92rem;font-weight:700;cursor:pointer;margin-top:22px;transition:opacity .15s,transform .1s,box-shadow .15s;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15)}
 .ws-complete-btn:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.18)}
 .ws-complete-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
-.ws-done-badge{display:inline-flex;align-items:center;gap:9px;background:rgba(16,185,129,.1);border:1.5px solid rgba(16,185,129,.4);color:#059669;border-radius:11px;padding:11px 20px;font-size:.9rem;font-weight:700;margin-top:18px}
+.ws-done-badge{display:inline-flex;align-items:center;gap:9px;background:rgba(16,185,129,.1);border:1.5px solid rgba(16,185,129,.4);color:#2D7A55;border-radius:11px;padding:11px 20px;font-size:.9rem;font-weight:700;margin-top:18px}
 .ws-next-hint{margin-top:26px;padding:14px 18px;background:var(--card);border:1.5px solid var(--line);border-radius:11px;cursor:pointer;transition:border-color .15s,background .15s;display:flex;align-items:center;gap:12px}
 .ws-next-hint:hover{border-color:var(--blue);background:rgba(0,167,225,.03)}
 .ws-next-hint-eyebrow{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:3px}
@@ -4664,8 +4664,8 @@ const ACAD_STYLES = `
 .quiz-choice{display:flex;align-items:center;gap:13px;padding:13px 16px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;margin-bottom:9px;transition:border-color .15s,background .15s;background:var(--bg);width:100%;box-sizing:border-box;text-align:left}
 .quiz-choice:hover{border-color:var(--blue);background:rgba(0,167,225,.04)}
 .quiz-choice.selected{border-color:var(--blue);background:rgba(0,167,225,.07)}
-.quiz-choice.correct{border-color:#10b981;background:rgba(16,185,129,.07)}
-.quiz-choice.wrong{border-color:#ef4444;background:rgba(239,68,68,.06)}
+.quiz-choice.correct{border-color:#2D7A55;background:rgba(16,185,129,.07)}
+.quiz-choice.wrong{border-color:#8B3A2A;background:rgba(239,68,68,.06)}
 .quiz-choice input[type=radio]{margin:0;flex-shrink:0;width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
 .quiz-choice-text{font-size:.88rem;color:var(--ink);line-height:1.5;flex:1;min-width:0;word-wrap:break-word}
 .quiz-submit-btn{background:var(--blue);color:#fff;border:none;border-radius:11px;padding:13px 30px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:20px;transition:opacity .15s,transform .1s,box-shadow .15s;box-shadow:0 2px 8px rgba(0,167,225,.2);display:inline-flex;align-items:center;gap:9px}
@@ -4676,11 +4676,11 @@ const ACAD_STYLES = `
 .quiz-result.fail{background:rgba(239,68,68,.04);border:1.5px solid rgba(239,68,68,.2)}
 .quiz-result-score{font-size:2.2rem;font-weight:800;line-height:1}
 .quiz-feedback-item{padding:10px 14px;border-radius:10px;margin-bottom:8px;font-size:.84rem;border-left:3.5px solid}
-.quiz-feedback-item.correct{background:rgba(16,185,129,.06);border-left-color:#10b981}
-.quiz-feedback-item.wrong{background:rgba(239,68,68,.05);border-left-color:#ef4444}
+.quiz-feedback-item.correct{background:rgba(16,185,129,.06);border-left-color:#2D7A55}
+.quiz-feedback-item.wrong{background:rgba(239,68,68,.05);border-left-color:#8B3A2A}
 .quiz-feedback-verdict{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
-.quiz-feedback-item.correct .quiz-feedback-verdict{color:#059669}
-.quiz-feedback-item.wrong .quiz-feedback-verdict{color:#ef4444}
+.quiz-feedback-item.correct .quiz-feedback-verdict{color:#2D7A55}
+.quiz-feedback-item.wrong .quiz-feedback-verdict{color:#8B3A2A}
 .quiz-explanation{font-size:.82rem;color:var(--muted);margin-top:5px;line-height:1.5}
 .prev-attempts-chip{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--muted);background:var(--line);border-radius:99px;padding:4px 12px;margin-bottom:16px}
 
@@ -4701,11 +4701,11 @@ const ACAD_STYLES = `
 .admin-rep-header:hover{background:rgba(0,167,225,.03)}
 .admin-mod-matrix{overflow-x:auto;padding:12px 18px 16px;display:flex;flex-wrap:wrap;gap:6px}
 .admin-mod-cell{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:60px;min-width:54px;border:1.5px solid var(--line);border-radius:9px;padding:8px 4px;font-size:.72rem;font-weight:700;text-align:center;background:var(--bg);transition:border-color .15s;cursor:default}
-.admin-mod-cell.completed{background:rgba(16,185,129,.08);border-color:#10b981;color:#059669}
-.admin-mod-cell.in-progress{background:rgba(245,158,11,.08);border-color:#f59e0b;color:#b45309}
+.admin-mod-cell.completed{background:rgba(16,185,129,.08);border-color:#2D7A55;color:#2D7A55}
+.admin-mod-cell.in-progress{background:rgba(245,158,11,.08);border-color:#8B6914;color:#7A5C10}
 .admin-action-btn{font-size:.76rem;padding:6px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer;font-weight:600;transition:border-color .15s,background .15s;display:inline-flex;align-items:center;gap:6px}
 .admin-action-btn:hover{border-color:var(--blue);background:rgba(0,167,225,.06)}
-.admin-action-btn.danger:hover{border-color:#ef4444;background:rgba(239,68,68,.05);color:#ef4444}
+.admin-action-btn.danger:hover{border-color:#8B3A2A;background:rgba(239,68,68,.05);color:#8B3A2A}
 
 /* Team summary metric cards */
 .admin-metric-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
@@ -4715,7 +4715,7 @@ const ACAD_STYLES = `
 .admin-metric-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:5px}
 
 /* ══ SA-104 Practice Arena ═══════════════════════════════════════════════════ */
-.acad-practice-challenge{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:16px;padding:24px 28px;margin-bottom:22px;display:flex;align-items:center;gap:20px;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.acad-practice-challenge{background:linear-gradient(135deg,#1F2A2B 0%,#1F2A2B 100%);border-radius:16px;padding:24px 28px;margin-bottom:22px;display:flex;align-items:center;gap:20px;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.15)}
 .acad-practice-challenge-icon{width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .acad-practice-challenge-body{flex:1;min-width:0}
 .acad-practice-challenge-title{font-size:1.1rem;font-weight:800;margin-bottom:4px}
@@ -4787,7 +4787,7 @@ function academyHome() {
       ? `<span class="sa-chip sa-chip-locked">${SVG_LOCK} Locked</span>`
       : `<span class="sa-chip sa-chip-not-started">Not Started</span>`;
     const ctaLabel = ph.pct === 100 ? 'Review' : ph.inProgress ? 'Continue' : ph.locked ? 'Locked' : 'Start';
-    const ctaColor = ph.pct === 100 ? '#10b981' : ph.locked ? 'var(--muted)' : ph.color;
+    const ctaColor = ph.pct === 100 ? '#2D7A55' : ph.locked ? 'var(--muted)' : ph.color;
     return `<article class="acad-phase-card${ph.locked?' acad-phase-locked':''}${ph.pct===100?' acad-phase-complete':''}" ${ph.locked?'':` onclick="show('academy','phase:${ph.id}')"`}>
       <div class="acad-phase-bar" style="background:${ph.color}"></div>
       <div class="acad-phase-body">
@@ -4829,9 +4829,9 @@ function academyHome() {
       </div>`
     : hd.overallPct === 100
     ? `<div class="acad-continue-card" style="background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(5,150,105,.05));border-color:rgba(16,185,129,.3);cursor:default">
-        <div class="acad-continue-icon" style="background:#10b981">${svgBadgeShape('trophy','#fff',24)}</div>
+        <div class="acad-continue-icon" style="background:#2D7A55">${svgBadgeShape('trophy','#fff',24)}</div>
         <div class="acad-continue-body">
-          <div class="acad-continue-eyebrow" style="color:#059669">Academy Complete</div>
+          <div class="acad-continue-eyebrow" style="color:#2D7A55">Academy Complete</div>
           <div class="acad-continue-title">All 9 modules finished</div>
           <div class="acad-continue-meta">You've mastered the full Avalon Sales Academy curriculum.</div>
         </div>
@@ -4886,7 +4886,7 @@ function academyHome() {
         ${svgLevelIcon(level.id, level.color, 22)}
         <span>${escapeHtml(level.name)}</span>
       </div>
-      ${hd.streak_days > 0 ? `<div class="acad-streak-badge">${svgBadgeShape('flame','#f97316',16)} ${hd.streak_days}-day streak</div>` : ''}
+      ${hd.streak_days > 0 ? `<div class="acad-streak-badge">${svgBadgeShape('flame','#8B6914',16)} ${hd.streak_days}-day streak</div>` : ''}
       ${isAdmin ? `<button class="sa-btn-secondary" style="font-size:.78rem;padding:7px 14px" onclick="show('academy','admin')">${SVG_TEAM} Team Progress</button>` : ''}
     </div>
   </div>
@@ -4922,7 +4922,7 @@ function academyHome() {
         </div>
         <div class="acad-level-bar"><div class="acad-level-bar-fill" style="width:${levelPct}%;background:linear-gradient(90deg,${level.color},${nextLevel.color})"></div></div>
       </div>`
-    : `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:.86rem;color:#f59e0b;font-weight:700;display:inline-flex;align-items:center;gap:7px">${svgBadgeShape('star','#f59e0b',18)} Maximum Level Reached — Mentor</div>`}
+    : `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:.86rem;color:#8B6914;font-weight:700;display:inline-flex;align-items:center;gap:7px">${svgBadgeShape('star','#8B6914',18)} Maximum Level Reached — Mentor</div>`}
 </div>
 
 <!-- ── Continue CTA ── -->
@@ -5014,11 +5014,11 @@ function academyPhaseDetail(phaseId) {
     // Step indicator
     let numHtml, accentColor;
     if (status === 'completed') {
-      accentColor = '#10b981';
-      numHtml = `<div class="acad-module-card-num" style="background:#10b981;border-color:#10b981;color:#fff">${SVG_CHECK}</div>`;
+      accentColor = '#2D7A55';
+      numHtml = `<div class="acad-module-card-num" style="background:#2D7A55;border-color:#2D7A55;color:#fff">${SVG_CHECK}</div>`;
     } else if (status === 'in_progress') {
-      accentColor = '#f59e0b';
-      numHtml = `<div class="acad-module-card-num" style="background:rgba(245,158,11,.12);border-color:#f59e0b;color:#f59e0b">${SVG_PLAY}</div>`;
+      accentColor = '#8B6914';
+      numHtml = `<div class="acad-module-card-num" style="background:rgba(245,158,11,.12);border-color:#8B6914;color:#8B6914">${SVG_PLAY}</div>`;
     } else if (isLocked) {
       accentColor = 'var(--line)';
       numHtml = `<div class="acad-module-card-num" style="background:var(--line);border-color:var(--line);color:var(--muted)">${SVG_LOCK}</div>`;
@@ -5044,7 +5044,7 @@ function academyPhaseDetail(phaseId) {
 
     // Quiz chip
     const quizChip = mp.quiz_best_score != null
-      ? `<span class="sa-chip" style="background:${mp.quiz_passed?'rgba(16,185,129,.1)':'rgba(239,68,68,.08)'};color:${mp.quiz_passed?'#10b981':'#ef4444'};border-color:${mp.quiz_passed?'rgba(16,185,129,.3)':'rgba(239,68,68,.3)'}">Quiz ${mp.quiz_best_score}%</span>`
+      ? `<span class="sa-chip" style="background:${mp.quiz_passed?'rgba(16,185,129,.1)':'rgba(239,68,68,.08)'};color:${mp.quiz_passed?'#2D7A55':'#8B3A2A'};border-color:${mp.quiz_passed?'rgba(16,185,129,.3)':'rgba(239,68,68,.3)'}">Quiz ${mp.quiz_best_score}%</span>`
       : '';
 
     // Time chip
@@ -5497,16 +5497,16 @@ window.academySubmitQuiz = function(moduleId, quizId, repId) {
     resultArea.innerHTML = `
 <div class="quiz-result ${passed ? 'pass' : 'fail'}">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-    <div>${svgBadgeShape(passed?'check':'bolt', passed?'#10b981':'#ef4444', 40)}</div>
+    <div>${svgBadgeShape(passed?'check':'bolt', passed?'#2D7A55':'#8B3A2A', 40)}</div>
     <div>
-      <div style="font-size:1.1rem;font-weight:700;color:${passed?'#10b981':'#ef4444'}">${passed ? 'Quiz Passed!' : 'Not quite yet'}</div>
+      <div style="font-size:1.1rem;font-weight:700;color:${passed?'#2D7A55':'#8B3A2A'}">${passed ? 'Quiz Passed!' : 'Not quite yet'}</div>
       <div style="font-size:.85rem;color:var(--muted)">${score}% — ${passedCount} of ${totalCount} correct${passed ? ' — module progress updated.' : ` — ${mod.quiz.pass_score}% required.`}</div>
     </div>
   </div>
   ${result.feedback.map(f => {
     const q = mod.quiz.questions.find(qq => qq.id === f.questionId);
     return `<div class="quiz-feedback-item ${f.correct ? 'correct' : 'wrong'}">
-      <div style="font-weight:700;font-size:.82rem;color:${f.correct?'#10b981':'#ef4444'};margin-bottom:3px">${f.correct ? 'Correct' : 'Incorrect'}</div>
+      <div style="font-weight:700;font-size:.82rem;color:${f.correct?'#2D7A55':'#8B3A2A'};margin-bottom:3px">${f.correct ? 'Correct' : 'Incorrect'}</div>
       <div class="quiz-explanation">${escapeHtml(q && q.explanation ? q.explanation : '')}</div>
     </div>`;
   }).join('')}
@@ -5535,7 +5535,7 @@ function academyBadgesView() {
   <article class="acad-badge-card ${isEarned ? 'earned' : 'locked'}" style="${isEarned ? `border-color:${b.color}44;background:${b.color}06` : ''}">
     <div style="display:flex;justify-content:center;margin-bottom:14px;position:relative">
       ${svgBadgeShape(b.shape, isEarned ? b.color : 'var(--muted)', 56)}
-      ${isEarned ? `<div style="position:absolute;bottom:-4px;right:calc(50% - 28px - 4px);width:18px;height:18px;border-radius:50%;background:#10b981;border:2px solid var(--card);display:flex;align-items:center;justify-content:center;color:#fff">${SVG_CHECK}</div>` : ''}
+      ${isEarned ? `<div style="position:absolute;bottom:-4px;right:calc(50% - 28px - 4px);width:18px;height:18px;border-radius:50%;background:#2D7A55;border:2px solid var(--card);display:flex;align-items:center;justify-content:center;color:#fff">${SVG_CHECK}</div>` : ''}
     </div>
     <div style="font-weight:700;font-size:.92rem;color:${isEarned ? b.color : 'var(--muted)'};margin-bottom:5px;text-align:center">${escapeHtml(b.name)}</div>
     <div style="font-size:.76rem;color:var(--muted);line-height:1.5;text-align:center;margin-bottom:10px">${escapeHtml(b.desc)}</div>
@@ -5561,11 +5561,11 @@ function academyBadgesView() {
 
 <!-- Hero -->
 <div class="acad-phase-hero" style="border-color:rgba(99,102,241,.2)">
-  <div class="acad-phase-hero-bar" style="background:linear-gradient(90deg,#6366f1,#8b5cf6)"></div>
+  <div class="acad-phase-hero-bar" style="background:linear-gradient(90deg,#204A43,#4D8A86)"></div>
   <div class="acad-phase-hero-inner">
-    <div class="acad-phase-hero-icon">${svgBadgeShape('shield','#6366f1',48)}</div>
+    <div class="acad-phase-hero-icon">${svgBadgeShape('shield','#204A43',48)}</div>
     <div class="acad-phase-hero-body">
-      <div class="acad-phase-hero-eyebrow" style="color:#6366f1">Achievement Center</div>
+      <div class="acad-phase-hero-eyebrow" style="color:#204A43">Achievement Center</div>
       <h1 class="acad-phase-hero-title">Badges &amp; Achievements</h1>
       <p class="acad-phase-hero-desc">Earn badges by completing modules, passing quizzes, maintaining streaks, and reaching new levels.</p>
     </div>
@@ -5579,10 +5579,10 @@ function academyBadgesView() {
       <div class="acad-progress-card-label">Badge Collection</div>
       <div class="acad-progress-meta">${earnedBadges.length} of ${totalBadges} badges earned · Level: ${escapeHtml(lvlInfo ? lvlInfo.name : '—')}</div>
     </div>
-    <div class="acad-progress-card-pct" style="color:#6366f1">${earnedPct}%</div>
+    <div class="acad-progress-card-pct" style="color:#204A43">${earnedPct}%</div>
   </div>
   <div class="acad-progress-bar">
-    <div class="acad-progress-bar-fill" style="width:${earnedPct}%;background:linear-gradient(90deg,#6366f1,#8b5cf6)"></div>
+    <div class="acad-progress-bar-fill" style="width:${earnedPct}%;background:linear-gradient(90deg,#204A43,#4D8A86)"></div>
   </div>
 </div>
 
@@ -5627,7 +5627,7 @@ function academyPracticeArena() {
   const ph = masteryCandidate ? content.phases.find(p => p.id === masteryCandidate.phase_id) : null;
   const masteryScore = masteryCandidate ? ((rp.modules[masteryCandidate.id]||{}).quiz_best_score || 0) : 0;
 
-  const SVG_LIGHTNING = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="none"><path d="M13 2L4.5 13.5H11L10 22L20.5 10H14L13 2Z"/></svg>`;
+  const SVG_LIGHTNING = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#8B6914" stroke="none"><path d="M13 2L4.5 13.5H11L10 22L20.5 10H14L13 2Z"/></svg>`;
   const SVG_REPEAT    = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
   const SVG_BOOK      = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
 
@@ -5656,11 +5656,11 @@ function academyPracticeArena() {
     const mp  = rp.modules[m.id] || {};
     const mph = content.phases.find(p => p.id === m.phase_id);
     return `<div class="acad-practice-item" onclick="show('academy','module:${m.id}')">
-      <div class="acad-practice-item-icon" style="background:rgba(239,68,68,.08);color:#ef4444">${SVG_REPEAT}</div>
+      <div class="acad-practice-item-icon" style="background:rgba(239,68,68,.08);color:#8B3A2A">${SVG_REPEAT}</div>
       <div class="acad-practice-item-body">
         <div class="acad-practice-item-title">Retry Quiz — ${escapeHtml(m.title)}</div>
         <div class="acad-practice-item-meta">
-          <span class="sa-chip" style="color:#ef4444;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)">Best: ${mp.quiz_best_score}%</span>
+          <span class="sa-chip" style="color:#8B3A2A;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)">Best: ${mp.quiz_best_score}%</span>
           <span class="sa-chip">${mp.quiz_passed?'Passed':'Not Passed'}</span>
         </div>
       </div>
@@ -5684,11 +5684,11 @@ function academyPracticeArena() {
 
 <!-- SA-201-style hero -->
 <div class="acad-phase-hero" style="border-color:rgba(245,158,11,.25)">
-  <div class="acad-phase-hero-bar" style="background:linear-gradient(90deg,#f59e0b,#f97316)"></div>
+  <div class="acad-phase-hero-bar" style="background:linear-gradient(90deg,#8B6914,#8B6914)"></div>
   <div class="acad-phase-hero-inner">
     <div class="acad-phase-hero-icon">${SVG_LIGHTNING}</div>
     <div class="acad-phase-hero-body">
-      <div class="acad-phase-hero-eyebrow" style="color:#f59e0b">Skill Building</div>
+      <div class="acad-phase-hero-eyebrow" style="color:#8B6914">Skill Building</div>
       <h1 class="acad-phase-hero-title">Practice Arena</h1>
       <p class="acad-phase-hero-desc">Sharpen your skills with drills, quiz retries, and mastery challenges. Focus on the areas that move your numbers.</p>
     </div>
@@ -5698,15 +5698,15 @@ function academyPracticeArena() {
 ${masteryCandidate ? `
 <!-- Mastery Challenge Banner -->
 <div class="acad-practice-challenge">
-  <div class="acad-practice-challenge-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)">${SVG_LIGHTNING}</div>
+  <div class="acad-practice-challenge-icon" style="background:linear-gradient(135deg,#8B6914,#8B6914)">${SVG_LIGHTNING}</div>
   <div class="acad-practice-challenge-body">
     <div class="acad-practice-challenge-title">
       Mastery Challenge
-      <span class="sa-chip" style="background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.3);font-size:.68rem">${masteryScore > 0 ? `Best: ${masteryScore}%` : 'Not attempted'}</span>
+      <span class="sa-chip" style="background:rgba(245,158,11,.12);color:#8B6914;border-color:rgba(245,158,11,.3);font-size:.68rem">${masteryScore > 0 ? `Best: ${masteryScore}%` : 'Not attempted'}</span>
     </div>
     <div class="acad-practice-challenge-sub">${escapeHtml(masteryCandidate.title)} — ${escapeHtml(masteryCandidate.short_description||'')}</div>
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="sa-btn-primary" style="background:#f59e0b" onclick="show('academy','module:${masteryCandidate.id}')">
+      <button class="sa-btn-primary" style="background:#8B6914" onclick="show('academy','module:${masteryCandidate.id}')">
         ${masteryScore > 0 ? 'Retry Challenge' : 'Start Challenge'} ${SVG_ARROW}
       </button>
       ${ph ? `<button class="sa-btn-ghost" onclick="show('academy','phase:${ph.id}')">View Phase</button>` : ''}
@@ -5725,8 +5725,8 @@ ${masteryCandidate ? `
     ${failedQuizMods.length ? `
     <div class="acad-sidebar-card">
       <div class="acad-sidebar-card-head">
-        <span style="font-size:.78rem;font-weight:700;color:#ef4444">Quiz Retries</span>
-        <span class="sa-chip" style="color:#ef4444;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)">${failedQuizMods.length}</span>
+        <span style="font-size:.78rem;font-weight:700;color:#8B3A2A">Quiz Retries</span>
+        <span class="sa-chip" style="color:#8B3A2A;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)">${failedQuizMods.length}</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:2px">
         ${retryItems}
@@ -5794,7 +5794,7 @@ function academyRepProfile() {
   const repName = rep && rep.name ? rep.name : 'Rep';
   const initials = repName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 
-  const SVG_STAR = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+  const SVG_STAR = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#8B6914" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 
   view.innerHTML = ACAD_STYLES + `
 <nav class="acad-breadcrumb">
@@ -5827,7 +5827,7 @@ function academyRepProfile() {
         <div class="acad-profile-stat-label">Badges</div>
       </div>
       <div class="acad-profile-stat">
-        <div class="acad-profile-stat-num" style="color:${quizAvg!=null?(quizAvg>=75?'#10b981':'#ef4444'):'var(--muted)'}">${quizAvg != null ? quizAvg+'%' : '—'}</div>
+        <div class="acad-profile-stat-num" style="color:${quizAvg!=null?(quizAvg>=75?'#2D7A55':'#8B3A2A'):'var(--muted)'}">${quizAvg != null ? quizAvg+'%' : '—'}</div>
         <div class="acad-profile-stat-label">Quiz Avg</div>
       </div>
     </div>
@@ -5967,14 +5967,14 @@ function academyCertificationsPage() {
       statusBadge = `<span class="sa-chip sa-chip-certified">${SVG_CHECK} Certified</span>`;
       ctaHtml = `
         <div style="margin-top:14px;padding:12px 16px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:10px">
-          <div style="font-size:.78rem;color:#10b981;font-weight:700;margin-bottom:2px">${SVG_CHECK} Certification Awarded</div>
+          <div style="font-size:.78rem;color:#2D7A55;font-weight:700;margin-bottom:2px">${SVG_CHECK} Certification Awarded</div>
           <div style="font-size:.75rem;color:var(--muted)">${fmtDate(certData.at)} · Verified by ${escapeHtml(certData.by||'Admin')}</div>
         </div>`;
     } else if (allDone) {
-      statusBadge = `<span class="sa-chip" style="color:#f59e0b;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)">Ready for Review</span>`;
+      statusBadge = `<span class="sa-chip" style="color:#8B6914;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)">Ready for Review</span>`;
       ctaHtml = `
         <div style="margin-top:14px;padding:12px 16px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:10px">
-          <div style="font-size:.78rem;color:#f59e0b;font-weight:700;margin-bottom:2px">⏳ Awaiting Admin Certification</div>
+          <div style="font-size:.78rem;color:#8B6914;font-weight:700;margin-bottom:2px">⏳ Awaiting Admin Certification</div>
           <div style="font-size:.75rem;color:var(--muted)">All modules complete — your manager or admin will issue this certification.</div>
         </div>`;
     } else {
@@ -6004,10 +6004,10 @@ function academyCertificationsPage() {
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
             <div style="flex:1">
               <div class="acad-progress-bar" style="height:6px">
-                <div class="acad-progress-bar-fill" style="width:${pct}%;background:${isEarned?'#10b981':ph.color}"></div>
+                <div class="acad-progress-bar-fill" style="width:${pct}%;background:${isEarned?'#2D7A55':ph.color}"></div>
               </div>
             </div>
-            <span style="font-size:.78rem;font-weight:700;color:${isEarned?'#10b981':ph.color};white-space:nowrap">${doneCount}/${phMods.length} modules</span>
+            <span style="font-size:.78rem;font-weight:700;color:${isEarned?'#2D7A55':ph.color};white-space:nowrap">${doneCount}/${phMods.length} modules</span>
           </div>
           ${ctaHtml}
         </div>
@@ -6025,11 +6025,11 @@ function academyCertificationsPage() {
 </nav>
 
 <div class="acad-phase-hero" style="border-color:rgba(245,158,11,.25)">
-  <div class="acad-phase-hero-bar" style="background:linear-gradient(90deg,#f59e0b,#10b981)"></div>
+  <div class="acad-phase-hero-bar" style="background:linear-gradient(90deg,#8B6914,#2D7A55)"></div>
   <div class="acad-phase-hero-inner">
-    <div class="acad-phase-hero-icon" style="color:#f59e0b">${SVG_CERT_ICON}</div>
+    <div class="acad-phase-hero-icon" style="color:#8B6914">${SVG_CERT_ICON}</div>
     <div class="acad-phase-hero-body">
-      <div class="acad-phase-hero-eyebrow" style="color:#f59e0b">Achievement Record</div>
+      <div class="acad-phase-hero-eyebrow" style="color:#8B6914">Achievement Record</div>
       <h1 class="acad-phase-hero-title">Certifications</h1>
       <p class="acad-phase-hero-desc">Complete each phase and earn your certification. Certifications are issued by your manager or admin upon phase completion.</p>
     </div>
@@ -6043,10 +6043,10 @@ function academyCertificationsPage() {
       <div class="acad-progress-card-label">Certification Progress</div>
       <div class="acad-progress-meta">${earnedCount} of ${(content.phases||[]).length} certifications earned</div>
     </div>
-    <div class="acad-progress-card-pct" style="color:#f59e0b">${(content.phases||[]).length ? Math.round((earnedCount/(content.phases||[]).length)*100) : 0}%</div>
+    <div class="acad-progress-card-pct" style="color:#8B6914">${(content.phases||[]).length ? Math.round((earnedCount/(content.phases||[]).length)*100) : 0}%</div>
   </div>
   <div class="acad-progress-bar">
-    <div class="acad-progress-bar-fill" style="width:${(content.phases||[]).length ? Math.round((earnedCount/(content.phases||[]).length)*100) : 0}%;background:linear-gradient(90deg,#f59e0b,#10b981)"></div>
+    <div class="acad-progress-bar-fill" style="width:${(content.phases||[]).length ? Math.round((earnedCount/(content.phases||[]).length)*100) : 0}%;background:linear-gradient(90deg,#8B6914,#2D7A55)"></div>
   </div>
 </div>
 
@@ -6056,7 +6056,7 @@ function academyCertificationsPage() {
 </div>
 
 <div style="margin-top:24px;padding:16px 20px;background:rgba(99,102,241,.04);border:1px solid rgba(99,102,241,.15);border-radius:12px">
-  <div style="font-size:.8rem;font-weight:700;color:#6366f1;margin-bottom:6px">${SVG_CERT_ICON} How Certifications Work</div>
+  <div style="font-size:.8rem;font-weight:700;color:#204A43;margin-bottom:6px">${SVG_CERT_ICON} How Certifications Work</div>
   <div style="font-size:.82rem;color:var(--muted);display:grid;gap:5px">
     <div>1. Complete all modules in a phase</div>
     <div>2. Your status changes to "Ready for Review"</div>
@@ -6100,8 +6100,8 @@ function academyAdminDashboard() {
   }
   function truncate(str, n) { return str && str.length > n ? str.slice(0,n)+'…' : (str||''); }
 
-  const SVG_FLAME = `<svg width="13" height="13" viewBox="0 0 24 24" fill="#f97316" stroke="none"><path d="M12 2C8 7 6 10 6 14a6 6 0 0 0 12 0c0-4-2-7-6-12zM9.5 17c-.3-1.2.5-2.4 2.5-3-.5 1.5.2 2.5 1 3 .3-1 1-1.8 1-3 1 .8 1.5 2 1 3a4 4 0 0 1-5.5 0z"/></svg>`;
-  const SVG_CERT  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/><path d="M8 21l4-2 4 2v-6H8z"/></svg>`;
+  const SVG_FLAME = `<svg width="13" height="13" viewBox="0 0 24 24" fill="#8B6914" stroke="none"><path d="M12 2C8 7 6 10 6 14a6 6 0 0 0 12 0c0-4-2-7-6-12zM9.5 17c-.3-1.2.5-2.4 2.5-3-.5 1.5.2 2.5 1 3 .3-1 1-1.8 1-3 1 .8 1.5 2 1 3a4 4 0 0 1-5.5 0z"/></svg>`;
+  const SVG_CERT  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B6914" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/><path d="M8 21l4-2 4 2v-6H8z"/></svg>`;
   const SVG_BULK  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/><polyline points="20 12 9 23 4 18"/></svg>`;
 
   const certs = loadCerts();
@@ -6117,9 +6117,9 @@ function academyAdminDashboard() {
         <div style="width:110px;font-size:.8rem;font-weight:600;color:var(--ink)">${escapeHtml(r.rep.name)}</div>
         <div style="flex:1">
           ${isCert
-            ? `<span style="font-size:.75rem;color:#f59e0b;font-weight:600">${SVG_CERT} Certified ${fmtDate(certData.at)} by ${escapeHtml(certData.by)}</span>`
+            ? `<span style="font-size:.75rem;color:#8B6914;font-weight:600">${SVG_CERT} Certified ${fmtDate(certData.at)} by ${escapeHtml(certData.by)}</span>`
             : (allDone
-                ? `<button class="admin-action-btn" style="background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.35)" onclick="academyAdminCertifyPhase('${r.rep.id}','${ph.id}','${escapeHtml(r.rep.name)}','${escapeHtml(ph.certification_name||ph.title)}')">${SVG_CERT} Certify ${escapeHtml(ph.certification_name||ph.title)}</button>`
+                ? `<button class="admin-action-btn" style="background:rgba(245,158,11,.12);color:#8B6914;border-color:rgba(245,158,11,.35)" onclick="academyAdminCertifyPhase('${r.rep.id}','${ph.id}','${escapeHtml(r.rep.name)}','${escapeHtml(ph.certification_name||ph.title)}')">${SVG_CERT} Certify ${escapeHtml(ph.certification_name||ph.title)}</button>`
                 : `<span style="font-size:.75rem;color:var(--muted)">Modules not yet complete</span>`
               )
           }
@@ -6147,7 +6147,7 @@ function academyAdminDashboard() {
     const note = loadNote(r.rep.id);
     const streak = r.streak || 0;
     const streakChip = streak > 0
-      ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:.72rem;font-weight:600;color:#f97316;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:99px;padding:2px 8px">${SVG_FLAME}${streak}-day streak</span>`
+      ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:.72rem;font-weight:600;color:#8B6914;background:rgba(139,105,20,.10);border:1px solid rgba(139,105,20,.3);border-radius:99px;padding:2px 8px">${SVG_FLAME}${streak}-day streak</span>`
       : '';
 
     // Module cells — clickable for quiz drill-down
@@ -6164,7 +6164,7 @@ function academyAdminDashboard() {
         title="${escapeHtml(m.title)} — ${ms}${qScore!=null?' | Quiz: '+qScore+'%':''}${hasAttempts?' | Click for quiz detail':''}">
         <div style="font-size:.68rem;font-weight:700;color:inherit">${m.id}</div>
         <div style="margin-top:3px">${isComp ? SVG_CHECK : isInProg ? SVG_PLAY : '–'}</div>
-        ${qScore != null ? `<div style="font-size:.6rem;margin-top:2px;color:${isComp&&qScore>=75?'#10b981':'var(--muted)'}">${qScore}%</div>` : ''}
+        ${qScore != null ? `<div style="font-size:.6rem;margin-top:2px;color:${isComp&&qScore>=75?'#2D7A55':'var(--muted)'}">${qScore}%</div>` : ''}
       </div>`;
     }).join('');
 
@@ -6185,7 +6185,7 @@ function academyAdminDashboard() {
           </div>
           <div style="flex:1;min-width:120px;max-width:220px">
             <div style="height:6px;background:var(--line);border-radius:4px;overflow:hidden">
-              <div style="height:100%;width:${r.pct}%;background:${r.pct===100?'#10b981':'var(--blue)'};border-radius:4px;transition:width .5s"></div>
+              <div style="height:100%;width:${r.pct}%;background:${r.pct===100?'#2D7A55':'var(--blue)'};border-radius:4px;transition:width .5s"></div>
             </div>
             <div style="font-size:.7rem;color:var(--muted);margin-top:3px">${r.completedMods}/${r.totalMods} modules</div>
           </div>
@@ -6197,7 +6197,7 @@ function academyAdminDashboard() {
             <div style="font-size:.6rem;color:var(--muted)">last active</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:1.1rem;font-weight:700;color:${r.pct===100?'#10b981':'var(--ink)'}">${r.pct}%</div>
+            <div style="font-size:1.1rem;font-weight:700;color:${r.pct===100?'#2D7A55':'var(--ink)'}">${r.pct}%</div>
             <div style="font-size:.65rem;color:var(--muted)">done</div>
           </div>
           <div style="text-align:center">
@@ -6208,7 +6208,7 @@ function academyAdminDashboard() {
             <span style="font-size:.78rem;font-weight:600;padding:3px 10px;border-radius:99px;background:${r.level.color}18;color:${r.level.color};border:1px solid ${r.level.color}44">${escapeHtml(r.level.name)}</span>
           </div>
           <div style="text-align:center">
-            <div style="font-size:1rem;font-weight:700;color:${r.quizAvg!=null?(r.quizAvg>=75?'#10b981':'#ef4444'):'var(--muted)'}">${r.quizAvg != null ? r.quizAvg+'%' : '—'}</div>
+            <div style="font-size:1rem;font-weight:700;color:${r.quizAvg!=null?(r.quizAvg>=75?'#2D7A55':'#8B3A2A'):'var(--muted)'}">${r.quizAvg != null ? r.quizAvg+'%' : '—'}</div>
             <div style="font-size:.65rem;color:var(--muted)">quiz avg</div>
           </div>
           <div style="color:var(--muted);font-size:.8rem">${SVG_ARROW}</div>
@@ -6223,12 +6223,12 @@ function academyAdminDashboard() {
         </div>
 
         <!-- Quiz drill-down panel (hidden until cell clicked) -->
-        <div id="quiz-drill-${r.rep.id}" style="display:none;padding:12px 16px;background:#f8fafc;border-top:1px solid var(--line)"></div>
+        <div id="quiz-drill-${r.rep.id}" style="display:none;padding:12px 16px;background:#FDFCF9;border-top:1px solid var(--line)"></div>
 
         <!-- Mark complete buttons -->
         <div style="padding:10px 16px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center">
           <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:4px">Mark Complete:</span>
-          ${markBtns || `<span style="font-size:.8rem;color:#10b981">${SVG_CHECK} All modules complete</span>`}
+          ${markBtns || `<span style="font-size:.8rem;color:#2D7A55">${SVG_CHECK} All modules complete</span>`}
         </div>
 
         <!-- Coaching notes -->
@@ -6245,7 +6245,7 @@ function academyAdminDashboard() {
 
         <!-- Danger zone -->
         <div style="padding:10px 16px 14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-          <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#ef4444;margin-right:4px">Danger:</span>
+          <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8B3A2A;margin-right:4px">Danger:</span>
           <button class="admin-action-btn danger" onclick="academyAdminResetRep('${r.rep.id}','${escapeHtml(r.rep.name)}')">Reset All Progress</button>
         </div>
       </div>
@@ -6261,11 +6261,11 @@ function academyAdminDashboard() {
 
 <!-- SA-401 Phase Hero -->
 <div class="acad-phase-hero" style="border-color:rgba(99,102,241,.2);margin-bottom:20px">
-  <div class="acad-phase-hero-bar" style="background:linear-gradient(90deg,#6366f1,#4f46e5)"></div>
+  <div class="acad-phase-hero-bar" style="background:linear-gradient(90deg,#204A43,#204A43)"></div>
   <div class="acad-phase-hero-inner">
     <div class="acad-phase-hero-icon">${SVG_TEAM}</div>
     <div class="acad-phase-hero-body">
-      <div class="acad-phase-hero-eyebrow" style="color:#6366f1">Admin View</div>
+      <div class="acad-phase-hero-eyebrow" style="color:#204A43">Admin View</div>
       <h1 class="acad-phase-hero-title" style="font-size:1.4rem">Team Academy Progress</h1>
       <p class="acad-phase-hero-desc">Monitor team completion, quiz performance, streaks, and certifications across all reps.</p>
     </div>
@@ -6276,12 +6276,12 @@ function academyAdminDashboard() {
 <div class="admin-metric-cards">
   <div class="admin-metric-card">
     <div class="admin-metric-card-num" style="color:var(--ink)">${allReps.length}</div>
-    <div class="admin-metric-card-icon" style="background:rgba(99,102,241,.1);color:#6366f1">${SVG_TEAM}</div>
+    <div class="admin-metric-card-icon" style="background:rgba(99,102,241,.1);color:#204A43">${SVG_TEAM}</div>
     <div class="admin-metric-card-label">Team Members</div>
   </div>
   <div class="admin-metric-card">
-    <div class="admin-metric-card-num" style="color:#10b981">${allReps.filter(r=>r.pct===100).length}</div>
-    <div class="admin-metric-card-icon" style="background:rgba(16,185,129,.1);color:#10b981">${SVG_CHECK}</div>
+    <div class="admin-metric-card-num" style="color:#2D7A55">${allReps.filter(r=>r.pct===100).length}</div>
+    <div class="admin-metric-card-icon" style="background:rgba(16,185,129,.1);color:#2D7A55">${SVG_CHECK}</div>
     <div class="admin-metric-card-label">Academy Complete</div>
   </div>
   <div class="admin-metric-card">
@@ -6290,13 +6290,13 @@ function academyAdminDashboard() {
     <div class="admin-metric-card-label">Avg Completion</div>
   </div>
   <div class="admin-metric-card">
-    <div class="admin-metric-card-num" style="color:#f59e0b">${teamQuizAvg != null ? teamQuizAvg+'%' : '—'}</div>
-    <div class="admin-metric-card-icon" style="background:rgba(245,158,11,.1);color:#f59e0b">${SVG_NOTE}</div>
+    <div class="admin-metric-card-num" style="color:#8B6914">${teamQuizAvg != null ? teamQuizAvg+'%' : '—'}</div>
+    <div class="admin-metric-card-icon" style="background:rgba(245,158,11,.1);color:#8B6914">${SVG_NOTE}</div>
     <div class="admin-metric-card-label">Team Quiz Avg</div>
   </div>
   <div class="admin-metric-card">
-    <div class="admin-metric-card-num" style="color:#f97316">${activeStreaks}</div>
-    <div class="admin-metric-card-icon" style="background:rgba(249,115,22,.1);color:#f97316">${SVG_FLAME}</div>
+    <div class="admin-metric-card-num" style="color:#8B6914">${activeStreaks}</div>
+    <div class="admin-metric-card-icon" style="background:rgba(139,105,20,.10);color:#8B6914">${SVG_FLAME}</div>
     <div class="admin-metric-card-label">Active Streaks</div>
   </div>
 </div>
@@ -6308,7 +6308,7 @@ ${repCards}
 ${phaseRows}
 
 <div class="card" style="margin-top:18px;border-color:rgba(99,102,241,.2);background:rgba(99,102,241,.03)">
-  <div style="font-size:.78rem;font-weight:700;color:#6366f1;margin-bottom:8px">Admin Controls Guide</div>
+  <div style="font-size:.78rem;font-weight:700;color:#204A43;margin-bottom:8px">Admin Controls Guide</div>
   <div style="font-size:.82rem;color:var(--muted);display:grid;gap:6px">
     <div><strong style="color:var(--ink)">Module cells</strong> — click any cell that shows a quiz score to see the full question-by-question drill-down for that rep.</div>
     <div><strong style="color:var(--ink)">Mark Complete</strong> — credit a specific module for a rep (e.g. after an in-person session). Shows full module title so you know exactly what you're marking.</div>
@@ -6357,7 +6357,7 @@ ${phaseRows}
         const correctText   = (q.choices||[]).find(c=>c.correct)?.text || f.correct_answer || '—';
         return `<div style="margin-bottom:12px;padding:10px;border-radius:8px;background:${f.correct?'rgba(16,185,129,.06)':'rgba(239,68,68,.06)'};border:1px solid ${f.correct?'rgba(16,185,129,.2)':'rgba(239,68,68,.2)'}">
           <div style="font-size:.83rem;font-weight:600;color:var(--ink);margin-bottom:6px">${escapeHtml(q.prompt||f.questionId)}</div>
-          <div style="font-size:.78rem;color:${f.correct?'#10b981':'#ef4444'};margin-bottom:4px">
+          <div style="font-size:.78rem;color:${f.correct?'#2D7A55':'#8B3A2A'};margin-bottom:4px">
             ${f.correct ? SVG_CHECK+' Correct' : '✗ Incorrect'}
             &nbsp;·&nbsp; Rep answered: <em>${escapeHtml(repAnswerText)}</em>
             ${!f.correct ? `&nbsp;·&nbsp; Correct: <em>${escapeHtml(correctText)}</em>` : ''}
@@ -6370,7 +6370,7 @@ ${phaseRows}
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
           <div style="font-weight:700;font-size:.85rem;color:var(--ink)">Quiz Drill-Down: ${moduleId} — ${escapeHtml(mod.title)}</div>
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:.78rem;color:var(--muted)">Attempt ${idx+1} of ${attempts.length} · ${fmtDate(att.submitted_at)} · Score: <strong style="color:${att.passed?'#10b981':'#ef4444'}">${att.percent_score}%</strong> ${att.passed?'PASSED':'FAILED'}</span>
+            <span style="font-size:.78rem;color:var(--muted)">Attempt ${idx+1} of ${attempts.length} · ${fmtDate(att.submitted_at)} · Score: <strong style="color:${att.passed?'#2D7A55':'#8B3A2A'}">${att.percent_score}%</strong> ${att.passed?'PASSED':'FAILED'}</span>
             ${idx > 0 ? `<button class="admin-action-btn" onclick="academyAdminShowAttempt('${repId}','${moduleId}',${idx-1})">← Older</button>` : ''}
             ${idx < attempts.length-1 ? `<button class="admin-action-btn" onclick="academyAdminShowAttempt('${repId}','${moduleId}',${idx+1})">Newer →</button>` : ''}
             <button class="admin-action-btn" onclick="document.getElementById('quiz-drill-${repId}').style.display='none'">Close ✕</button>
@@ -6449,9 +6449,9 @@ function manager(){
   }
 
   const DIV_SVG = {
-    landscape:   '<svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M9 15V9.5M9 9.5C9 9.5 5 9.5 3 5c3 0 6 2 6 4.5zm0 0c0 0 4 0 6-4.5-3 0-6 2-6 4.5z" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    maintenance: '<svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M12.5 3a3 3 0 00-2.5 4.5L3.8 13.8a.8.8 0 001.2 1.2l6.5-5.7A3 3 0 0014 10a3 3 0 00-.5-1.5l-1.8 1.8-1.2-1.2 1.8-1.8A3 3 0 0012.5 3z" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    snow:        '<svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M9 2.5v13M2.5 9h13M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="2.5" r="1" fill="#93c5fd"/><circle cx="9" cy="15.5" r="1" fill="#93c5fd"/><circle cx="2.5" cy="9" r="1" fill="#93c5fd"/><circle cx="15.5" cy="9" r="1" fill="#93c5fd"/></svg>',
+    landscape:   '<svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M9 15V9.5M9 9.5C9 9.5 5 9.5 3 5c3 0 6 2 6 4.5zm0 0c0 0 4 0 6-4.5-3 0-6 2-6 4.5z" stroke="#2D7A55" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    maintenance: '<svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M12.5 3a3 3 0 00-2.5 4.5L3.8 13.8a.8.8 0 001.2 1.2l6.5-5.7A3 3 0 0014 10a3 3 0 00-.5-1.5l-1.8 1.8-1.2-1.2 1.8-1.8A3 3 0 0012.5 3z" stroke="#4D8A86" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    snow:        '<svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M9 2.5v13M2.5 9h13M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="#B8C8C7" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="2.5" r="1" fill="#B8C8C7"/><circle cx="9" cy="15.5" r="1" fill="#B8C8C7"/><circle cx="2.5" cy="9" r="1" fill="#B8C8C7"/><circle cx="15.5" cy="9" r="1" fill="#B8C8C7"/></svg>',
   };
   function divTile(div){
     const abovePlan = div.remaining <= 0;
@@ -6465,8 +6465,8 @@ function manager(){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
         <div><div class="gw-div-tile-meta">Target</div><div class="gw-div-tile-val">${fmtM(div.target)}</div></div>
         <div><div class="gw-div-tile-meta">Actual (5/21)</div><div class="gw-div-tile-val" style="color:${abovePlan?'var(--gw-emerald)':'var(--gw-sky)'}">${fmtM(div.actual)}</div></div>
-        <div><div class="gw-div-tile-meta">GM Floor</div><div style="font-size:1rem;font-weight:700;color:#f59e0b">${Math.round(div.grossMarginFloor*100)}%</div></div>
-        <div><div class="gw-div-tile-meta">Actual GM</div><div style="font-size:1rem;font-weight:700;color:${gmOk?'var(--gw-emerald)':'#ef4444'}">${Math.round(div.grossMarginPct*100)}%</div></div>
+        <div><div class="gw-div-tile-meta">GM Floor</div><div style="font-size:1rem;font-weight:700;color:#8B6914">${Math.round(div.grossMarginFloor*100)}%</div></div>
+        <div><div class="gw-div-tile-meta">Actual GM</div><div style="font-size:1rem;font-weight:700;color:${gmOk?'var(--gw-emerald)':'#8B3A2A'}">${Math.round(div.grossMarginPct*100)}%</div></div>
       </div>
       ${pbar(div.actual, div.target)}
       ${div.remaining > 0 ? `<div class="gw-div-tile-remaining">Remaining: <strong>${fmtM(div.remaining)}</strong></div>` : `<div class="gw-div-tile-over">+${fmtM(Math.abs(div.remaining))} over plan</div>`}
@@ -6490,7 +6490,7 @@ function manager(){
   const monthRows = fy.monthlyBudget.map(m => {
     const hasActual = m.actual != null;
     const varSign = m.variance > 0 ? '+' : '';
-    const varColor = m.variance == null ? '#334155' : m.variance >= 0 ? '#4ade80' : '#f87171';
+    const varColor = m.variance == null ? '#4A5947' : m.variance >= 0 ? '#2D7A55' : '#C97B6A';
     const mIdx2 = allMonthNames.indexOf(m.month.slice(0,3));
     const isPastMonth = mIdx2 >= 0 && new Date(2026, mIdx2, 1) < todayM;
     const missingBadge = !hasActual && isPastMonth ? '<span class="missing-data-badge">Missing</span>' : '';
@@ -6504,7 +6504,7 @@ function manager(){
 
   view.innerHTML = `
     <div class="eyebrow">Leadership Rhythm \u2014 FY2026</div>
-    <h1>Manager Tools <span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px">${escapeHtml(fy.budgetVersion)}</span>${(()=>{ const _cr = window.getCurrentRep ? window.getCurrentRep() : null; return (_cr && _cr.role === 'office_manager') ? '<span style="font-size:12px;color:#f59e0b;font-weight:400;margin-left:10px;vertical-align:middle;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:8px;padding:2px 8px">Office Manager View — Read Only</span>' : ''; })()}</h1>
+    <h1>Manager Tools <span style="font-size:13px;color:#6F7E6A;font-weight:400;margin-left:8px">${escapeHtml(fy.budgetVersion)}</span>${(()=>{ const _cr = window.getCurrentRep ? window.getCurrentRep() : null; return (_cr && _cr.role === 'office_manager') ? '<span style="font-size:12px;color:#8B6914;font-weight:400;margin-left:10px;vertical-align:middle;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:8px;padding:2px 8px">Office Manager View — Read Only</span>' : ''; })()}</h1>
     <p class="lede">Real division P&amp;L, monthly actuals, HubSpot pipeline gates, pricing discipline, and team scorecard.</p>
 
     <div class="gw-kpi-banner">
@@ -6518,16 +6518,16 @@ function manager(){
       </div>
       <div class="gw-kpi-banner-cell">
         <div class="gw-kpi-banner-label">Remaining</div>
-        <div class="gw-kpi-banner-val" style="color:#ef4444">${fmtM(annual.remaining)}</div>
+        <div class="gw-kpi-banner-val" style="color:#8B3A2A">${fmtM(annual.remaining)}</div>
       </div>
       <div class="gw-kpi-banner-cell">
         <div class="gw-kpi-banner-label">Needed / Month</div>
-        <div class="gw-kpi-banner-val" style="color:#f59e0b">${fmtM(annual.avgNeededPerMonth)}</div>
+        <div class="gw-kpi-banner-val" style="color:#8B6914">${fmtM(annual.avgNeededPerMonth)}</div>
         <div class="gw-kpi-banner-sub">${annual.monthsLeft} months remaining</div>
       </div>
       <div class="gw-kpi-banner-cell">
         <div class="gw-kpi-banner-label">Operating GM</div>
-        <div class="gw-kpi-banner-val" style="color:#a78bfa">${Math.round(annual.grossMarginPct*100)}%</div>
+        <div class="gw-kpi-banner-val" style="color:#4D8A86">${Math.round(annual.grossMarginPct*100)}%</div>
       </div>
       <div class="gw-kpi-banner-cell">
         <div class="gw-kpi-banner-label">True Net Income</div>
@@ -6557,7 +6557,7 @@ function manager(){
       </div>
     </div>
 
-    ${missingPastMonths.length > 0 ? `<div class="missing-data-alert"><strong>${missingPastMonths.length} past month${missingPastMonths.length>1?'s':''} missing actuals:</strong> ${missingPastMonths.map(m=>m.month).join(', ')} — <button onclick="show('revenueAdmin','division')" style="background:none;border:none;color:#00d4ff;cursor:pointer;font-size:inherit;text-decoration:underline;padding:0">Enter data →</button></div>` : ''}
+    ${missingPastMonths.length > 0 ? `<div class="missing-data-alert"><strong>${missingPastMonths.length} past month${missingPastMonths.length>1?'s':''} missing actuals:</strong> ${missingPastMonths.map(m=>m.month).join(', ')} — <button onclick="show('revenueAdmin','division')" style="background:none;border:none;color:#4D8A86;cursor:pointer;font-size:inherit;text-decoration:underline;padding:0">Enter data →</button></div>` : ''}
     <div class="card mt">
       <h2>Monthly Revenue — Budget vs Actual (Jan–Dec 2026)</h2>
       <p class="muted small-text">Actuals through 5/21/2026. Remaining months show budget target only.</p>
@@ -6574,7 +6574,7 @@ function manager(){
             <td style="padding:10px 12px;font-weight:700">YTD Total</td>
             <td style="padding:10px 12px;text-align:right;font-weight:700">${fmtM(ytdBudgeted)}</td>
             <td style="padding:10px 12px;text-align:right;font-weight:700;color:var(--gw-sky)">${fmtM(annual.actualRevenue)}</td>
-            <td style="padding:10px 12px;text-align:right;font-weight:700;color:${ytdVariance>=0?'var(--gw-emerald)':'#ef4444'}">${ytdVariance>=0?'+':''}${fmtM(ytdVariance)}</td>
+            <td style="padding:10px 12px;text-align:right;font-weight:700;color:${ytdVariance>=0?'var(--gw-emerald)':'#8B3A2A'}">${ytdVariance>=0?'+':''}${fmtM(ytdVariance)}</td>
           </tr></tfoot>
         </table>
       </div>
@@ -6585,9 +6585,9 @@ function manager(){
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
         <div>
           <h2 style="margin:0;font-size:16px">Pipeline by Division</h2>
-          <div style="font-size:11px;color:#64748b;margin-top:3px">
-            <strong style="color:#a78bfa">Paper on the Street</strong>
-            <span style="color:#475569"> = active quoted / proposed value currently in front of customers, not yet sold or lost</span>
+          <div style="font-size:11px;color:#6F7E6A;margin-top:3px">
+            <strong style="color:#4D8A86">Paper on the Street</strong>
+            <span style="color:#5C6B58"> = active quoted / proposed value currently in front of customers, not yet sold or lost</span>
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -6608,7 +6608,7 @@ function manager(){
       <div id="dpTableWrap" style="overflow-x:auto;margin-top:8px"></div>
 
       <div style="margin-top:20px;border-top:1px solid var(--gw-line);padding-top:16px">
-        <h3 style="font-size:13px;font-weight:700;color:#94a3b8;margin:0 0 10px;text-transform:uppercase;letter-spacing:.08em">Estimate Aging — Open Paper</h3>
+        <h3 style="font-size:13px;font-weight:700;color:#6F7E6A;margin:0 0 10px;text-transform:uppercase;letter-spacing:.08em">Estimate Aging — Open Paper</h3>
         <div id="dpAgingWrap" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px"></div>
       </div>
     </div>
@@ -6627,7 +6627,7 @@ function manager(){
           </tr></thead>
           <tbody>${((data.hubspotPipeline||{}).stages||[]).map(s=>{
             const pct = Math.round(s.winProb*100);
-            const barC = pct>=80?'#4ade80':pct>=60?'#fbbf24':pct>=40?'#60a5fa':'#94a3b8';
+            const barC = pct>=80?'#2D7A55':pct>=60?'#8B6914':pct>=40?'#4D8A86':'#6F7E6A';
             return `<tr>
               <td style="padding:8px 10px;text-align:center;font-weight:800;color:${barC}">${s.num}</td>
               <td style="padding:8px 10px;font-weight:600">${escapeHtml(s.name)}</td>
@@ -6642,7 +6642,7 @@ function manager(){
           }).join('')}</tbody>
         </table>
       </div>
-      <div style="margin-top:12px"><h4 style="font-size:12px;color:#64748b;margin-bottom:6px">Hygiene Rules</h4>${list((data.hubspotPipeline||{}).hygieneRules||[])}</div>
+      <div style="margin-top:12px"><h4 style="font-size:12px;color:#6F7E6A;margin-bottom:6px">Hygiene Rules</h4>${list((data.hubspotPipeline||{}).hygieneRules||[])}</div>
     </div>
 
     <div class="grid grid-2 mt">
@@ -6652,14 +6652,14 @@ function manager(){
           <thead><tr><th style="padding:8px 10px;text-align:left">Division</th><th style="padding:8px 10px;text-align:center">Floor</th><th style="padding:8px 10px;text-align:left">Current Status</th></tr></thead>
           <tbody>${(pd.grossMarginFloors||[]).map(g=>`<tr><td style="padding:8px 10px;font-weight:600">${escapeHtml(g.division)}</td><td style="padding:8px 10px;text-align:center;font-weight:800;color:var(--gw-emerald)">${escapeHtml(g.floor)}</td><td style="padding:8px 10px;font-size:11px;color:var(--gw-muted)">${escapeHtml(g.current)}</td></tr>`).join('')}</tbody>
         </table>
-        <h4 style="font-size:12px;color:#64748b;margin-top:16px;margin-bottom:6px">Labor Recovery Rules</h4>
+        <h4 style="font-size:12px;color:#6F7E6A;margin-top:16px;margin-bottom:6px">Labor Recovery Rules</h4>
         ${list(pd.laborRecoveryRules||[])}
       </div>
       <div class="card">
         <h2>\ud83d\udccb Cost Recovery by Division</h2>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px">
-            <thead><tr><th style="padding:6px 8px;text-align:left">Category</th><th style="padding:6px 8px;text-align:center;color:#22d3ee">Landscape</th><th style="padding:6px 8px;text-align:center;color:var(--gw-emerald)">Maintenance</th><th style="padding:6px 8px;text-align:center;color:#93c5fd">Snow</th></tr></thead>
+            <thead><tr><th style="padding:6px 8px;text-align:left">Category</th><th style="padding:6px 8px;text-align:center;color:#4D8A86">Landscape</th><th style="padding:6px 8px;text-align:center;color:var(--gw-emerald)">Maintenance</th><th style="padding:6px 8px;text-align:center;color:#B8C8C7">Snow</th></tr></thead>
             <tbody>${(pd.activityCostRecovery||[]).map(r=>`<tr><td style="padding:6px 8px;color:var(--gw-muted)">${escapeHtml(r.category)}</td><td style="padding:6px 8px;text-align:center;font-weight:600">${escapeHtml(r.landscape)}</td><td style="padding:6px 8px;text-align:center;font-weight:600">${escapeHtml(r.maintenance)}</td><td style="padding:6px 8px;text-align:center;font-weight:600">${escapeHtml(r.snow)}</td></tr>`).join('')}</tbody>
           </table>
         </div>
@@ -6679,8 +6679,8 @@ function manager(){
         <h2>\ud83d\uddd3 Review Cadence</h2>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
           ${(rc||[]).map(r=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px;background:var(--bg2);border-radius:8px">
-            <span style="font-size:10px;font-weight:700;color:#f59e0b;background:rgba(245,158,11,.12);padding:2px 8px;border-radius:10px;min-width:60px;text-align:center">${escapeHtml(r.cadence)}</span>
-            <div><div style="font-size:13px;font-weight:600;color:#e2e8f0">${escapeHtml(r.meeting)}</div><div style="font-size:11px;color:#64748b">${escapeHtml(r.attendees)} \u00b7 ${escapeHtml(r.output)}</div></div>
+            <span style="font-size:10px;font-weight:700;color:#8B6914;background:rgba(245,158,11,.12);padding:2px 8px;border-radius:10px;min-width:60px;text-align:center">${escapeHtml(r.cadence)}</span>
+            <div><div style="font-size:13px;font-weight:600;color:#E8E4D9">${escapeHtml(r.meeting)}</div><div style="font-size:11px;color:#6F7E6A">${escapeHtml(r.attendees)} \u00b7 ${escapeHtml(r.output)}</div></div>
           </div>`).join('')}
         </div>
       </div>
@@ -6724,7 +6724,7 @@ window._renderDpTable = function() {
 
     const KEYS = ['landscape','maintenance','snow'];
     const LABELS = {landscape:'Landscape',maintenance:'Maintenance',snow:'Snow & Ice'};
-    const COLORS = {landscape:'#22d3ee',maintenance:'#4ade80',snow:'#60a5fa'};
+    const COLORS = {landscape:'#4D8A86',maintenance:'#2D7A55',snow:'#4D8A86'};
 
     const stats = {};
     KEYS.forEach(k => { stats[k] = {openVal:0,estVal:0,pots:0,weighted:0,openCt:0,estCt:0,ageDays:[],risk7:0,soldMo:0,soldMoCt:0,sold:0,soldCt:0,lost:0,lostCt:0}; });
@@ -6759,7 +6759,7 @@ window._renderDpTable = function() {
     function cr(d){ const tot=d.soldCt+d.lostCt; return tot>0?Math.round(d.soldCt/tot*100)+'%':'—'; }
     function avgAge(d){ return d.ageDays.length>0?Math.round(d.ageDays.reduce((a,b)=>a+b,0)/d.ageDays.length):null; }
     function maxAge(d){ return d.ageDays.length>0?Math.max(...d.ageDays):null; }
-    function ageColor(days){ if(days==null)return'#475569'; if(days<=7)return'#4ade80'; if(days<=14)return'#fbbf24'; if(days<=30)return'#f97316'; return'#f87171'; }
+    function ageColor(days){ if(days==null)return'#5C6B58'; if(days<=7)return'#2D7A55'; if(days<=14)return'#8B6914'; if(days<=30)return'#8B6914'; return'#C97B6A'; }
 
     const totals = {
       openVal:KEYS.reduce((a,k)=>a+stats[k].openVal,0),
@@ -6775,7 +6775,7 @@ window._renderDpTable = function() {
     const headerRow = `<tr>
       <th style="padding:8px 10px;text-align:left;font-size:11px">Division</th>
       <th style="padding:8px 10px;text-align:right;font-size:11px">Open Pipeline</th>
-      <th style="padding:8px 10px;text-align:right;color:#a78bfa;font-size:11px" title="Active quoted/proposed value in front of customers, not yet sold or lost">Paper on the Street</th>
+      <th style="padding:8px 10px;text-align:right;color:#4D8A86;font-size:11px" title="Active quoted/proposed value in front of customers, not yet sold or lost">Paper on the Street</th>
       <th style="padding:8px 10px;text-align:right;font-size:11px">Open Est. Value</th>
       <th style="padding:8px 10px;text-align:right;font-size:11px">Weighted</th>
       <th style="padding:8px 10px;text-align:center;font-size:11px">Active Opps</th>
@@ -6792,30 +6792,30 @@ window._renderDpTable = function() {
       return `<tr>
         <td style="padding:8px 10px;font-weight:700;color:${COLORS[k]}">${LABELS[k]}</td>
         <td style="padding:8px 10px;text-align:right;font-weight:600">${fm(d.openVal)}</td>
-        <td style="padding:8px 10px;text-align:right;font-weight:800;color:#a78bfa">${fm(d.pots)}</td>
-        <td style="padding:8px 10px;text-align:right;color:#94a3b8">${fm(d.estVal)}</td>
-        <td style="padding:8px 10px;text-align:right;color:#94a3b8">${fm(d.weighted)}</td>
+        <td style="padding:8px 10px;text-align:right;font-weight:800;color:#4D8A86">${fm(d.pots)}</td>
+        <td style="padding:8px 10px;text-align:right;color:#6F7E6A">${fm(d.estVal)}</td>
+        <td style="padding:8px 10px;text-align:right;color:#6F7E6A">${fm(d.weighted)}</td>
         <td style="padding:8px 10px;text-align:center">${d.openCt}</td>
         <td style="padding:8px 10px;text-align:center">${d.estCt}</td>
         <td style="padding:8px 10px;text-align:center;color:${ageColor(avg)};font-weight:600">${avg!=null?avg+'d':'—'}</td>
         <td style="padding:8px 10px;text-align:center;color:${ageColor(mx)};font-weight:600">${mx!=null?mx+'d':'—'}</td>
-        <td style="padding:8px 10px;text-align:center;color:${d.risk7>0?'#fbbf24':'#4ade80'};font-weight:700">${d.risk7}</td>
-        <td style="padding:8px 10px;text-align:right;color:#4ade80;font-weight:700">${fm(d.soldMo)}</td>
-        <td style="padding:8px 10px;text-align:center;font-weight:700;color:#00d4ff">${cr(d)}</td>
+        <td style="padding:8px 10px;text-align:center;color:${d.risk7>0?'#8B6914':'#2D7A55'};font-weight:700">${d.risk7}</td>
+        <td style="padding:8px 10px;text-align:right;color:#2D7A55;font-weight:700">${fm(d.soldMo)}</td>
+        <td style="padding:8px 10px;text-align:center;font-weight:700;color:#4D8A86">${cr(d)}</td>
       </tr>`;
     }).join('');
 
     const totRow = `<tr style="border-top:2px solid var(--gw-line)">
       <td style="padding:9px 10px;font-weight:800">Total</td>
       <td style="padding:9px 10px;text-align:right;font-weight:800">${fm(totals.openVal)}</td>
-      <td style="padding:9px 10px;text-align:right;font-weight:900;color:#a78bfa">${fm(totals.pots)}</td>
+      <td style="padding:9px 10px;text-align:right;font-weight:900;color:#4D8A86">${fm(totals.pots)}</td>
       <td style="padding:9px 10px;text-align:right;font-weight:700;color:var(--gw-muted)">${fm(totals.estVal)}</td>
       <td style="padding:9px 10px;text-align:right;color:var(--gw-muted)">${fm(totals.weighted)}</td>
       <td style="padding:9px 10px;text-align:center;font-weight:700">${totals.openCt}</td>
       <td style="padding:9px 10px;text-align:center;font-weight:700">${totals.estCt}</td>
-      <td colspan="2" style="padding:9px 10px;text-align:center;color:#475569">—</td>
-      <td style="padding:9px 10px;text-align:center;font-weight:700;color:${totals.risk7>0?'#fbbf24':'#4ade80'}">${totals.risk7}</td>
-      <td style="padding:9px 10px;text-align:right;font-weight:800;color:#4ade80">${fm(totals.soldMo)}</td>
+      <td colspan="2" style="padding:9px 10px;text-align:center;color:#5C6B58">—</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700;color:${totals.risk7>0?'#8B6914':'#2D7A55'}">${totals.risk7}</td>
+      <td style="padding:9px 10px;text-align:right;font-weight:800;color:#2D7A55">${fm(totals.soldMo)}</td>
       <td style="padding:9px 10px"></td>
     </tr>`;
 
@@ -6833,7 +6833,7 @@ window._renderDpTable = function() {
       return d.ageDays.map(age => ({age, label:LABELS[k], color:COLORS[k], val:0}));
     });
     // Re-compute aging by day bucket across all opps
-    const buckets = [{label:'0–7 days',max:7,count:0,val:0,color:'#4ade80'},{label:'8–14 days',min:8,max:14,count:0,val:0,color:'#fbbf24'},{label:'15–30 days',min:15,max:30,count:0,val:0,color:'#f97316'},{label:'30+ days',min:31,count:0,val:0,color:'#f87171'}];
+    const buckets = [{label:'0–7 days',max:7,count:0,val:0,color:'#2D7A55'},{label:'8–14 days',min:8,max:14,count:0,val:0,color:'#8B6914'},{label:'15–30 days',min:15,max:30,count:0,val:0,color:'#8B6914'},{label:'30+ days',min:31,count:0,val:0,color:'#C97B6A'}];
     const POTS_S = ['sent','revised','viewed','awaiting_response','awaiting response'];
     const POTS_ST = ['Estimate Sent','Proposal Under Review','Negotiating','Decision Pending','Follow-Up'];
     opps.forEach(o => {
@@ -6868,18 +6868,18 @@ function settings(){
   const _ia = _cr && _cr.role === 'admin';
   const _iom = _cr && _cr.role === 'office_manager';
   const adminSections = _ia ? `
-    <section class="card" style="border:1px solid #334155">
+    <section class="card" style="border:1px solid #4A5947">
       <h2>Import</h2>
-      <p>Restore a JSON backup from this same app. <strong style="color:#f87171">Admin only.</strong></p>
+      <p>Restore a JSON backup from this same app. <strong style="color:#C97B6A">Admin only.</strong></p>
       <input id="importFile" type="file" accept="application/json">
       <button class="secondary-btn mt8" onclick="importJson()">Import Backup</button>
     </section>
-    <section class="card" style="border:1px solid #7f1d1d">
+    <section class="card" style="border:1px solid #5C2318">
       <h2>Reset All Data</h2>
-      <p>Clears all opportunities, notes, and checklist progress on this browser. <strong style="color:#f87171">Admin only — cannot be undone.</strong></p>
+      <p>Clears all opportunities, notes, and checklist progress on this browser. <strong style="color:#C97B6A">Admin only — cannot be undone.</strong></p>
       <button class="danger-btn" onclick="confirmReset()">Reset All Local Data</button>
     </section>` : _iom ? `
-    <section class="card" style="border:1px solid #f59e0b30;opacity:.75">
+    <section class="card" style="border:1px solid rgba(139,105,20,.19);opacity:.75">
       <h2>Import / Reset</h2>
       <p class="muted">Import and data reset are restricted to Tyler (Owner / Admin). Contact Tyler if a data restore is needed.</p>
     </section>` : `
@@ -6889,10 +6889,10 @@ function settings(){
     </section>`;
 
   const _viewLabel = _ia
-    ? '<span style="font-size:13px;color:#00d4ff;font-weight:400;margin-left:8px">· Owner / Admin View</span>'
+    ? '<span style="font-size:13px;color:#4D8A86;font-weight:400;margin-left:8px">· Owner / Admin View</span>'
     : _iom
-    ? '<span style="font-size:13px;color:#f59e0b;font-weight:400;margin-left:8px">· Office Manager View</span>'
-    : '<span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px">· Rep View</span>';
+    ? '<span style="font-size:13px;color:#8B6914;font-weight:400;margin-left:8px">· Office Manager View</span>'
+    : '<span style="font-size:13px;color:#6F7E6A;font-weight:400;margin-left:8px">· Rep View</span>';
 
   view.innerHTML = `
     <div class="eyebrow">Data and Setup</div>
@@ -6963,11 +6963,11 @@ function renderCommissionRulesPanel() {
   const override = (typeof window.loadActiveCommissionRules === 'function') ? window.loadActiveCommissionRules() : null;
   const basePlan = (typeof window.COMMISSION_PLANS !== 'undefined') ? window.COMMISSION_PLANS.ryan : null;
   const active = (override && override.plans && override.plans.ryan) ? override.plans.ryan : basePlan;
-  if (!active) return '<p style="color:#64748b;font-size:13px">Commission engine not loaded yet — reload the page.</p>';
+  if (!active) return '<p style="color:#6F7E6A;font-size:13px">Commission engine not loaded yet — reload the page.</p>';
 
   const updatedInfo = override
-    ? `<span style="color:#f59e0b;font-size:12px"> ⚙ Custom rules active — last edited ${new Date(override.updatedAt||'').toLocaleDateString()} by ${override.updatedBy||'admin'}</span>`
-    : `<span style="color:#4ade80;font-size:12px"> ✓ Using default Avalon commission structure</span>`;
+    ? `<span style="color:#8B6914;font-size:12px"> ⚙ Custom rules active — last edited ${new Date(override.updatedAt||'').toLocaleDateString()} by ${override.updatedBy||'admin'}</span>`
+    : `<span style="color:#2D7A55;font-size:12px"> ✓ Using default Avalon commission structure</span>`;
 
   const lTiers = active.landscape.tiers;
   const ot = active.maintenance.oneTime;
@@ -6981,7 +6981,7 @@ function renderCommissionRulesPanel() {
     if (t.selfGen === null || t.selfGen === undefined) {
       return `<tr class="gw-table-row">
         <td style="padding:7px 10px;font-size:12px;color:var(--gw-muted)">${label}</td>
-        <td colspan="3" style="padding:7px 10px;font-size:12px;color:#f59e0b;text-align:center">Management approval required</td>
+        <td colspan="3" style="padding:7px 10px;font-size:12px;color:#8B6914;text-align:center">Management approval required</td>
       </tr>`;
     }
     return `<tr class="gw-table-row">
@@ -6989,7 +6989,7 @@ function renderCommissionRulesPanel() {
       <td style="padding:4px 6px"><input type="number" id="cr-ls-sg-${i}" value="${Math.round(t.selfGen*100)}" min="0" max="50" step="0.5"
         class="gw-input-sm" style="width:60px;color:var(--gw-emerald);font-weight:700;text-align:center"> %</td>
       <td style="padding:4px 6px"><input type="number" id="cr-ls-cl-${i}" value="${Math.round(t.companyLead*100)}" min="0" max="50" step="0.5"
-        class="gw-input-sm" style="width:60px;color:#60a5fa;font-weight:700;text-align:center"> %</td>
+        class="gw-input-sm" style="width:60px;color:#4D8A86;font-weight:700;text-align:center"> %</td>
       <td style="padding:4px 6px"><input type="number" id="cr-ls-as-${i}" value="${Math.round(t.assisted*100)}" min="0" max="50" step="0.5"
         class="gw-input-sm" style="width:60px;font-weight:700;text-align:center"> %</td>
     </tr>`;
@@ -7007,7 +7007,7 @@ function renderCommissionRulesPanel() {
       <label class="gw-label">T3%: <input type="number" id="${idPrefix}-t3" value="${Math.round(r.t3Rate*100)}" min="0" max="100" step="1"
         class="gw-input-sm" style="width:48px;text-align:center"></label>
       <label class="gw-label">Cap $: <input type="number" id="${idPrefix}-cap" value="${r.cap}" min="0" max="5000" step="25"
-        class="gw-input-sm" style="width:60px;color:#f59e0b;text-align:center"></label>
+        class="gw-input-sm" style="width:60px;color:#8B6914;text-align:center"></label>
       <label class="gw-label">Bonus $: <input type="number" id="${idPrefix}-bonus" value="${r.retentionBonus}" min="0" max="500" step="5"
         class="gw-input-sm" style="width:55px;color:var(--gw-emerald);text-align:center"></label>
     </div>`;
@@ -7017,8 +7017,8 @@ function renderCommissionRulesPanel() {
   <div class="gw-comm-panel">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
       <div>
-        <div style="font-size:14px;font-weight:800;color:#e2e8f0">💰 Commission Rules Manager</div>
-        <div style="font-size:12px;color:#64748b;margin-top:2px">Edit rates, caps, and thresholds. Changes apply immediately to all commission calculations.${updatedInfo}</div>
+        <div style="font-size:14px;font-weight:800;color:#E8E4D9">💰 Commission Rules Manager</div>
+        <div style="font-size:12px;color:#6F7E6A;margin-top:2px">Edit rates, caps, and thresholds. Changes apply immediately to all commission calculations.${updatedInfo}</div>
       </div>
       <div style="display:flex;gap:8px">
         <button onclick="window._saveCommRules()" class="gw-btn-primary">Save Rules</button>
@@ -7028,13 +7028,13 @@ function renderCommissionRulesPanel() {
 
     <!-- Landscape tiers -->
     <div style="margin-bottom:16px">
-      <div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Landscape / Enhancement Tiers</div>
+      <div style="font-size:10px;font-weight:700;color:#5C6B58;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Landscape / Enhancement Tiers</div>
       <div style="overflow-x:auto">
         <table class="gw-data-table" style="border-radius:8px;overflow:hidden;font-size:12px">
           <thead><tr>
             <th style="padding:8px 10px;text-align:left;font-size:10px;letter-spacing:.05em">RANGE</th>
             <th style="padding:8px 10px;text-align:center;color:var(--gw-emerald);font-size:10px">SELF-GEN %</th>
-            <th style="padding:8px 10px;text-align:center;color:#60a5fa;font-size:10px">CO. LEAD %</th>
+            <th style="padding:8px 10px;text-align:center;color:#4D8A86;font-size:10px">CO. LEAD %</th>
             <th style="padding:8px 10px;text-align:center;font-size:10px">ASSISTED %</th>
           </tr></thead>
           <tbody>${tierRows}</tbody>
@@ -7042,33 +7042,33 @@ function renderCommissionRulesPanel() {
       </div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
         <label class="gw-label">Soft approval at payout $: <input type="number" id="cr-soft-cap" value="${softCap}" min="0" max="10000" step="50"
-          class="gw-input-sm" style="width:80px;color:#f59e0b;text-align:center"></label>
+          class="gw-input-sm" style="width:80px;color:#8B6914;text-align:center"></label>
         <label class="gw-label">Hard cap $: <input type="number" id="cr-hard-cap" value="${hardCap}" min="0" max="20000" step="100"
-          class="gw-input-sm" style="width:80px;color:#f87171;text-align:center"></label>
+          class="gw-input-sm" style="width:80px;color:#C97B6A;text-align:center"></label>
       </div>
     </div>
 
     <!-- Maintenance one-time -->
     <div style="margin-bottom:16px">
-      <div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Maintenance — One-Time / Seasonal</div>
+      <div style="font-size:10px;font-weight:700;color:#5C6B58;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Maintenance — One-Time / Seasonal</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
         <label style="font-size:11px;color:var(--gw-emerald)">Self-Gen %: <input type="number" id="cr-ot-sg" value="${Math.round(ot.selfGen*100)}" min="0" max="50" step="0.5"
           class="gw-input-sm" style="width:55px;color:var(--gw-emerald);font-weight:700;text-align:center"></label>
-        <label style="font-size:11px;color:#60a5fa">Co. Lead %: <input type="number" id="cr-ot-cl" value="${Math.round(ot.companyLead*100)}" min="0" max="50" step="0.5"
-          class="gw-input-sm" style="width:55px;color:#60a5fa;font-weight:700;text-align:center"></label>
+        <label style="font-size:11px;color:#4D8A86">Co. Lead %: <input type="number" id="cr-ot-cl" value="${Math.round(ot.companyLead*100)}" min="0" max="50" step="0.5"
+          class="gw-input-sm" style="width:55px;color:#4D8A86;font-weight:700;text-align:center"></label>
         <label style="font-size:11px;color:var(--gw-muted)">Assisted %: <input type="number" id="cr-ot-as" value="${Math.round(ot.assisted*100)}" min="0" max="50" step="0.5"
           class="gw-input-sm" style="width:55px;font-weight:700;text-align:center"></label>
-        <label style="font-size:11px;color:#f59e0b">Approval above $: <input type="number" id="cr-ot-approval" value="${ot.approvalAbove || 750}" min="0" max="5000" step="50"
-          class="gw-input-sm" style="width:70px;color:#f59e0b;text-align:center"></label>
+        <label style="font-size:11px;color:#8B6914">Approval above $: <input type="number" id="cr-ot-approval" value="${ot.approvalAbove || 750}" min="0" max="5000" step="50"
+          class="gw-input-sm" style="width:70px;color:#8B6914;text-align:center"></label>
       </div>
     </div>
 
     <!-- Recurring maintenance -->
     <div>
-      <div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Recurring Maintenance — Tiered First-Month</div>
-      ${recInputs('selfGen',     '#4ade80', 'cr-rec-sg')}
-      ${recInputs('companyLead', '#60a5fa', 'cr-rec-cl')}
-      ${recInputs('assisted',    '#94a3b8', 'cr-rec-as')}
+      <div style="font-size:10px;font-weight:700;color:#5C6B58;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Recurring Maintenance — Tiered First-Month</div>
+      ${recInputs('selfGen',     '#2D7A55', 'cr-rec-sg')}
+      ${recInputs('companyLead', '#4D8A86', 'cr-rec-cl')}
+      ${recInputs('assisted',    '#6F7E6A', 'cr-rec-as')}
     </div>
   </div>`;
 }
@@ -7137,7 +7137,7 @@ window._runMigrationFromUI = function() {
   const result = window._migrateCommissionLifecycle ? window._migrateCommissionLifecycle() : null;
   const el = document.getElementById('comm-tool-result');
   if (!result) { if (el) el.textContent = '⚠ Migration function not loaded — refresh and try again.'; return; }
-  if (el) el.innerHTML = `<span style="color:#4ade80">✓ Migration complete: ${result.migrated} opps updated, ${result.skipped} already migrated.</span>`;
+  if (el) el.innerHTML = `<span style="color:#2D7A55">✓ Migration complete: ${result.migrated} opps updated, ${result.skipped} already migrated.</span>`;
   if (window.showToast) window.showToast(`Migration: ${result.migrated} updated, ${result.skipped} skipped ✓`);
 };
 
@@ -7146,13 +7146,13 @@ window._runQAFromUI = function() {
   if (!window._commQA) { if (el) el.textContent = '⚠ QA function not loaded — refresh and try again.'; return; }
   const { passed, failed, warnings, results } = window._commQA();
   const failItems = results.filter(r => r.status !== 'PASS');
-  const statusColor = failed > 0 ? '#f87171' : warnings > 0 ? '#f59e0b' : '#4ade80';
+  const statusColor = failed > 0 ? '#C97B6A' : warnings > 0 ? '#8B6914' : '#2D7A55';
   const icon = failed > 0 ? '❌' : warnings > 0 ? '⚠️' : '✅';
   if (el) {
     el.innerHTML = `
       <div style="color:${statusColor};font-weight:700;margin-bottom:4px">${icon} QA: ${passed} passed · ${warnings} warnings · ${failed} failed</div>
-      ${failItems.map(r => `<div style="color:${r.status==='PASS'?'#4ade80':r.status==='WARN'?'#f59e0b':'#f87171'};margin-left:8px">• ${r.name}${r.detail ? ' — ' + r.detail : ''}</div>`).join('')}
-      <div style="color:#475569;margin-top:4px;font-size:10px">Full report in browser console (F12)</div>`;
+      ${failItems.map(r => `<div style="color:${r.status==='PASS'?'#2D7A55':r.status==='WARN'?'#8B6914':'#C97B6A'};margin-left:8px">• ${r.name}${r.detail ? ' — ' + r.detail : ''}</div>`).join('')}
+      <div style="color:#5C6B58;margin-top:4px;font-size:10px">Full report in browser console (F12)</div>`;
   }
 };
 
@@ -7162,18 +7162,18 @@ window._showFlagPanel = function() {
   if (!el) return;
   const rows = Object.entries(flags).map(([k, v]) => `
     <div class="gw-flag-row">
-      <span style="font-size:12px;color:#94a3b8">${k}</span>
+      <span style="font-size:12px;color:#6F7E6A">${k}</span>
       <button onclick="window._setCommFlag('${k}', ${!v}); window._showFlagPanel();"
-        style="background:${v ? '#064e3b' : '#450a0a'};border:none;color:${v ? '#4ade80' : '#f87171'};border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700">
+        style="background:${v ? '#1B3F38' : '#5C2318'};border:none;color:${v ? '#2D7A55' : '#C97B6A'};border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700">
         ${v ? 'ON' : 'OFF'}
       </button>
     </div>`).join('');
   el.innerHTML = `
     <div class="gw-flag-panel">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:12px;font-weight:700;color:#e2e8f0">Feature Flags</span>
+        <span style="font-size:12px;font-weight:700;color:#E8E4D9">Feature Flags</span>
         <button onclick="window._resetCommFlags();window._showFlagPanel();"
-          style="font-size:10px;color:#f87171;background:none;border:none;cursor:pointer">Reset all</button>
+          style="font-size:10px;color:#C97B6A;background:none;border:none;cursor:pointer">Reset all</button>
       </div>
       ${rows}
     </div>`;
@@ -7188,8 +7188,8 @@ function renderCommissionSimulator() {
   <div class="gw-sim-panel">
     <div class="gw-sim-header">
       <div>
-        <div style="font-size:14px;font-weight:800;color:#e2e8f0">🧮 Commission Simulator</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px">Hypothetical — no data is saved or changed</div>
+        <div style="font-size:14px;font-weight:800;color:#E8E4D9">🧮 Commission Simulator</div>
+        <div style="font-size:11px;color:#6F7E6A;margin-top:2px">Hypothetical — no data is saved or changed</div>
       </div>
       <button onclick="window._runCommSim()" class="gw-btn-primary">Calculate →</button>
     </div>
@@ -7198,7 +7198,7 @@ function renderCommissionSimulator() {
 
       <!-- Work Type -->
       <div>
-        <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Work Type</label>
+        <label style="font-size:11px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Work Type</label>
         <select id="sim-workType" class="gw-select" style="width:100%;margin-top:5px">
           <option value="landscape">Landscape / Enhancement</option>
           <option value="maintenance_onetime">Maintenance — One-Time</option>
@@ -7212,7 +7212,7 @@ function renderCommissionSimulator() {
 
       <!-- Lead Source -->
       <div>
-        <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Lead Source</label>
+        <label style="font-size:11px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Lead Source</label>
         <select id="sim-leadSource" class="gw-select" style="width:100%;margin-top:5px">
           <option value="company_lead">Company Lead</option>
           <option value="self_generated">Self-Generated</option>
@@ -7222,14 +7222,14 @@ function renderCommissionSimulator() {
 
       <!-- Job Value -->
       <div>
-        <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Job Value ($)</label>
+        <label style="font-size:11px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Job Value ($)</label>
         <input id="sim-jobValue" type="number" min="0" step="100" value="5000"
           class="gw-select" style="width:100%;margin-top:5px;box-sizing:border-box">
       </div>
 
       <!-- Collected -->
       <div>
-        <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Payment Collected?</label>
+        <label style="font-size:11px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Payment Collected?</label>
         <select id="sim-collected" class="gw-select" style="width:100%;margin-top:5px">
           <option value="yes">Yes — payment received</option>
           <option value="no">No — pending collection</option>
@@ -7238,7 +7238,7 @@ function renderCommissionSimulator() {
 
       <!-- Pre-approved -->
       <div>
-        <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Tyler Pre-Approved?</label>
+        <label style="font-size:11px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Tyler Pre-Approved?</label>
         <select id="sim-approved" class="gw-select" style="width:100%;margin-top:5px">
           <option value="yes">Yes — approved</option>
           <option value="no">No — not yet approved</option>
@@ -7263,7 +7263,7 @@ window._runCommSim = function() {
   const approved   = document.getElementById('sim-approved')?.value   === 'yes';
 
   if (!window.calculateCommission) {
-    document.getElementById('sim-result').innerHTML = '<span style="color:#f87171">Engine not loaded — refresh and try again.</span>';
+    document.getElementById('sim-result').innerHTML = '<span style="color:#C97B6A">Engine not loaded — refresh and try again.</span>';
     return;
   }
 
@@ -7272,22 +7272,22 @@ window._runCommSim = function() {
   const fmtC = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const fmtP = n => Math.round(n * 100) + '%';
 
-  const amountColor = r.amount > 0 ? '#4ade80' : (r.requiresApproval ? '#f59e0b' : '#f87171');
-  const capBadge    = r.capApplied ? `<span style="font-size:10px;background:#f87171;color:#fff;border-radius:10px;padding:2px 7px;margin-left:6px">CAPPED at ${fmtC(r.cap)}</span>` : '';
-  const appBadge    = r.requiresApproval ? `<span style="font-size:10px;background:#92400e;color:#fbbf24;border-radius:10px;padding:2px 7px;margin-left:6px">APPROVAL REQUIRED</span>` : '';
-  const bonusEl     = r.retentionBonus > 0 ? `<div style="margin-top:8px;font-size:12px;color:#4ade80">+ ${fmtC(r.retentionBonus)} retention bonus eligible after 90-day active period</div>` : '';
+  const amountColor = r.amount > 0 ? '#2D7A55' : (r.requiresApproval ? '#8B6914' : '#C97B6A');
+  const capBadge    = r.capApplied ? `<span style="font-size:10px;background:#C97B6A;color:#fff;border-radius:10px;padding:2px 7px;margin-left:6px">CAPPED at ${fmtC(r.cap)}</span>` : '';
+  const appBadge    = r.requiresApproval ? `<span style="font-size:10px;background:#7A5C10;color:#8B6914;border-radius:10px;padding:2px 7px;margin-left:6px">APPROVAL REQUIRED</span>` : '';
+  const bonusEl     = r.retentionBonus > 0 ? `<div style="margin-top:8px;font-size:12px;color:#2D7A55">+ ${fmtC(r.retentionBonus)} retention bonus eligible after 90-day active period</div>` : '';
   const gateEl      = !collected && !r.requiresApproval && r.amount === 0
-    ? `<div style="margin-top:6px;font-size:11px;color:#f59e0b">⚠ Collection gate: commission held until payment is received</div>` : '';
+    ? `<div style="margin-top:6px;font-size:11px;color:#8B6914">⚠ Collection gate: commission held until payment is received</div>` : '';
 
   document.getElementById('sim-result').innerHTML = `
     <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px">
       <span style="font-size:28px;font-weight:800;color:${amountColor}">${fmtC(r.amount)}</span>
       ${capBadge}${appBadge}
-      <span style="font-size:13px;color:#64748b">at ${fmtP(r.rate)} effective rate</span>
+      <span style="font-size:13px;color:#6F7E6A">at ${fmtP(r.rate)} effective rate</span>
     </div>
-    <div style="font-size:12px;color:#94a3b8;margin-bottom:4px"><strong style="color:#64748b">Rule applied:</strong> ${r.ruleApplied}</div>
-    <div style="font-size:12px;color:#94a3b8"><strong style="color:#64748b">Explanation:</strong> ${r.note}</div>
-    ${r.approvalReason ? `<div style="margin-top:6px;font-size:11px;color:#f59e0b">⚠ ${r.approvalReason}</div>` : ''}
+    <div style="font-size:12px;color:#6F7E6A;margin-bottom:4px"><strong style="color:#6F7E6A">Rule applied:</strong> ${r.ruleApplied}</div>
+    <div style="font-size:12px;color:#6F7E6A"><strong style="color:#6F7E6A">Explanation:</strong> ${r.note}</div>
+    ${r.approvalReason ? `<div style="margin-top:6px;font-size:11px;color:#8B6914">⚠ ${r.approvalReason}</div>` : ''}
     ${gateEl}${bonusEl}`;
 };
 
@@ -7305,7 +7305,7 @@ function renderCommissionAuditTrail() {
   const fmt = ts => { try { return new Date(ts).toLocaleString(undefined, { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' }); } catch(e) { return ts; } };
   const rows = audit.slice(0, 10).map((entry, i) => {
     const isCreate = entry.action === 'rules_created';
-    const color    = isCreate ? '#4ade80' : '#00d4ff';
+    const color    = isCreate ? '#2D7A55' : '#4D8A86';
     const label    = isCreate ? 'Rules Created' : `Rules Updated → v${entry.after?.version || '?'}`;
     const actor    = entry.actor || 'admin';
     return `
@@ -7314,10 +7314,10 @@ function renderCommissionAuditTrail() {
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:12px;font-weight:700;color:${color}">${label}</span>
-          <span style="font-size:11px;color:#475569">by ${actor}</span>
-          <span style="font-size:10px;color:#334155">${fmt(entry.ts)}</span>
+          <span style="font-size:11px;color:#5C6B58">by ${actor}</span>
+          <span style="font-size:10px;color:#4A5947">${fmt(entry.ts)}</span>
         </div>
-        ${entry.before ? `<div style="font-size:10px;color:#334155;margin-top:2px">Previous version: v${entry.before.version || 0}</div>` : ''}
+        ${entry.before ? `<div style="font-size:10px;color:#4A5947;margin-top:2px">Previous version: v${entry.before.version || 0}</div>` : ''}
       </div>
       ${i === 0 ? `<button onclick="window._showAuditDiff(${i})" class="gw-ghost-btn">View diff</button>` : ''}
     </div>`;
@@ -7327,12 +7327,12 @@ function renderCommissionAuditTrail() {
   <div class="gw-audit-panel">
     <div class="gw-audit-panel-header">
       <div>
-        <div style="font-size:14px;font-weight:800;color:#e2e8f0">📋 Commission Rule Audit Trail</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px">${audit.length} change${audit.length !== 1 ? 's' : ''} recorded</div>
+        <div style="font-size:14px;font-weight:800;color:#E8E4D9">📋 Commission Rule Audit Trail</div>
+        <div style="font-size:11px;color:#6F7E6A;margin-top:2px">${audit.length} change${audit.length !== 1 ? 's' : ''} recorded</div>
       </div>
     </div>
     <div style="padding:4px 18px 14px">${rows}</div>
-    ${audit.length > 10 ? `<div style="padding:0 18px 12px;font-size:11px;color:#475569">Showing 10 of ${audit.length} entries — last 50 retained</div>` : ''}
+    ${audit.length > 10 ? `<div style="padding:0 18px 12px;font-size:11px;color:#5C6B58">Showing 10 of ${audit.length} entries — last 50 retained</div>` : ''}
   </div>`;
 }
 window.renderCommissionAuditTrail = renderCommissionAuditTrail;
@@ -7349,15 +7349,15 @@ window._showAuditDiff = function(idx) {
   modal.innerHTML = `
     <div class="gw-diff-modal-box">
       <button onclick="this.closest('div[style]').remove()"
-        style="position:absolute;top:12px;right:14px;background:transparent;border:none;color:#64748b;font-size:22px;cursor:pointer;line-height:1">×</button>
-      <h3 style="margin:0 0 16px;font-size:16px;color:#e2e8f0">Rule Change — ${new Date(entry.ts).toLocaleString()}</h3>
+        style="position:absolute;top:12px;right:14px;background:transparent;border:none;color:#6F7E6A;font-size:22px;cursor:pointer;line-height:1">×</button>
+      <h3 style="margin:0 0 16px;font-size:16px;color:#E8E4D9">Rule Change — ${new Date(entry.ts).toLocaleString()}</h3>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
-          <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:6px;text-transform:uppercase">Before</div>
+          <div style="font-size:11px;font-weight:700;color:#C97B6A;margin-bottom:6px;text-transform:uppercase">Before</div>
           <pre class="gw-diff-pre">${before}</pre>
         </div>
         <div>
-          <div style="font-size:11px;font-weight:700;color:#4ade80;margin-bottom:6px;text-transform:uppercase">After</div>
+          <div style="font-size:11px;font-weight:700;color:#2D7A55;margin-bottom:6px;text-transform:uppercase">After</div>
           <pre class="gw-diff-pre">${after}</pre>
         </div>
       </div>
@@ -7368,8 +7368,8 @@ window._showAuditDiff = function(idx) {
 function _renderPermMatrixOld_deleted() {
   const perms = loadNavPerms();
   const roles = [
-    { key: 'office_manager', label: 'Jen — Office Manager', color: '#f59e0b' },
-    { key: 'rep',            label: 'Ryan — Sales Rep',     color: '#4ade80' }
+    { key: 'office_manager', label: 'Jen — Office Manager', color: '#8B6914' },
+    { key: 'rep',            label: 'Ryan — Sales Rep',     color: '#2D7A55' }
   ];
   const views = [
     { key: 'today',       label: 'Today',              group: 'Home' },
@@ -7413,9 +7413,9 @@ function _renderPermMatrixOld_deleted() {
   }).join('');
 
   return `
-  <section class="card" style="margin-top:20px;border:1px solid #334155">
-    <h2>Permission Controls <span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px">— Tyler (Owner) only</span></h2>
-    <p style="color:#64748b;font-size:13px;margin-bottom:16px">Control which sections each role can access. Changes take effect immediately. Tyler (Owner) always has full access.</p>
+  <section class="card" style="margin-top:20px;border:1px solid #4A5947">
+    <h2>Permission Controls <span style="font-size:13px;color:#6F7E6A;font-weight:400;margin-left:8px">— Tyler (Owner) only</span></h2>
+    <p style="color:#6F7E6A;font-size:13px;margin-bottom:16px">Control which sections each role can access. Changes take effect immediately. Tyler (Owner) always has full access.</p>
     <div style="overflow-x:auto">
       <table class="perm-table">
         <thead>
@@ -7428,17 +7428,17 @@ function _renderPermMatrixOld_deleted() {
       </table>
     </div>
     <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-      <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-right:4px">Quick Presets:</span>
+      <span style="font-size:11px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em;margin-right:4px">Quick Presets:</span>
       <button class="secondary-btn" style="font-size:11px" onclick="window._applyPermPreset('office_manager','full')">Jen · Full Access</button>
       <button class="secondary-btn" style="font-size:11px" onclick="window._applyPermPreset('office_manager','standard')">Jen · Standard</button>
       <button class="secondary-btn" style="font-size:11px" onclick="window._applyPermPreset('office_manager','view')">Jen · View Only</button>
-      <span style="color:#334155">|</span>
+      <span style="color:#4A5947">|</span>
       <button class="secondary-btn" style="font-size:11px" onclick="window._applyPermPreset('rep','full')">Ryan · Full Access</button>
       <button class="secondary-btn" style="font-size:11px" onclick="window._applyPermPreset('rep','standard')">Ryan · Standard</button>
       <button class="secondary-btn" style="font-size:11px" onclick="window._applyPermPreset('rep','view')">Ryan · View Only</button>
       <button class="secondary-btn" style="font-size:12px;margin-left:8px" onclick="window._resetNavPerms()">↺ Reset All Defaults</button>
     </div>
-    <div style="font-size:11px;color:#475569;margin-top:6px">Presets save instantly. Full = all tabs · Standard = hide admin/finance · View Only = today + pipeline only.</div>
+    <div style="font-size:11px;color:#5C6B58;margin-top:6px">Presets save instantly. Full = all tabs · Standard = hide admin/finance · View Only = today + pipeline only.</div>
   </section>`;
 }
 
@@ -7462,7 +7462,7 @@ function openMarkSoldModal(oppId) {
   backdrop.innerHTML = `
     <div class="sold-modal">
       <button class="sold-modal-close" onclick="closeMarkSoldModal()" title="Close">×</button>
-      <div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#16a34a;margin-bottom:8px">Mark as Sold</div>
+      <div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#2D7A55;margin-bottom:8px">Mark as Sold</div>
       <h2>${escapeHtml(o.client || 'Lead')} — Closed Won</h2>
       <p style="color:var(--muted);font-size:14px;margin-bottom:20px">${escapeHtml(o.project || o.serviceLine || 'Opportunity')} · ${escapeHtml(o.address || '')}</p>
       <div class="form-grid" style="gap:14px">
@@ -7495,7 +7495,7 @@ function openMarkSoldModal(oppId) {
           <textarea id="sm_notes" rows="3" placeholder="What closed this deal?" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical"></textarea>
         </label>
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-          <input type="checkbox" id="sm_deposit" style="width:16px;height:16px;accent-color:#16a34a">
+          <input type="checkbox" id="sm_deposit" style="width:16px;height:16px;accent-color:#2D7A55">
           <span style="font-size:13px;font-weight:600">Deposit Collected</span>
         </label>
         <label style="display:grid;gap:6px">
@@ -7504,7 +7504,7 @@ function openMarkSoldModal(oppId) {
         </label>
       </div>
       <div style="display:flex;gap:10px;margin-top:24px">
-        <button class="primary-btn" style="background:linear-gradient(135deg,#16a34a,#15803d);flex:1;font-size:15px" onclick="confirmMarkSold('${oppId}')">Confirm — Mark Sold</button>
+        <button class="primary-btn" style="background:linear-gradient(135deg,#2D7A55,#2D7A55);flex:1;font-size:15px" onclick="confirmMarkSold('${oppId}')">Confirm — Mark Sold</button>
         <button class="secondary-btn" onclick="closeMarkSoldModal()">Cancel</button>
       </div>
     </div>
@@ -7554,13 +7554,13 @@ window.confirmReset = function(){
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.innerHTML = `
-    <div class="modal" style="max-width:420px;border:2px solid #7f1d1d">
+    <div class="modal" style="max-width:420px;border:2px solid #5C2318">
       
-      <h3 style="color:#f87171;text-align:center;margin:0 0 8px">Permanent Data Reset</h3>
-      <p style="font-size:13px;color:#94a3b8;text-align:center;margin:0 0 20px">This will delete <strong style="color:#f87171">all pipeline leads, notes, financials, and settings</strong> permanently. There is no undo.</p>
-      <p style="font-size:12px;color:#64748b;margin:0 0 8px">Type <strong style="color:#e2e8f0">RESET</strong> to confirm:</p>
+      <h3 style="color:#C97B6A;text-align:center;margin:0 0 8px">Permanent Data Reset</h3>
+      <p style="font-size:13px;color:#6F7E6A;text-align:center;margin:0 0 20px">This will delete <strong style="color:#C97B6A">all pipeline leads, notes, financials, and settings</strong> permanently. There is no undo.</p>
+      <p style="font-size:12px;color:#6F7E6A;margin:0 0 8px">Type <strong style="color:#E8E4D9">RESET</strong> to confirm:</p>
       <input id="resetConfirmInput" type="text" placeholder="Type RESET here"
-        class="gw-input-sm" style="width:100%;border-color:#7f1d1d;color:#f87171;font-size:14px;font-weight:700;letter-spacing:.1em;box-sizing:border-box;margin-bottom:14px;padding:10px 12px">
+        class="gw-input-sm" style="width:100%;border-color:#5C2318;color:#C97B6A;font-size:14px;font-weight:700;letter-spacing:.1em;box-sizing:border-box;margin-bottom:14px;padding:10px 12px">
       <div style="display:flex;gap:8px">
         <button class="secondary-btn" style="flex:1" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
         <button class="danger-btn" id="resetConfirmBtn" style="flex:1;opacity:.4;pointer-events:none" onclick="window.doResetAll()">Reset All Data</button>
@@ -7659,13 +7659,13 @@ window.showExportModal = function(title, buildDataFn) {
     <div class="gw-modal-card" style="max-width:400px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
         <div>
-          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Export Data</div>
-          <h2 style="margin:0;color:#f1f5f9;font-size:1.1rem">${escapeHtml(title)}</h2>
+          <div style="font-size:10px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Export Data</div>
+          <h2 style="margin:0;color:#EDEAE0;font-size:1.1rem">${escapeHtml(title)}</h2>
         </div>
         <button onclick="document.getElementById('exportModalOverlay').remove()"
           class="gw-ghost-btn" style="padding:6px 10px;font-size:16px;line-height:1">×</button>
       </div>
-      <p style="color:#64748b;font-size:13px;margin:0 0 20px">Choose your preferred format:</p>
+      <p style="color:#6F7E6A;font-size:13px;margin:0 0 20px">Choose your preferred format:</p>
       <div style="display:grid;gap:10px">
         <button onclick="exportAsCSV('${escapeHtml(title)}', window._exportDataFn)"
           class="gw-export-btn"
@@ -7673,7 +7673,7 @@ window.showExportModal = function(title, buildDataFn) {
           
           <div>
             <div>CSV</div>
-            <div style="font-size:11px;font-weight:400;color:#64748b">Comma-separated, opens in Excel / Sheets</div>
+            <div style="font-size:11px;font-weight:400;color:#6F7E6A">Comma-separated, opens in Excel / Sheets</div>
           </div>
         </button>
         <button onclick="exportAsXLSX('${escapeHtml(title)}', window._exportDataFn)"
@@ -7682,16 +7682,16 @@ window.showExportModal = function(title, buildDataFn) {
           
           <div>
             <div>Excel (.xlsx)</div>
-            <div style="font-size:11px;font-weight:400;color:#64748b">Native Excel workbook with formatting</div>
+            <div style="font-size:11px;font-weight:400;color:#6F7E6A">Native Excel workbook with formatting</div>
           </div>
         </button>
         <button onclick="exportAsPDF('${escapeHtml(title)}', window._exportDataFn)"
           class="gw-export-btn"
-          onmouseover="this.style.borderColor='#f87171'" onmouseout="this.style.borderColor='var(--gw-line)'">
+          onmouseover="this.style.borderColor='#C97B6A'" onmouseout="this.style.borderColor='var(--gw-line)'">
           
           <div>
             <div>PDF</div>
-            <div style="font-size:11px;font-weight:400;color:#64748b">Print-ready formatted report</div>
+            <div style="font-size:11px;font-weight:400;color:#6F7E6A">Print-ready formatted report</div>
           </div>
         </button>
       </div>
@@ -7874,31 +7874,31 @@ window.exportAsPDF = function(title, buildDataFn) {
   const xe = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   const tableRows = rows.map((r, ri) => `
-    <tr style="background:${ri % 2 === 0 ? '#f8fafc' : '#ffffff'}">
-      ${r.map(cell => `<td style="padding:7px 10px;border:1px solid #e2e8f0;font-size:12px;color:#1e293b">${xe(cell)}</td>`).join('')}
+    <tr style="background:${ri % 2 === 0 ? '#FDFCF9' : '#ffffff'}">
+      ${r.map(cell => `<td style="padding:7px 10px;border:1px solid #E8E4D9;font-size:12px;color:#1F2A2B">${xe(cell)}</td>`).join('')}
     </tr>`).join('');
 
   const printDiv = document.createElement('div');
   printDiv.id = 'avalonPrintArea';
   printDiv.innerHTML = `
     <div style="font-family:'Segoe UI',Arial,sans-serif;padding:24px;max-width:900px;margin:0 auto">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #0e3044">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #1F2A2B">
         <div>
-          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px">Avalon Landscaping</div>
-          <h1 style="margin:0;font-size:20px;color:#0e3044;font-weight:800">${xe(title)}</h1>
-          <div style="font-size:11px;color:#64748b;margin-top:4px">Generated ${new Date().toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'long',day:'numeric'})}</div>
+          <div style="font-size:10px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px">Avalon Landscaping</div>
+          <h1 style="margin:0;font-size:20px;color:#1F2A2B;font-weight:800">${xe(title)}</h1>
+          <div style="font-size:11px;color:#6F7E6A;margin-top:4px">Generated ${new Date().toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'long',day:'numeric'})}</div>
         </div>
-        <div style="font-size:10px;color:#94a3b8;text-align:right">FY 2026</div>
+        <div style="font-size:10px;color:#6F7E6A;text-align:right">FY 2026</div>
       </div>
       <table style="width:100%;border-collapse:collapse;font-family:inherit">
         <thead>
-          <tr style="background:#0e3044">
-            ${headers.map(h => `<th style="padding:9px 10px;text-align:left;color:#fff;font-size:12px;font-weight:700;border:1px solid #1e4d6b">${xe(h)}</th>`).join('')}
+          <tr style="background:#1F2A2B">
+            ${headers.map(h => `<th style="padding:9px 10px;text-align:left;color:#fff;font-size:12px;font-weight:700;border:1px solid #204A43">${xe(h)}</th>`).join('')}
           </tr>
         </thead>
         <tbody>${tableRows}</tbody>
       </table>
-      <div style="margin-top:20px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px">
+      <div style="margin-top:20px;font-size:10px;color:#6F7E6A;border-top:1px solid #E8E4D9;padding-top:10px">
         Avalon Landscaping — Confidential — ${new Date().getFullYear()}
       </div>
     </div>`;
@@ -8065,9 +8065,9 @@ window.showMonthDrilldown = function(monthKey) {
   const monthBudget = (fy.monthlyBudget || []).find(m => m.month === monthKey) || {};
   const notes = (loadRevenueActuals() || {})['note_' + monthKey] || '';
   const DIVISIONS = [
-    { key:'landscape',   label:'Landscape',   icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 15V9.5M9 9.5C9 9.5 5 9.5 3 5c3 0 6 2 6 4.5zm0 0c0 0 4 0 6-4.5-3 0-6 2-6 4.5z" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', color:'#4ade80' },
-    { key:'maintenance', label:'Maintenance',  icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 3a3 3 0 00-2.5 4.5L3.8 13.8a.8.8 0 001.2 1.2l6.5-5.7A3 3 0 0014 10a3 3 0 00-.5-1.5l-1.8 1.8-1.2-1.2 1.8-1.8A3 3 0 0012.5 3z" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', color:'#22d3ee' },
-    { key:'snow',        label:'Snow & Ice',   icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 2.5v13M2.5 9h13M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="2.5" r="1" fill="#93c5fd"/><circle cx="9" cy="15.5" r="1" fill="#93c5fd"/><circle cx="2.5" cy="9" r="1" fill="#93c5fd"/><circle cx="15.5" cy="9" r="1" fill="#93c5fd"/></svg>', color:'#a78bfa' }
+    { key:'landscape',   label:'Landscape',   icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 15V9.5M9 9.5C9 9.5 5 9.5 3 5c3 0 6 2 6 4.5zm0 0c0 0 4 0 6-4.5-3 0-6 2-6 4.5z" stroke="#2D7A55" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', color:'#2D7A55' },
+    { key:'maintenance', label:'Maintenance',  icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 3a3 3 0 00-2.5 4.5L3.8 13.8a.8.8 0 001.2 1.2l6.5-5.7A3 3 0 0014 10a3 3 0 00-.5-1.5l-1.8 1.8-1.2-1.2 1.8-1.8A3 3 0 0012.5 3z" stroke="#4D8A86" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', color:'#4D8A86' },
+    { key:'snow',        label:'Snow & Ice',   icon:'<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 2.5v13M2.5 9h13M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="#B8C8C7" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="2.5" r="1" fill="#B8C8C7"/><circle cx="9" cy="15.5" r="1" fill="#B8C8C7"/><circle cx="2.5" cy="9" r="1" fill="#B8C8C7"/><circle cx="15.5" cy="9" r="1" fill="#B8C8C7"/></svg>', color:'#4D8A86' }
   ];
   function fmtM(n){ return n!=null ? n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}) : '—'; }
   const rows = DIVISIONS.map(d => {
@@ -8079,8 +8079,8 @@ window.showMonthDrilldown = function(monthKey) {
     return `<tr class="gw-table-row">
       <td style="padding:10px 12px;font-weight:600">${d.icon} ${d.label}</td>
       <td style="padding:10px 12px;text-align:right;color:${d.color};font-weight:700">${fmtM(rev)}</td>
-      <td style="padding:10px 12px;text-align:right;color:#64748b">${fmtM(cogs)}</td>
-      <td style="padding:10px 12px;text-align:right;color:${gmPct!=null&&gmPct>=30?'#4ade80':'#f87171'}">${gmPct!=null?gmPct+'%':'—'}</td>
+      <td style="padding:10px 12px;text-align:right;color:#6F7E6A">${fmtM(cogs)}</td>
+      <td style="padding:10px 12px;text-align:right;color:${gmPct!=null&&gmPct>=30?'#2D7A55':'#C97B6A'}">${gmPct!=null?gmPct+'%':'—'}</td>
     </tr>`;
   }).join('');
   const total = DIVISIONS.reduce((a,d) => a + ((divActuals[d.key]||{})[monthKey]?.revenue ?? 0), 0);
@@ -8089,12 +8089,12 @@ window.showMonthDrilldown = function(monthKey) {
   overlay.innerHTML = `
     <div class="modal-box" style="max-width:580px">
       <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
-      <div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#22d3ee;margin-bottom:6px">Month Drilldown</div>
+      <div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#4D8A86;margin-bottom:6px">Month Drilldown</div>
       <h2 style="margin:0 0 4px">${monthKey} 2026</h2>
       <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
-        <div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Budgeted</div><div style="font-size:1.3rem;font-weight:800;color:#e2e8f0">${fmtM(monthBudget.budgeted)}</div></div>
-        <div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Actual</div><div style="font-size:1.3rem;font-weight:800;color:#22d3ee">${fmtM(monthBudget.actual)}</div></div>
-        <div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Variance</div><div style="font-size:1.3rem;font-weight:800;color:${(monthBudget.variance||0)>=0?'#4ade80':'#f87171'}">${monthBudget.variance!=null?((monthBudget.variance>=0?'+':'')+fmtM(monthBudget.variance)):'—'}</div></div>
+        <div><div style="font-size:10px;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Budgeted</div><div style="font-size:1.3rem;font-weight:800;color:#E8E4D9">${fmtM(monthBudget.budgeted)}</div></div>
+        <div><div style="font-size:10px;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Actual</div><div style="font-size:1.3rem;font-weight:800;color:#4D8A86">${fmtM(monthBudget.actual)}</div></div>
+        <div><div style="font-size:10px;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Variance</div><div style="font-size:1.3rem;font-weight:800;color:${(monthBudget.variance||0)>=0?'#2D7A55':'#C97B6A'}">${monthBudget.variance!=null?((monthBudget.variance>=0?'+':'')+fmtM(monthBudget.variance)):'—'}</div></div>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
         <thead><tr>
@@ -8106,7 +8106,7 @@ window.showMonthDrilldown = function(monthKey) {
         <tbody>${rows}</tbody>
         <tfoot><tr style="border-top:2px solid var(--gw-line)">
           <td style="padding:10px 12px;font-weight:700">Total</td>
-          <td style="padding:10px 12px;text-align:right;color:#22d3ee">${fmtM(total)}</td>
+          <td style="padding:10px 12px;text-align:right;color:#4D8A86">${fmtM(total)}</td>
           <td colspan="2"></td>
         </tr></tfoot>
       </table>
@@ -8133,7 +8133,7 @@ function revenueAdmin(tab) {
   const ytdBudget  = months.filter(m => m.actual != null).reduce((a,m) => a + m.budgeted, 0);
   const ytdActual  = months.filter(m => m.actual != null).reduce((a,m) => a + m.actual, 0);
   const ytdVar     = ytdActual - ytdBudget;
-  const ytdVarColor= ytdVar >= 0 ? '#4ade80' : '#f87171';
+  const ytdVarColor= ytdVar >= 0 ? '#2D7A55' : '#C97B6A';
   const dynamicMonthsLeft = months.filter(m => m.actual == null).length;
 
   // ── Tab Nav ──
@@ -8162,16 +8162,16 @@ function revenueAdmin(tab) {
         </div>
         <div class="gw-rev-banner-cell">
           <div class="gw-kpi-banner-label">Remaining</div>
-          <div class="gw-kpi-banner-val" style="color:#ef4444">${fmtM(fy.annual.remaining)}</div>
+          <div class="gw-kpi-banner-val" style="color:#8B3A2A">${fmtM(fy.annual.remaining)}</div>
         </div>
         <div class="gw-rev-banner-cell">
           <div class="gw-kpi-banner-label">Needed / Mo</div>
-          <div class="gw-kpi-banner-val" style="color:#f59e0b">${fmtM(fy.annual.avgNeededPerMonth)}</div>
+          <div class="gw-kpi-banner-val" style="color:#8B6914">${fmtM(fy.annual.avgNeededPerMonth)}</div>
           <div class="gw-kpi-banner-sub">${dynamicMonthsLeft} months left</div>
         </div>
         <div class="gw-rev-banner-cell">
           <div class="gw-kpi-banner-label">Annual Budget</div>
-          <div class="gw-kpi-banner-val" style="color:#a78bfa">${fmtM(fy.annual.budgetedRevenue)}</div>
+          <div class="gw-kpi-banner-val" style="color:#4D8A86">${fmtM(fy.annual.budgetedRevenue)}</div>
         </div>
       </div>
     </div>`;
@@ -8183,7 +8183,7 @@ function revenueAdmin(tab) {
     const savedNotes = loadRevenueActuals(); // only note_* keys
     const tableRows = months.map(m => {
       const hasActual = m.actual != null;
-      const varColor  = m.variance == null ? '#334155' : m.variance >= 0 ? '#4ade80' : '#f87171';
+      const varColor  = m.variance == null ? '#4A5947' : m.variance >= 0 ? '#2D7A55' : '#C97B6A';
       const varSign   = m.variance != null && m.variance > 0 ? '+' : '';
       // Determine which divisions contributed data for this month
       const divs = loadDivisionActuals();
@@ -8194,12 +8194,12 @@ function revenueAdmin(tab) {
       const hasDivData = divBreakdown.some(v => v != null);
       return `<tr style="cursor:pointer" onclick="showMonthDrilldown('${m.month}')" title="Click for ${m.month} division breakdown">
         <td><span class="rev-month-tag">${escapeHtml(m.month)}</span>${hasActual ? '<span class="rev-locked-badge">auto</span>' : ''}</td>
-        <td class="right" style="color:#64748b">${fmtM(m.budgeted)}</td>
+        <td class="right" style="color:#6F7E6A">${fmtM(m.budgeted)}</td>
         <td class="right">
-          <div style="font-weight:700;color:${hasActual ? '#22d3ee' : '#475569'};font-size:14px;padding:6px 4px">
-            ${hasActual ? fmtM(m.actual) : '<span style="color:#334155">—</span>'}
+          <div style="font-weight:700;color:${hasActual ? '#4D8A86' : '#5C6B58'};font-size:14px;padding:6px 4px">
+            ${hasActual ? fmtM(m.actual) : '<span style="color:#4A5947">—</span>'}
           </div>
-          ${hasDivData ? `<div style="font-size:10px;color:#475569;line-height:1.4">
+          ${hasDivData ? `<div style="font-size:10px;color:#5C6B58;line-height:1.4">
             ${fmtM(divBreakdown[0])} · ${fmtM(divBreakdown[1])} · ${fmtM(divBreakdown[2])}
           </div>` : ''}
         </td>
@@ -8218,14 +8218,14 @@ function revenueAdmin(tab) {
         <div class="gw-admin-panel-header">
           <h2 style="margin:0;font-size:1rem">Budget vs Actual — Jan–Dec 2026</h2>
           <div style="display:flex;gap:8px">
-            <button class="secondary-btn small" onclick="revSaveNotes()" style="background:#16a34a;border-color:#16a34a;color:#fff">Save Notes</button>
+            <button class="secondary-btn small" onclick="revSaveNotes()" style="background:#2D7A55;border-color:#2D7A55;color:#fff">Save Notes</button>
             <button class="secondary-btn small" onclick="showExportModal('Monthly Revenue', buildMonthlyExportData)">Export</button>
           </div>
         </div>
         <div style="overflow-x:auto">
           <table class="rev-editor-table" id="revTable">
             <thead><tr>
-              <th>Month</th><th class="right">Budgeted</th><th class="right">Actual Revenue <span style="font-size:10px;color:#475569;font-weight:400">(from divisions)</span></th><th class="right">Variance</th><th>Notes</th>
+              <th>Month</th><th class="right">Budgeted</th><th class="right">Actual Revenue <span style="font-size:10px;color:#5C6B58;font-weight:400">(from divisions)</span></th><th class="right">Variance</th><th>Notes</th>
             </tr></thead>
             <tbody>${tableRows}</tbody>
             <tfoot>
@@ -8240,9 +8240,9 @@ function revenueAdmin(tab) {
           </table>
         </div>
       </div>
-      <p style="color:#64748b;font-size:12px;margin-top:8px">
-        Monthly totals are <strong style="color:#22d3ee">automatically computed</strong> from division entries — they cannot be edited directly.
-        To change revenue, go to the <strong style="color:#22d3ee">Division Entry</strong> tab.
+      <p style="color:#6F7E6A;font-size:12px;margin-top:8px">
+        Monthly totals are <strong style="color:#4D8A86">automatically computed</strong> from division entries — they cannot be edited directly.
+        To change revenue, go to the <strong style="color:#4D8A86">Division Entry</strong> tab.
       </p>`;
   }
 
@@ -8250,9 +8250,9 @@ function revenueAdmin(tab) {
 
   // ── Tab: Division Entry ──
   const DIVISIONS_META = [
-    { key: 'landscape',   label: 'Landscape',    icon: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 15V9.5M9 9.5C9 9.5 5 9.5 3 5c3 0 6 2 6 4.5zm0 0c0 0 4 0 6-4.5-3 0-6 2-6 4.5z" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', color: '#4ade80' },
-    { key: 'maintenance', label: 'Maintenance',   icon: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 3a3 3 0 00-2.5 4.5L3.8 13.8a.8.8 0 001.2 1.2l6.5-5.7A3 3 0 0014 10a3 3 0 00-.5-1.5l-1.8 1.8-1.2-1.2 1.8-1.8A3 3 0 0012.5 3z" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', color: '#22d3ee' },
-    { key: 'snow',        label: 'Snow & Ice',    icon: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 2.5v13M2.5 9h13M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="2.5" r="1" fill="#93c5fd"/><circle cx="9" cy="15.5" r="1" fill="#93c5fd"/><circle cx="2.5" cy="9" r="1" fill="#93c5fd"/><circle cx="15.5" cy="9" r="1" fill="#93c5fd"/></svg>', color: '#a78bfa' }
+    { key: 'landscape',   label: 'Landscape',    icon: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 15V9.5M9 9.5C9 9.5 5 9.5 3 5c3 0 6 2 6 4.5zm0 0c0 0 4 0 6-4.5-3 0-6 2-6 4.5z" stroke="#2D7A55" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', color: '#2D7A55' },
+    { key: 'maintenance', label: 'Maintenance',   icon: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 3a3 3 0 00-2.5 4.5L3.8 13.8a.8.8 0 001.2 1.2l6.5-5.7A3 3 0 0014 10a3 3 0 00-.5-1.5l-1.8 1.8-1.2-1.2 1.8-1.8A3 3 0 0012.5 3z" stroke="#4D8A86" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', color: '#4D8A86' },
+    { key: 'snow',        label: 'Snow & Ice',    icon: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 2.5v13M2.5 9h13M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="#B8C8C7" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="2.5" r="1" fill="#B8C8C7"/><circle cx="9" cy="15.5" r="1" fill="#B8C8C7"/><circle cx="2.5" cy="9" r="1" fill="#B8C8C7"/><circle cx="15.5" cy="9" r="1" fill="#B8C8C7"/></svg>', color: '#4D8A86' }
   ];
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -8273,7 +8273,7 @@ function revenueAdmin(tab) {
           <td><input class="rev-editor-input" type="number" min="0" step="500"
             id="div_${div.key}_cogs_${mon}" value="${cogs}" placeholder="COGS"
             oninput="divUpdateRow('${div.key}','${mon}')"></td>
-          <td class="right" id="div_${div.key}_gm_${mon}" style="color:${gmPctCalc !== '' ? (gmPctCalc >= 30 ? '#4ade80' : '#f87171') : '#334155'};font-weight:700">
+          <td class="right" id="div_${div.key}_gm_${mon}" style="color:${gmPctCalc !== '' ? (gmPctCalc >= 30 ? '#2D7A55' : '#C97B6A') : '#4A5947'};font-weight:700">
             ${gmPctCalc !== '' ? gmPctCalc + '%' : '—'}
           </td>
         </tr>`;
@@ -8295,13 +8295,13 @@ function revenueAdmin(tab) {
             <div style="display:flex;align-items:center;gap:10px">
               <span style="font-size:20px">${div.icon}</span>
               <div>
-                <div style="font-weight:700;color:#e2e8f0;font-size:15px">${div.label}</div>
-                <div style="font-size:11px;color:#64748b">Target: ${fmtM(divObj.target)} · Actual YTD: <span style="color:${div.color}">${fmtM(totalRev || divObj.actual)}</span></div>
+                <div style="font-weight:700;color:#E8E4D9;font-size:15px">${div.label}</div>
+                <div style="font-size:11px;color:#6F7E6A">Target: ${fmtM(divObj.target)} · Actual YTD: <span style="color:${div.color}">${fmtM(totalRev || divObj.actual)}</span></div>
               </div>
             </div>
             <div style="display:flex;gap:8px;align-items:center">
               <span style="font-size:11px;font-weight:700;color:${div.color}">${totalGm}% GM</span>
-              <button class="secondary-btn small" onclick="divSaveDivision('${div.key}')" style="background:#1e4d6b;border-color:#1e4d6b;color:#22d3ee;font-size:11px">Save ${div.label}</button>
+              <button class="secondary-btn small" onclick="divSaveDivision('${div.key}')" style="background:#204A43;border-color:#204A43;color:#4D8A86;font-size:11px">Save ${div.label}</button>
             </div>
           </div>
           <div style="overflow-x:auto">
@@ -8314,8 +8314,8 @@ function revenueAdmin(tab) {
                 <tr>
                   <td style="padding:10px;font-weight:700">Totals</td>
                   <td class="right" style="padding:10px;color:var(--gw-sky)" id="div_${div.key}_total_rev">${fmtM(totalRev||null)}</td>
-                  <td class="right" style="padding:10px;color:#64748b" id="div_${div.key}_total_cogs">${fmtM(totalCogs||null)}</td>
-                  <td class="right" style="padding:10px;color:${totalGm >= 30 ? '#4ade80' : '#f87171'};font-weight:700" id="div_${div.key}_total_gm">${totalRev > 0 ? totalGm + '%' : '—'}</td>
+                  <td class="right" style="padding:10px;color:#6F7E6A" id="div_${div.key}_total_cogs">${fmtM(totalCogs||null)}</td>
+                  <td class="right" style="padding:10px;color:${totalGm >= 30 ? '#2D7A55' : '#C97B6A'};font-weight:700" id="div_${div.key}_total_gm">${totalRev > 0 ? totalGm + '%' : '—'}</td>
                 </tr>
               </tfoot>
             </table>
@@ -8326,7 +8326,7 @@ function revenueAdmin(tab) {
     return `
       <p class="lede" style="margin-bottom:16px">Enter revenue and COGS for each division per month. Monthly totals auto-sum to the company total in the Monthly Totals tab.</p>
       <div style="display:flex;gap:8px;margin-bottom:16px">
-        <button class="secondary-btn" onclick="divSaveAllDivisions()" style="background:#16a34a;border-color:#16a34a;color:#fff">Save All Divisions</button>
+        <button class="secondary-btn" onclick="divSaveAllDivisions()" style="background:#2D7A55;border-color:#2D7A55;color:#fff">Save All Divisions</button>
         <button class="secondary-btn" onclick="showExportModal('Division Actuals 2026', buildDivisionExportData)">Export</button>
       </div>
       ${divSections}`;
@@ -8354,23 +8354,23 @@ function revenueAdmin(tab) {
           <div style="font-weight:700;font-size:14px;margin-bottom:12px">${div.icon} ${div.label} Division</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
             <div>
-              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Revenue Target</label>
+              <label style="font-size:11px;color:#6F7E6A;display:block;margin-bottom:4px">Revenue Target</label>
               <input class="rev-editor-input" type="number" id="ann_${div.key}_target" value="${d.target||''}" placeholder="target" step="1000" style="width:100%">
             </div>
             <div>
-              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Actual YTD Revenue <span style="font-size:9px;color:#475569">(auto)</span></label>
+              <label style="font-size:11px;color:#6F7E6A;display:block;margin-bottom:4px">Actual YTD Revenue <span style="font-size:9px;color:#5C6B58">(auto)</span></label>
               <div style="padding:8px 10px;background:var(--gw-surface-2);border:1px solid var(--gw-line);border-radius:8px;color:var(--gw-sky);font-weight:700;font-size:14px">${d.actual != null ? d.actual.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '—'}</div>
             </div>
             <div>
-              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">GM Floor %</label>
+              <label style="font-size:11px;color:#6F7E6A;display:block;margin-bottom:4px">GM Floor %</label>
               <input class="rev-editor-input" type="number" id="ann_${div.key}_gmfloor" value="${d.grossMarginFloor != null ? Math.round(d.grossMarginFloor*100) : ''}" placeholder="floor %" step="1" min="0" max="100" style="width:100%">
             </div>
             <div>
-              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Actual GM %</label>
+              <label style="font-size:11px;color:#6F7E6A;display:block;margin-bottom:4px">Actual GM %</label>
               <input class="rev-editor-input" type="number" id="ann_${div.key}_gmpct" value="${d.grossMarginPct != null ? Math.round(d.grossMarginPct*100) : ''}" placeholder="actual GM %" step="1" min="0" max="100" style="width:100%">
             </div>
             <div>
-              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">COGS YTD</label>
+              <label style="font-size:11px;color:#6F7E6A;display:block;margin-bottom:4px">COGS YTD</label>
               <input class="rev-editor-input" type="number" id="ann_${div.key}_cogs" value="${d.cogs||''}" placeholder="COGS" step="1000" style="width:100%">
             </div>
           </div>
@@ -8381,50 +8381,50 @@ function revenueAdmin(tab) {
       <p class="lede" style="margin-bottom:16px">Edit company-wide and division-level annual financial figures. Changes persist to localStorage and reflect in all dashboards.</p>
 
       <div style="margin-bottom:20px">
-        <h3 style="color:#f1f5f9;font-size:14px;margin-bottom:12px">Company Annual Figures</h3>
+        <h3 style="color:#EDEAE0;font-size:14px;margin-bottom:12px">Company Annual Figures</h3>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
           ${fields.map(f => `
           <div class="gw-ann-field">
             <label style="font-size:11px;color:var(--gw-muted);display:block;margin-bottom:4px">${f.label}</label>
             <div style="display:flex;align-items:center;gap:6px">
-              ${f.unit === '$' ? '<span style="color:#64748b;font-size:13px">$</span>' : ''}
+              ${f.unit === '$' ? '<span style="color:#6F7E6A;font-size:13px">$</span>' : ''}
               <input class="rev-editor-input" type="number" id="ann_${f.key}"
                 value="${f.val}" placeholder="${f.placeholder}" step="${f.step}"
                 style="flex:1">
-              ${f.unit === '%' ? '<span style="color:#64748b;font-size:13px">%</span>' : ''}
+              ${f.unit === '%' ? '<span style="color:#6F7E6A;font-size:13px">%</span>' : ''}
             </div>
-            <div style="font-size:10px;color:#475569;margin-top:4px">${f.note}</div>
+            <div style="font-size:10px;color:#5C6B58;margin-top:4px">${f.note}</div>
           </div>`).join('')}
         </div>
       </div>
 
       <div style="margin-bottom:20px">
-        <h3 style="color:#f1f5f9;font-size:14px;margin-bottom:12px">Division Annual Figures</h3>
+        <h3 style="color:#EDEAE0;font-size:14px;margin-bottom:12px">Division Annual Figures</h3>
         ${divFinancials}
       </div>
 
       <div style="display:flex;gap:8px">
-        <button class="secondary-btn" onclick="annSaveAll()" style="background:#16a34a;border-color:#16a34a;color:#fff">Save All Annual Figures</button>
+        <button class="secondary-btn" onclick="annSaveAll()" style="background:#2D7A55;border-color:#2D7A55;color:#fff">Save All Annual Figures</button>
         <button class="secondary-btn" onclick="showExportModal('Annual Financials 2026', buildAnnualExportData)">Export</button>
-        <button class="secondary-btn" onclick="annResetOverrides()" style="background:#7f1d1d;border-color:#991b1b;color:#fca5a5">Reset to Budget Defaults</button>
+        <button class="secondary-btn" onclick="annResetOverrides()" style="background:#5C2318;border-color:#7A2E20;color:#F5D5C8">Reset to Budget Defaults</button>
       </div>`;
   }
 
   // ── Tab: P&L Files ──
   function renderPnlTab() {
     const fileList = pnlFiles.length === 0
-      ? '<p style="color:#64748b;font-size:13px">No files uploaded yet. Upload a monthly P&L CSV or PDF below.</p>'
+      ? '<p style="color:#6F7E6A;font-size:13px">No files uploaded yet. Upload a monthly P&L CSV or PDF below.</p>'
       : pnlFiles.map(f => `
         <div class="gw-pnl-file-row">
           <span style="font-size:20px">${f.type === 'csv' ? 'CSV' : 'DOC'}</span>
           <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:13px;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(f.name)}</div>
-            <div style="font-size:11px;color:#64748b">${f.date} · ${f.size} · ${f.type.toUpperCase()}</div>
-            ${f.period ? `<div style="font-size:11px;color:#22d3ee">Period: ${escapeHtml(f.period)}</div>` : ''}
+            <div style="font-weight:600;font-size:13px;color:#E8E4D9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(f.name)}</div>
+            <div style="font-size:11px;color:#6F7E6A">${f.date} · ${f.size} · ${f.type.toUpperCase()}</div>
+            ${f.period ? `<div style="font-size:11px;color:#4D8A86">Period: ${escapeHtml(f.period)}</div>` : ''}
           </div>
           <div style="display:flex;gap:6px">
             ${f.type === 'csv' ? `<button class="secondary-btn small" onclick="pnlImportCsv('${f.id}')" style="font-size:11px">Import to Divisions</button>` : ''}
-            <button class="secondary-btn small" onclick="pnlDeleteFile('${f.id}')" style="background:#7f1d1d;border-color:#991b1b;color:#fca5a5;font-size:11px">×</button>
+            <button class="secondary-btn small" onclick="pnlDeleteFile('${f.id}')" style="background:#5C2318;border-color:#7A2E20;color:#F5D5C8;font-size:11px">×</button>
           </div>
         </div>`).join('');
 
@@ -8433,8 +8433,8 @@ function revenueAdmin(tab) {
 
       <div class="gw-upload-zone">
         
-        <div style="color:#e2e8f0;font-weight:600;margin-bottom:4px">Upload P&L File</div>
-        <div style="color:#64748b;font-size:12px;margin-bottom:16px">CSV (auto-parsed) or PDF (stored as attachment) · Max 5MB</div>
+        <div style="color:#E8E4D9;font-weight:600;margin-bottom:4px">Upload P&L File</div>
+        <div style="color:#6F7E6A;font-size:12px;margin-bottom:16px">CSV (auto-parsed) or PDF (stored as attachment) · Max 5MB</div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:14px">
           <div>
             <label class="gw-label">Period Label</label>
@@ -8454,14 +8454,14 @@ function revenueAdmin(tab) {
 
       <div class="gw-ann-field">
         <h3 style="font-size:13px;margin-top:0;margin-bottom:8px">CSV Import Format</h3>
-        <p style="color:#64748b;font-size:12px;margin:0 0 8px">For auto-import to work, your CSV should include these columns:</p>
+        <p style="color:#6F7E6A;font-size:12px;margin:0 0 8px">For auto-import to work, your CSV should include these columns:</p>
         <code class="gw-code-block">
           Month, Division, Revenue, COGS<br>
           Jan, Landscape, 25000, 14500<br>
           Jan, Maintenance, 40000, 28400<br>
           Jan, Snow, 18000, 7200
         </code>
-        <p style="color:#64748b;font-size:11px;margin-top:8px">Division values: Landscape / Maintenance / Snow (or Snow &amp; Ice)</p>
+        <p style="color:#6F7E6A;font-size:11px;margin-top:8px">Division values: Landscape / Maintenance / Snow (or Snow &amp; Ice)</p>
       </div>`;
   }
 
@@ -8493,7 +8493,7 @@ window.revUpdateRow = function(idx) {
   const rawVal = input?.value;
   const actual = rawVal !== '' && rawVal != null ? parseFloat(rawVal) : null;
   const variance = actual != null ? actual - m.budgeted : null;
-  const varColor = variance == null ? '#334155' : variance >= 0 ? '#4ade80' : '#f87171';
+  const varColor = variance == null ? '#4A5947' : variance >= 0 ? '#2D7A55' : '#C97B6A';
   const varSign  = variance != null && variance > 0 ? '+' : '';
   function fmtM(n) { return n != null ? n.toLocaleString(undefined, { style:'currency', currency:'USD', maximumFractionDigits:0 }) : '—'; }
   const varEl = document.getElementById('rev_var_' + idx);
@@ -8506,10 +8506,10 @@ window.revUpdateRow = function(idx) {
     if (v != null) { ytdBudget += mb.budgeted; ytdActual += v; }
   });
   const ytdVar = ytdActual - ytdBudget;
-  const ytdVarColor = ytdVar >= 0 ? '#4ade80' : '#f87171';
+  const ytdVarColor = ytdVar >= 0 ? '#2D7A55' : '#C97B6A';
   const setEl = (id, txt, color) => { const el = document.getElementById(id); if (el) { el.textContent = txt; if (color) el.style.color = color; } };
   setEl('rev_ytd_budget', fmtM(ytdBudget));
-  setEl('rev_ytd_actual', fmtM(ytdActual), '#22d3ee');
+  setEl('rev_ytd_actual', fmtM(ytdActual), '#4D8A86');
   setEl('rev_ytd_var', (ytdVar >= 0 ? '+' : '') + fmtM(ytdVar), ytdVarColor);
   setEl('rev_tfoot_budget', fmtM(ytdBudget));
   setEl('rev_tfoot_actual', fmtM(ytdActual));
@@ -8613,10 +8613,10 @@ window.divUpdateRow = function(divKey, mon) {
   if (rev != null && cogs != null) {
     const gm = Math.round(((rev - cogs) / rev) * 100);
     gmEl.textContent = gm + '%';
-    gmEl.style.color = gm >= 30 ? '#4ade80' : '#f87171';
+    gmEl.style.color = gm >= 30 ? '#2D7A55' : '#C97B6A';
   } else {
     gmEl.textContent = '—';
-    gmEl.style.color = '#334155';
+    gmEl.style.color = '#4A5947';
   }
   // Recompute division totals
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -8633,7 +8633,7 @@ window.divUpdateRow = function(divKey, mon) {
   const setEl = (id, txt, color) => { const el = document.getElementById(id); if (el) { el.textContent = txt; if (color) el.style.color = color; } };
   setEl(`div_${divKey}_total_rev`,  fmtM(totalRev  || null));
   setEl(`div_${divKey}_total_cogs`, fmtM(totalCogs || null));
-  setEl(`div_${divKey}_total_gm`,   totalRev > 0 ? totalGm + '%' : '—', totalGm >= 30 ? '#4ade80' : '#f87171');
+  setEl(`div_${divKey}_total_gm`,   totalRev > 0 ? totalGm + '%' : '—', totalGm >= 30 ? '#2D7A55' : '#C97B6A');
 };
 
 window.divSaveDivision = function(divKey) {
@@ -8838,15 +8838,15 @@ async function superAdmin() {
   if (!isSA) {
     view.innerHTML = `<div style="text-align:center;padding:80px 24px">
       <div style="font-size:48px;margin-bottom:16px">🔒</div>
-      <h2 style="color:#f87171;margin-bottom:8px">Access Denied</h2>
-      <p style="color:#64748b">Platform Admin is restricted to super-administrators.</p>
+      <h2 style="color:#C97B6A;margin-bottom:8px">Access Denied</h2>
+      <p style="color:#6F7E6A">Platform Admin is restricted to super-administrators.</p>
       <button class="secondary-btn" style="margin-top:24px" onclick="show('today')">← Back to Today</button>
     </div>`;
     return;
   }
 
   // Loading state
-  view.innerHTML = `<div style="padding:40px 24px;text-align:center;color:#64748b">
+  view.innerHTML = `<div style="padding:40px 24px;text-align:center;color:#6F7E6A">
     <div style="font-size:32px;margin-bottom:12px">🛡</div>Loading Platform Data…</div>`;
 
   // Fetch stats + company list in parallel
@@ -8868,7 +8868,7 @@ async function superAdmin() {
     if (!Array.isArray(companies)) companies = [];
   } catch(e) {
     view.innerHTML = `<div style="padding:40px 24px;text-align:center">
-      <p style="color:#f87171">Failed to load platform data: ${e.message}</p>
+      <p style="color:#C97B6A">Failed to load platform data: ${e.message}</p>
       <button class="secondary-btn" style="margin-top:16px" onclick="superAdmin()">↺ Retry</button>
     </div>`;
     return;
@@ -8877,28 +8877,28 @@ async function superAdmin() {
   const fmt = n => (n ?? 0).toLocaleString();
   const dateStr = d => d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
   const planBadge = p => {
-    const colors = { trial:'#f59e0b', starter:'#6366f1', pro:'#00d4ff', enterprise:'#10b981' };
-    const c = colors[p] || '#64748b';
+    const colors = { trial:'#8B6914', starter:'#204A43', pro:'#4D8A86', enterprise:'#2D7A55' };
+    const c = colors[p] || '#6F7E6A';
     return `<span style="display:inline-block;background:${c}22;color:${c};border:1px solid ${c}44;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.05em;text-transform:uppercase">${p || 'free'}</span>`;
   };
 
   const companyRows = companies.map(co => `
     <tr class="gw-table-row">
       <td style="padding:14px 12px">
-        <div style="font-weight:700;color:#e2e8f0;margin-bottom:2px">${co.name || '—'}</div>
-        <div style="font-size:11px;color:#475569">${co.slug || ''}</div>
+        <div style="font-weight:700;color:#E8E4D9;margin-bottom:2px">${co.name || '—'}</div>
+        <div style="font-size:11px;color:#5C6B58">${co.slug || ''}</div>
       </td>
       <td style="padding:14px 12px;text-align:center">${planBadge(co.plan)}</td>
       <td style="padding:14px 12px;text-align:center">
-        <span style="color:${co.active ? '#10b981':'#f87171'};font-size:12px;font-weight:700">${co.active ? '● Active':'○ Inactive'}</span>
+        <span style="color:${co.active ? '#2D7A55':'#C97B6A'};font-size:12px;font-weight:700">${co.active ? '● Active':'○ Inactive'}</span>
       </td>
-      <td style="padding:14px 12px;text-align:center;color:#94a3b8">${fmt(co.rep_count)}</td>
-      <td style="padding:14px 12px;text-align:center;color:#94a3b8">${fmt(co.opp_count)}</td>
-      <td style="padding:14px 12px;text-align:center;color:#475569;font-size:12px">${dateStr(co.last_activity)}</td>
+      <td style="padding:14px 12px;text-align:center;color:#6F7E6A">${fmt(co.rep_count)}</td>
+      <td style="padding:14px 12px;text-align:center;color:#6F7E6A">${fmt(co.opp_count)}</td>
+      <td style="padding:14px 12px;text-align:center;color:#5C6B58;font-size:12px">${dateStr(co.last_activity)}</td>
       <td style="padding:14px 12px;text-align:center">
         <button onclick="window._saImpersonate('${co.id}','${(co.name||'').replace(/'/g,"\\'")}')"
-          style="padding:6px 14px;background:#f59e0b22;border:1px solid #f59e0b44;border-radius:8px;color:#f59e0b;font-size:12px;font-weight:700;cursor:pointer"
-          onmouseover="this.style.background='#f59e0b33'" onmouseout="this.style.background='#f59e0b22'">
+          style="padding:6px 14px;background:#8B691422;border:1px solid #8B691444;border-radius:8px;color:#8B6914;font-size:12px;font-weight:700;cursor:pointer"
+          onmouseover="this.style.background='#8B691433'" onmouseout="this.style.background='#8B691422'">
           Impersonate
         </button>
       </td>
@@ -8911,8 +8911,8 @@ async function superAdmin() {
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:16px">
       <div>
-        <h1 style="font-size:28px;font-weight:800;color:#e2e8f0;margin:0 0 4px">🛡 Platform Admin</h1>
-        <p style="color:#64748b;margin:0;font-size:14px">Groundwork CRM · All tenants · Super-admin view</p>
+        <h1 style="font-size:28px;font-weight:800;color:#E8E4D9;margin:0 0 4px">🛡 Platform Admin</h1>
+        <p style="color:#6F7E6A;margin:0;font-size:14px">Groundwork CRM · All tenants · Super-admin view</p>
       </div>
       <button onclick="superAdmin()" class="gw-admin-btn" style="padding:8px 18px">↺ Refresh</button>
     </div>
@@ -8920,16 +8920,16 @@ async function superAdmin() {
     <!-- Stat Cards -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:36px">
       ${[
-        { label:'Companies',      value: fmt(stats.companies),        icon:'🏢', color:'#6366f1' },
-        { label:'Active Tenants', value: fmt(stats.active_companies),  icon:'✅', color:'#10b981' },
-        { label:'Total Reps',     value: fmt(stats.reps),              icon:'👥', color:'#00d4ff' },
-        { label:'Opportunities',  value: fmt(stats.opportunities),     icon:'📊', color:'#f59e0b' },
-        { label:'Notes',          value: fmt(stats.notes),             icon:'📝', color:'#a78bfa' },
+        { label:'Companies',      value: fmt(stats.companies),        icon:'🏢', color:'#204A43' },
+        { label:'Active Tenants', value: fmt(stats.active_companies),  icon:'✅', color:'#2D7A55' },
+        { label:'Total Reps',     value: fmt(stats.reps),              icon:'👥', color:'#4D8A86' },
+        { label:'Opportunities',  value: fmt(stats.opportunities),     icon:'📊', color:'#8B6914' },
+        { label:'Notes',          value: fmt(stats.notes),             icon:'📝', color:'#4D8A86' },
       ].map(s => `
         <div class="gw-div-tile" style="border-color:${s.color}44">
           <div style="font-size:24px;margin-bottom:8px">${s.icon}</div>
           <div style="font-size:28px;font-weight:800;color:${s.color};margin-bottom:4px">${s.value}</div>
-          <div style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${s.label}</div>
+          <div style="font-size:12px;color:#6F7E6A;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${s.label}</div>
         </div>
       `).join('')}
     </div>
@@ -8937,24 +8937,24 @@ async function superAdmin() {
     <!-- Companies Table -->
     <div class="gw-admin-panel" style="border-radius:16px">
       <div class="gw-admin-panel-header" style="padding:20px 20px 16px">
-        <h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:0">All Companies (${companies.length})</h2>
-        <a href="/onboard" target="_blank" style="padding:7px 16px;background:#00d4ff22;border:1px solid #00d4ff44;border-radius:8px;color:#00d4ff;font-size:12px;font-weight:700;text-decoration:none">+ New Company</a>
+        <h2 style="font-size:16px;font-weight:700;color:#E8E4D9;margin:0">All Companies (${companies.length})</h2>
+        <a href="/onboard" target="_blank" style="padding:7px 16px;background:rgba(77,138,134,.13);border:1px solid #4D8A8644;border-radius:8px;color:#4D8A86;font-size:12px;font-weight:700;text-decoration:none">+ New Company</a>
       </div>
       <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr>
-              <th style="padding:12px;text-align:left;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Company</th>
-              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Plan</th>
-              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Status</th>
-              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Reps</th>
-              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Opps</th>
-              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Last Activity</th>
-              <th style="padding:12px;text-align:center;color:#475569;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Actions</th>
+              <th style="padding:12px;text-align:left;color:#5C6B58;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Company</th>
+              <th style="padding:12px;text-align:center;color:#5C6B58;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Plan</th>
+              <th style="padding:12px;text-align:center;color:#5C6B58;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Status</th>
+              <th style="padding:12px;text-align:center;color:#5C6B58;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Reps</th>
+              <th style="padding:12px;text-align:center;color:#5C6B58;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Opps</th>
+              <th style="padding:12px;text-align:center;color:#5C6B58;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Last Activity</th>
+              <th style="padding:12px;text-align:center;color:#5C6B58;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Actions</th>
             </tr>
           </thead>
           <tbody>
-            ${companyRows || '<tr><td colspan="7" style="padding:40px;text-align:center;color:#475569">No companies found</td></tr>'}
+            ${companyRows || '<tr><td colspan="7" style="padding:40px;text-align:center;color:#5C6B58">No companies found</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -8962,10 +8962,10 @@ async function superAdmin() {
 
     <!-- Quick Actions -->
     <div class="gw-admin-panel" style="margin-top:24px;padding:20px;border-radius:16px">
-      <h3 style="font-size:14px;font-weight:700;color:#94a3b8;margin:0 0 14px;text-transform:uppercase;letter-spacing:.05em">Quick Actions</h3>
+      <h3 style="font-size:14px;font-weight:700;color:#6F7E6A;margin:0 0 14px;text-transform:uppercase;letter-spacing:.05em">Quick Actions</h3>
       <div style="display:flex;gap:12px;flex-wrap:wrap">
         <a href="/onboard" target="_blank"
-          style="padding:10px 20px;background:#6366f122;border:1px solid #6366f144;border-radius:10px;color:#6366f1;font-size:13px;font-weight:700;text-decoration:none">
+          style="padding:10px 20px;background:rgba(32,74,67,.13);border:1px solid #204A4344;border-radius:10px;color:#204A43;font-size:13px;font-weight:700;text-decoration:none">
           🏢 New Company Onboarding
         </a>
         <button onclick="superAdmin()"
@@ -8978,11 +8978,11 @@ async function superAdmin() {
     <!-- Impersonate confirm overlay -->
     <div id="saImpersonateOverlay" class="gw-modal-overlay" style="display:none">
       <div class="gw-modal-card" style="border-radius:20px">
-        <h2 style="color:#e2e8f0;margin:0 0 8px;font-size:20px;font-weight:800">Impersonate Company</h2>
-        <p id="saImpersonateMsg" style="color:#94a3b8;margin:0 0 24px;font-size:14px"></p>
+        <h2 style="color:#E8E4D9;margin:0 0 8px;font-size:20px;font-weight:800">Impersonate Company</h2>
+        <p id="saImpersonateMsg" style="color:#6F7E6A;margin:0 0 24px;font-size:14px"></p>
         <div style="display:flex;gap:12px">
           <button id="saImpersonateConfirmBtn"
-            style="flex:1;padding:12px;background:#f59e0b;border:none;border-radius:10px;color:#1a1a1a;font-size:14px;font-weight:800;cursor:pointer">
+            style="flex:1;padding:12px;background:#8B6914;border:none;border-radius:10px;color:#1F2A2B;font-size:14px;font-weight:800;cursor:pointer">
             Confirm Impersonate
           </button>
           <button onclick="document.getElementById('saImpersonateOverlay').style.display='none'"

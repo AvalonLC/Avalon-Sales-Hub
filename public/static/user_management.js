@@ -29,35 +29,35 @@ const UM_ROLE_DEFS = [
   {
     id: 'admin',
     label: 'Owner / Admin',
-    color: '#00d4ff',
+    color: '#4D8A86',
     description: 'Full access to all sections including financial data, user management, and settings.',
     defaultViews: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','revenueAdmin','integrations','settings','userManagement']
   },
   {
     id: 'office_manager',
     label: 'Office Manager',
-    color: '#f59e0b',
+    color: '#8B6914',
     description: 'Operations and admin access. Can see pipeline, clients, and most admin tools.',
     defaultViews: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','manager','integrations','settings']
   },
   {
     id: 'rep',
     label: 'Sales Rep',
-    color: '#4ade80',
+    color: '#2D7A55',
     description: 'Standard rep access. Today, pipeline, clients, and sales toolkit.',
     defaultViews: ['today','myDashboard','pipeline','lead','clients','process','forms','scripts','templates','objections','calculator','academy','settings']
   },
   {
     id: 'estimator',
     label: 'Estimator',
-    color: '#a78bfa',
+    color: '#4D8A86',
     description: 'Access to pipeline, pricing tools, forms, and process docs.',
     defaultViews: ['today','pipeline','clients','process','forms','calculator','settings']
   },
   {
     id: 'view_only',
     label: 'View Only',
-    color: '#94a3b8',
+    color: '#6F7E6A',
     description: 'Read-only access to Today and Pipeline.',
     defaultViews: ['today','pipeline','settings']
   }
@@ -195,7 +195,7 @@ function umFormatDate(iso) {
 }
 
 function umRoleDef(roleId) {
-  return UM_ROLE_DEFS.find(r => r.id === roleId) || { label: roleId, color: '#64748b', defaultViews: [] };
+  return UM_ROLE_DEFS.find(r => r.id === roleId) || { label: roleId, color: '#6F7E6A', defaultViews: [] };
 }
 
 function umColorTile(name, color, size = 36) {
@@ -204,9 +204,9 @@ function umColorTile(name, color, size = 36) {
 }
 
 function umStatusPill(status) {
-  if (status === 'active')   return `<span style="font-size:10px;font-weight:700;color:#4ade80;background:#4ade8018;border:1px solid #4ade8040;border-radius:20px;padding:2px 8px">Active</span>`;
-  if (status === 'inactive') return `<span style="font-size:10px;font-weight:700;color:#f87171;background:#f8717118;border:1px solid #f8717140;border-radius:20px;padding:2px 8px">Inactive</span>`;
-  return `<span style="font-size:10px;font-weight:700;color:#94a3b8;background:#94a3b818;border:1px solid #94a3b840;border-radius:20px;padding:2px 8px">${umEscape(status)}</span>`;
+  if (status === 'active')   return `<span style="font-size:10px;font-weight:700;color:#2D7A55;background:#2D7A5518;border:1px solid #2D7A5540;border-radius:20px;padding:2px 8px">Active</span>`;
+  if (status === 'inactive') return `<span style="font-size:10px;font-weight:700;color:#C97B6A;background:#C97B6A18;border:1px solid #C97B6A40;border-radius:20px;padding:2px 8px">Inactive</span>`;
+  return `<span style="font-size:10px;font-weight:700;color:#6F7E6A;background:#6F7E6A18;border:1px solid rgba(111,126,106,.25);border-radius:20px;padding:2px 8px">${umEscape(status)}</span>`;
 }
 
 // ── Toast helper (uses global showToast if available) ──────────────────────────
@@ -247,8 +247,8 @@ function userManagement(tab) {
     viewEl.innerHTML = `
       <div style="text-align:center;padding:64px 24px;margin-top:40px">
         <div style="font-size:40px;margin-bottom:16px">🔒</div>
-        <h2 style="color:#f87171;margin-bottom:10px">Access Restricted</h2>
-        <p style="color:#64748b;max-width:420px;margin:0 auto 24px">User Management is restricted to Tyler (Owner / Admin). Ask Tyler if you need access changes.</p>
+        <h2 style="color:#C97B6A;margin-bottom:10px">Access Restricted</h2>
+        <p style="color:#6F7E6A;max-width:420px;margin:0 auto 24px">User Management is restricted to Tyler (Owner / Admin). Ask Tyler if you need access changes.</p>
         <button class="secondary-btn" onclick="show('today')">← Back to Today</button>
       </div>`;
     return;
@@ -270,7 +270,7 @@ function userManagement(tab) {
   ${tabs.map(t => `
   <button onclick="window._umTab('${t.id}')"
     style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;
-    ${activeTab===t.id ? 'background:#00A7E1;color:#fff;border:1.5px solid #00A7E1' : 'background:var(--gw-surface-2);color:var(--gw-muted);border:1.5px solid var(--gw-line)'}"
+    ${activeTab===t.id ? 'background:#4D8A86;color:#fff;border:1.5px solid #4D8A86' : 'background:var(--gw-surface-2);color:var(--gw-muted);border:1.5px solid var(--gw-line)'}"
     onmouseover="if('${activeTab}'!=='${t.id}')this.style.background='var(--gw-surface-3)'"
     onmouseout="if('${activeTab}'!=='${t.id}')this.style.background='var(--gw-surface-2)'">
     ${t.label}
@@ -317,24 +317,24 @@ function umRenderUsers(container) {
 <div class="gw-um-form-card" style="border-radius:14px;padding:20px;margin-bottom:24px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
     <img src="https://www.google.com/favicon.ico" style="width:20px;height:20px" alt="Google">
-    <div style="font-weight:700;font-size:15px;color:#e2e8f0">My Google Workspace</div>
+    <div style="font-weight:700;font-size:15px;color:#E8E4D9">My Google Workspace</div>
     ${myConnected
-      ? `<span style="margin-left:auto;font-size:11px;font-weight:700;color:#4ade80;background:#4ade8015;border:1px solid #4ade8040;border-radius:20px;padding:2px 10px">● Connected</span>`
-      : `<span style="margin-left:auto;font-size:11px;font-weight:700;color:#f87171;background:#f8717115;border:1px solid #f8717140;border-radius:20px;padding:2px 10px">○ Not Connected</span>`}
+      ? `<span style="margin-left:auto;font-size:11px;font-weight:700;color:#2D7A55;background:#2D7A5515;border:1px solid #2D7A5540;border-radius:20px;padding:2px 10px">● Connected</span>`
+      : `<span style="margin-left:auto;font-size:11px;font-weight:700;color:#C97B6A;background:#C97B6A15;border:1px solid #C97B6A40;border-radius:20px;padding:2px 10px">○ Not Connected</span>`}
   </div>
   ${myConnected
-    ? `<div style="font-size:13px;color:#4ade80;margin-bottom:10px">Signed in as <strong>${umEscape(myEmail)}</strong></div>
+    ? `<div style="font-size:13px;color:#2D7A55;margin-bottom:10px">Signed in as <strong>${umEscape(myEmail)}</strong></div>
        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
          ${[{icon:'✉️',l:'Gmail'},{icon:'📅',l:'Calendar'},{icon:'📁',l:'Drive'}].map(s=>`
-         <span style="font-size:12px;background:#4ade8015;border:1px solid #4ade8040;border-radius:6px;padding:3px 10px;color:#4ade80">${s.icon} ${s.l}</span>`).join('')}
+         <span style="font-size:12px;background:#2D7A5515;border:1px solid #2D7A5540;border-radius:6px;padding:3px 10px;color:#2D7A55">${s.icon} ${s.l}</span>`).join('')}
        </div>
        <div style="display:flex;gap:8px;flex-wrap:wrap">
          <button class="secondary-btn" style="font-size:12px" onclick="show('integrations')">Open Workspace Hub →</button>
          <button class="danger-btn" style="font-size:12px" onclick="window._umMyDisconnect&&window._umMyDisconnect();userManagement('users')">Disconnect</button>
        </div>`
-    : `<p style="color:#64748b;font-size:13px;margin:0 0 12px">Connect your personal Google account to access Gmail, Calendar, and Drive inside the hub.</p>
+    : `<p style="color:#6F7E6A;font-size:13px;margin:0 0 12px">Connect your personal Google account to access Gmail, Calendar, and Drive inside the hub.</p>
        ${!sharedClientId
-         ? `<div style="font-size:12px;color:#f59e0b;background:#f59e0b15;border:1px solid #f59e0b40;border-radius:8px;padding:10px">
+         ? `<div style="font-size:12px;color:#8B6914;background:rgba(139,105,20,.09);border:1px solid rgba(139,105,20,.25);border-radius:8px;padding:10px">
               ⚠ Google Client ID not configured yet. Set it below under <strong>Google OAuth Setup</strong>.
             </div>`
          : `<button class="primary-btn" style="font-size:13px" onclick="window._umMyConnect&&window._umMyConnect().then(()=>userManagement('users'))">Connect My Google Account</button>`
@@ -346,8 +346,8 @@ function umRenderUsers(container) {
 <div class="gw-info-strip" style="border-radius:12px;padding:16px 18px;margin-bottom:24px">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div>
-      <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:2px">🔑 Google OAuth Client ID</div>
-      <div style="font-size:11px;color:#475569">Shared across all users. Set once — everyone can then connect their own account.</div>
+      <div style="font-size:13px;font-weight:700;color:#E8E4D9;margin-bottom:2px">🔑 Google OAuth Client ID</div>
+      <div style="font-size:11px;color:#5C6B58">Shared across all users. Set once — everyone can then connect their own account.</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1;min-width:260px;justify-content:flex-end">
       <input id="um-ws-client-id" type="text"
@@ -361,15 +361,15 @@ function umRenderUsers(container) {
 
 <!-- ── Team Users ─────────────────────────────────────────────────────────── -->
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-  <div style="font-size:13px;font-weight:700;color:#e2e8f0">
+  <div style="font-size:13px;font-weight:700;color:#E8E4D9">
     Team Members
-    <span style="font-size:12px;color:#64748b;font-weight:400;margin-left:8px">${users.filter(u=>u.status==='active').length} active · ${users.filter(u=>u.status==='inactive').length} inactive</span>
+    <span style="font-size:12px;color:#6F7E6A;font-weight:400;margin-left:8px">${users.filter(u=>u.status==='active').length} active · ${users.filter(u=>u.status==='inactive').length} inactive</span>
   </div>
   <button class="primary-btn" onclick="window._umOpenUserForm(null)">+ Add User</button>
 </div>
 
 <div style="display:flex;flex-direction:column;gap:10px" id="um-user-list">
-  ${users.length ? users.map(u => umUserRow(u, googleMap[u.id])).join('') : `<div style="text-align:center;padding:40px;color:#64748b">No users yet. Add your first team member.</div>`}
+  ${users.length ? users.map(u => umUserRow(u, googleMap[u.id])).join('') : `<div style="text-align:center;padding:40px;color:#6F7E6A">No users yet. Add your first team member.</div>`}
 </div>
 `;
 
@@ -390,7 +390,7 @@ function umRenderUsers(container) {
     const users = umLoadUsers();
     const u = userId ? users.find(u => u.id === userId) : null;
     const isEdit = !!u;
-    const colors = ['#00d4ff','#4ade80','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8','#34d399'];
+    const colors = ['#4D8A86','#2D7A55','#8B6914','#4D8A86','#C97B6A','#C97B6A','#4D8A86','#2D7A55'];
 
     const modal = document.createElement('div');
     modal.id = 'um-user-modal';
@@ -399,7 +399,7 @@ function umRenderUsers(container) {
 <div class="gw-modal-card" style="width:min(520px,100%);max-height:90vh;overflow-y:auto">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
     <h2 style="margin:0;font-size:18px">${isEdit ? 'Edit User' : 'Add New User'}</h2>
-    <button onclick="document.getElementById('um-user-modal').remove()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:20px;padding:0 4px">✕</button>
+    <button onclick="document.getElementById('um-user-modal').remove()" style="background:none;border:none;color:#6F7E6A;cursor:pointer;font-size:20px;padding:0 4px">✕</button>
   </div>
 
   <div style="display:grid;gap:14px">
@@ -450,7 +450,7 @@ function umRenderUsers(container) {
         <input id="um-f-pin" class="um-input" type="text" maxlength="4" pattern="[0-9]{4}"
           value="${umEscape(u?.pin||'')}" placeholder="1234" inputmode="numeric"
           oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
-        <div style="font-size:11px;color:#475569;margin-top:4px">Used for quick login. Keep it private.</div>
+        <div style="font-size:11px;color:#5C6B58;margin-top:4px">Used for quick login. Keep it private.</div>
       </div>
       <div>
         <label class="um-label">Status</label>
@@ -481,8 +481,8 @@ function umRenderUsers(container) {
     </div>
 
     <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#94a3b8">
-        <input type="checkbox" id="um-f-reset-pin" ${u?.mustResetPin?'checked':''} style="accent-color:#00A7E1">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#6F7E6A">
+        <input type="checkbox" id="um-f-reset-pin" ${u?.mustResetPin?'checked':''} style="accent-color:#4D8A86">
         Require PIN reset on next login
       </label>
     </div>
@@ -523,7 +523,7 @@ function umRenderUsers(container) {
       const role    = document.getElementById('um-f-role')?.value || 'rep';
       const pin     = document.getElementById('um-f-pin')?.value?.trim() || '';
       const status  = document.getElementById('um-f-status')?.value || 'active';
-      const color   = document.getElementById('um-f-color')?.value || '#4ade80';
+      const color   = document.getElementById('um-f-color')?.value || '#2D7A55';
       const notes   = document.getElementById('um-f-notes')?.value?.trim() || '';
       const mustReset = document.getElementById('um-f-reset-pin')?.checked || false;
 
@@ -615,13 +615,13 @@ function umUserRow(u, gc) {
   <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;flex-wrap:wrap;gap:12px">
     ${umColorTile(u.displayName || u.name, u.color, 42)}
     <div style="flex:1;min-width:160px">
-      <div style="font-weight:700;font-size:15px;color:#e2e8f0">${umEscape(u.displayName||u.name)}</div>
-      <div style="font-size:12px;color:#64748b;margin-top:1px">${umEscape(u.position)}${u.email ? ' · '+umEscape(u.email) : ''}</div>
+      <div style="font-weight:700;font-size:15px;color:#E8E4D9">${umEscape(u.displayName||u.name)}</div>
+      <div style="font-size:12px;color:#6F7E6A;margin-top:1px">${umEscape(u.position)}${u.email ? ' · '+umEscape(u.email) : ''}</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span style="font-size:11px;font-weight:700;color:${role.color};background:${role.color}18;border:1px solid ${role.color}40;border-radius:20px;padding:2px 10px">${role.label}</span>
       ${umStatusPill(u.status)}
-      ${u.mustResetPin ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;background:#f59e0b18;border:1px solid #f59e0b40;border-radius:20px;padding:2px 8px">⚠ PIN Reset</span>` : ''}
+      ${u.mustResetPin ? `<span style="font-size:10px;font-weight:700;color:#8B6914;background:#8B691418;border:1px solid rgba(139,105,20,.25);border-radius:20px;padding:2px 8px">⚠ PIN Reset</span>` : ''}
     </div>
     <div style="display:flex;gap:8px;margin-left:auto">
       <button class="secondary-btn" style="font-size:12px;padding:6px 12px" onclick="window._umResetPin('${u.id}')">Reset PIN</button>
@@ -629,15 +629,15 @@ function umUserRow(u, gc) {
     </div>
   </div>
   <!-- Google status strip -->
-  <div style="display:flex;align-items:center;gap:10px;padding:8px 18px;background:${googleConnected?'#4ade8008':'var(--gw-surface)'};border-top:1px solid var(--gw-line);flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:10px;padding:8px 18px;background:${googleConnected?'#2D7A5508':'var(--gw-surface)'};border-top:1px solid var(--gw-line);flex-wrap:wrap">
     <img src="https://www.google.com/favicon.ico" style="width:13px;height:13px;opacity:.7" alt="G">
     ${googleConnected
-      ? `<span style="font-size:11px;color:#4ade80;font-weight:600">● Google connected as ${umEscape(googleEmail)}</span>
+      ? `<span style="font-size:11px;color:#2D7A55;font-weight:600">● Google connected as ${umEscape(googleEmail)}</span>
          <div style="display:flex;gap:6px;margin-left:auto">
-           ${[['✉️','Gmail'],['📅','Cal'],['📁','Drive']].map(([ic,lb])=>`<span style="font-size:10px;color:#4ade80;background:#4ade8015;border:1px solid #4ade8030;border-radius:4px;padding:1px 6px">${ic} ${lb}</span>`).join('')}
-           <button onclick="window._umAdminDisconnectUser('${u.id}')" style="font-size:10px;font-weight:700;color:#f87171;background:#f8717115;border:1px solid #f8717140;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:4px">Disconnect</button>
+           ${[['✉️','Gmail'],['📅','Cal'],['📁','Drive']].map(([ic,lb])=>`<span style="font-size:10px;color:#2D7A55;background:#2D7A5515;border:1px solid #2D7A5530;border-radius:4px;padding:1px 6px">${ic} ${lb}</span>`).join('')}
+           <button onclick="window._umAdminDisconnectUser('${u.id}')" style="font-size:10px;font-weight:700;color:#C97B6A;background:#C97B6A15;border:1px solid #C97B6A40;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:4px">Disconnect</button>
          </div>`
-      : `<span style="font-size:11px;color:#475569">○ Google not connected</span>
+      : `<span style="font-size:11px;color:#5C6B58">○ Google not connected</span>
          <span style="font-size:11px;color:var(--gw-muted);margin-left:auto">User connects via Integrations → Google Workspace</span>`
     }
   </div>
@@ -672,7 +672,7 @@ function umRenderRoles(container) {
   container.innerHTML = `
 <div style="margin-bottom:20px">
   <h3 style="margin:0 0 4px;font-size:16px">Role Permission Matrix</h3>
-  <p style="color:#64748b;font-size:13px;margin:0">Control which sections each role can access. Tyler (Owner/Admin) always has full access.</p>
+  <p style="color:#6F7E6A;font-size:13px;margin:0">Control which sections each role can access. Tyler (Owner/Admin) always has full access.</p>
 </div>
 
 <!-- Role Cards -->
@@ -683,14 +683,14 @@ function umRenderRoles(container) {
       <span style="width:10px;height:10px;border-radius:50%;background:${r.color};flex-shrink:0"></span>
       <div style="font-weight:700;font-size:14px;color:${r.color}">${r.label}</div>
     </div>
-    <div style="font-size:12px;color:#64748b;line-height:1.5;margin-bottom:12px">${r.description}</div>
+    <div style="font-size:12px;color:#6F7E6A;line-height:1.5;margin-bottom:12px">${r.description}</div>
     ${r.id !== 'admin' ? `
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button class="secondary-btn" style="font-size:11px;padding:4px 9px" onclick="window._umPreset('${r.id}','full')">Full</button>
       <button class="secondary-btn" style="font-size:11px;padding:4px 9px" onclick="window._umPreset('${r.id}','standard')">Standard</button>
       <button class="secondary-btn" style="font-size:11px;padding:4px 9px" onclick="window._umPreset('${r.id}','view')">View Only</button>
       <button class="secondary-btn" style="font-size:11px;padding:4px 9px" onclick="window._umPreset('${r.id}','default')">↺ Reset</button>
-    </div>` : `<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Always Full Access</div>`}
+    </div>` : `<div style="font-size:11px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Always Full Access</div>`}
   </div>`).join('')}
 </div>
 
@@ -699,7 +699,7 @@ function umRenderRoles(container) {
   <table style="width:100%;border-collapse:collapse;min-width:600px">
     <thead>
       <tr style="background:var(--gw-surface);border-bottom:2px solid var(--gw-line)">
-        <th style="text-align:left;padding:12px 16px;font-size:12px;color:#64748b;font-weight:600;width:180px">Section</th>
+        <th style="text-align:left;padding:12px 16px;font-size:12px;color:#6F7E6A;font-weight:600;width:180px">Section</th>
         ${nonAdminRoles.map(r => `
         <th style="text-align:center;padding:12px 10px;font-size:12px;font-weight:700;color:${r.color}">
           ${r.label}
@@ -711,11 +711,11 @@ function umRenderRoles(container) {
         const gViews = UM_ALL_VIEWS.filter(v => v.group === group);
         return `
         <tr style="background:var(--gw-surface)">
-          <td colspan="${nonAdminRoles.length+1}" style="padding:8px 16px;font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.08em">${group}</td>
+          <td colspan="${nonAdminRoles.length+1}" style="padding:8px 16px;font-size:10px;font-weight:800;color:#5C6B58;text-transform:uppercase;letter-spacing:.08em">${group}</td>
         </tr>
         ${gViews.map(v => `
         <tr style="border-bottom:1px solid var(--gw-line)">
-          <td style="padding:10px 16px;font-size:13px;color:#cbd5e1">${v.label}</td>
+          <td style="padding:10px 16px;font-size:13px;color:#D6D1C4">${v.label}</td>
           ${nonAdminRoles.map(r => {
             const rolePerms = perms[r.id] || DEFAULT_NAV_PERMS[r.id] || [];
             const checked = rolePerms.includes(v.key);
@@ -732,7 +732,7 @@ function umRenderRoles(container) {
   </table>
 </div>
 
-<div style="margin-top:12px;font-size:11px;color:#475569">Changes take effect immediately. Settings is always visible for all roles.</div>
+<div style="margin-top:12px;font-size:11px;color:#5C6B58">Changes take effect immediately. Settings is always visible for all roles.</div>
 `;
 
   window._umTogglePerm = function(roleId, viewKey, enabled) {
@@ -777,16 +777,16 @@ function umRenderWorkspace(container) {
   container.innerHTML = `
 <div style="margin-bottom:20px">
   <h3 style="margin:0 0 4px;font-size:16px">Team Google Workspace Connections</h3>
-  <p style="color:#64748b;font-size:13px;margin:0">Each team member connects their own Google account. Connections are isolated — no shared tokens.</p>
+  <p style="color:#6F7E6A;font-size:13px;margin:0">Each team member connects their own Google account. Connections are isolated — no shared tokens.</p>
 </div>
 
 <!-- Client ID config -->
 <div class="gw-um-form-card" style="border-radius:12px;padding:18px;margin-bottom:20px">
-  <div style="font-weight:700;font-size:14px;color:#e2e8f0;margin-bottom:8px">🔑 Shared Google OAuth Client ID</div>
-  <p style="color:#64748b;font-size:12px;margin:0 0 12px">The same Google Cloud Client ID is used across all user connections. Set it once here and every user can connect their own account.</p>
+  <div style="font-weight:700;font-size:14px;color:#E8E4D9;margin-bottom:8px">🔑 Shared Google OAuth Client ID</div>
+  <p style="color:#6F7E6A;font-size:12px;margin:0 0 12px">The same Google Cloud Client ID is used across all user connections. Set it once here and every user can connect their own account.</p>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
     <div style="flex:1;min-width:260px">
-      <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Google Client ID</label>
+      <label style="font-size:11px;font-weight:600;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Google Client ID</label>
       <input id="um-ws-client-id" type="text"
         value="${umEscape(sharedClientId)}"
         placeholder="1234567890-abc...apps.googleusercontent.com"
@@ -802,9 +802,9 @@ function umRenderWorkspace(container) {
 </div>
 
 <div class="gw-info-strip" style="margin-top:20px;border-radius:10px">
-  <div style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">How Per-User Connections Work</div>
-  <div style="font-size:12px;color:#64748b;line-height:1.8">
-    Each user connects their own Google account from <strong style="color:#94a3b8">Settings → My Google Connection</strong>.
+  <div style="font-size:12px;font-weight:700;color:#5C6B58;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">How Per-User Connections Work</div>
+  <div style="font-size:12px;color:#6F7E6A;line-height:1.8">
+    Each user connects their own Google account from <strong style="color:#6F7E6A">Settings → My Google Connection</strong>.
     The token is stored under their user ID so Gmail, Calendar, and Drive actions always use their own account.
     Admin can see connection status here but cannot see another user's emails or files.
   </div>
@@ -852,26 +852,26 @@ function umWorkspaceRow(u, gc, clientId) {
 <div class="gw-um-user-row" style="display:flex;align-items:center;gap:14px;padding:14px 18px;flex-wrap:wrap;gap:12px">
   ${umColorTile(u.displayName||u.name, u.color, 40)}
   <div style="min-width:140px">
-    <div style="font-weight:700;font-size:14px;color:#e2e8f0">${umEscape(u.displayName||u.name)}</div>
-    <div style="font-size:11px;color:#64748b">${umEscape(u.position)}</div>
+    <div style="font-weight:700;font-size:14px;color:#E8E4D9">${umEscape(u.displayName||u.name)}</div>
+    <div style="font-size:11px;color:#6F7E6A">${umEscape(u.position)}</div>
   </div>
   <div style="flex:1;min-width:200px">
     ${connected
-      ? `<div style="font-size:12px;color:#4ade80;font-weight:600;margin-bottom:6px">● Connected as ${umEscape(email)}</div>`
-      : `<div style="font-size:12px;color:#f87171;font-weight:600;margin-bottom:6px">○ Not connected</div>`
+      ? `<div style="font-size:12px;color:#2D7A55;font-weight:600;margin-bottom:6px">● Connected as ${umEscape(email)}</div>`
+      : `<div style="font-size:12px;color:#C97B6A;font-weight:600;margin-bottom:6px">○ Not connected</div>`
     }
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${services.map(s => `
-      <span style="font-size:11px;color:${s.connected?'#4ade80':'var(--gw-muted)'};background:${s.connected?'#4ade8015':'var(--gw-surface-3)'};border:1px solid ${s.connected?'#4ade8040':'var(--gw-line)'};border-radius:6px;padding:2px 8px">
+      <span style="font-size:11px;color:${s.connected?'#2D7A55':'var(--gw-muted)'};background:${s.connected?'#2D7A5515':'var(--gw-surface-3)'};border:1px solid ${s.connected?'#2D7A5540':'var(--gw-line)'};border-radius:6px;padding:2px 8px">
         ${s.icon} ${s.label}
       </span>`).join('')}
     </div>
-    ${connectedAt ? `<div style="font-size:10px;color:#475569;margin-top:4px">Connected ${connectedAt}</div>` : ''}
+    ${connectedAt ? `<div style="font-size:10px;color:#5C6B58;margin-top:4px">Connected ${connectedAt}</div>` : ''}
   </div>
   <div style="display:flex;gap:8px;margin-left:auto">
     ${connected
       ? `<button class="danger-btn" style="font-size:12px;padding:6px 12px" onclick="window._umAdminDisconnectUser('${u.id}')">Disconnect</button>`
-      : `<span style="font-size:11px;color:#475569;padding:6px 12px">User connects via their Settings</span>`
+      : `<span style="font-size:11px;color:#5C6B58;padding:6px 12px">User connects via their Settings</span>`
     }
   </div>
 </div>`;
@@ -900,13 +900,13 @@ function umRenderAudit(container) {
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
   <div>
     <h3 style="margin:0 0 2px;font-size:16px">Login & Security Audit Log</h3>
-    <p style="color:#64748b;font-size:12px;margin:0">${log.length} entries · Last 200 events stored locally</p>
+    <p style="color:#6F7E6A;font-size:12px;margin:0">${log.length} entries · Last 200 events stored locally</p>
   </div>
   ${log.length ? `<button class="secondary-btn" style="font-size:12px" onclick="window._umClearAudit()">Clear Log</button>` : ''}
 </div>
 
 ${log.length === 0
-  ? `<div style="text-align:center;padding:48px;color:#475569">
+  ? `<div style="text-align:center;padding:48px;color:#5C6B58">
       <div style="font-size:32px;margin-bottom:12px">📋</div>
       <div>No audit events recorded yet.</div>
       <div style="font-size:12px;margin-top:6px">Events are logged as users log in and admin makes changes.</div>
@@ -918,11 +918,11 @@ ${log.length === 0
         <div class="gw-um-user-row" style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-radius:8px">
           <span style="font-size:16px;flex-shrink:0;margin-top:1px">${def.icon}</span>
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;color:#e2e8f0;font-weight:600">${def.label}
-              ${entry.userName ? `<span style="color:#94a3b8;font-weight:400"> · ${umEscape(entry.userName)}</span>` : ''}
-              ${entry.by && entry.by !== entry.userName ? `<span style="font-size:11px;color:#475569"> by ${umEscape(entry.by)}</span>` : ''}
+            <div style="font-size:13px;color:#E8E4D9;font-weight:600">${def.label}
+              ${entry.userName ? `<span style="color:#6F7E6A;font-weight:400"> · ${umEscape(entry.userName)}</span>` : ''}
+              ${entry.by && entry.by !== entry.userName ? `<span style="font-size:11px;color:#5C6B58"> by ${umEscape(entry.by)}</span>` : ''}
             </div>
-            <div style="font-size:11px;color:#475569;margin-top:2px">${umFormatDate(entry.timestamp)}</div>
+            <div style="font-size:11px;color:#5C6B58;margin-top:2px">${umFormatDate(entry.timestamp)}</div>
           </div>
         </div>`;
       }).join('')}
@@ -962,21 +962,21 @@ function umRenderMyGoogleConnection(container) {
     <img src="https://www.google.com/favicon.ico" style="width:24px;height:24px" alt="Google">
     <h3 style="margin:0;font-size:15px">My Google Workspace Connection</h3>
     ${connected
-      ? `<span style="font-size:11px;font-weight:700;color:#4ade80;background:#4ade8018;border:1px solid #4ade8040;border-radius:20px;padding:2px 9px;margin-left:auto">● Connected</span>`
-      : `<span style="font-size:11px;font-weight:700;color:#f87171;background:#f8717118;border:1px solid #f8717140;border-radius:20px;padding:2px 9px;margin-left:auto">○ Not Connected</span>`
+      ? `<span style="font-size:11px;font-weight:700;color:#2D7A55;background:#2D7A5518;border:1px solid #2D7A5540;border-radius:20px;padding:2px 9px;margin-left:auto">● Connected</span>`
+      : `<span style="font-size:11px;font-weight:700;color:#C97B6A;background:#C97B6A18;border:1px solid #C97B6A40;border-radius:20px;padding:2px 9px;margin-left:auto">○ Not Connected</span>`
     }
   </div>
 
   ${connected
-    ? `<div style="font-size:13px;color:#4ade80;margin-bottom:12px">Connected as <strong>${umEscape(email)}</strong></div>
+    ? `<div style="font-size:13px;color:#2D7A55;margin-bottom:12px">Connected as <strong>${umEscape(email)}</strong></div>
        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
          ${[{icon:'✉️',l:'Gmail'},{icon:'📅',l:'Calendar'},{icon:'📁',l:'Drive'}].map(s=>`
-         <span style="font-size:12px;background:#4ade8015;border:1px solid #4ade8040;border-radius:6px;padding:3px 10px;color:#4ade80">${s.icon} ${s.l}</span>`).join('')}
+         <span style="font-size:12px;background:#2D7A5515;border:1px solid #2D7A5540;border-radius:6px;padding:3px 10px;color:#2D7A55">${s.icon} ${s.l}</span>`).join('')}
        </div>
        <button class="danger-btn" onclick="window._umMyDisconnect()">Disconnect My Google Account</button>`
-    : `<p style="color:#64748b;font-size:13px;margin:0 0 14px">Connect your personal Google account to use Gmail, Calendar, and Drive directly from the Sales Hub.</p>
+    : `<p style="color:#6F7E6A;font-size:13px;margin:0 0 14px">Connect your personal Google account to use Gmail, Calendar, and Drive directly from the Sales Hub.</p>
        ${!clientId
-         ? `<div style="font-size:13px;color:#f59e0b;background:#f59e0b15;border:1px solid #f59e0b40;border-radius:8px;padding:12px">
+         ? `<div style="font-size:13px;color:#8B6914;background:rgba(139,105,20,.09);border:1px solid rgba(139,105,20,.25);border-radius:8px;padding:12px">
               ⚠ Google Client ID not configured. Ask Tyler (Admin) to set it up in <strong>Admin → User Management → Users &amp; Workspace tab</strong>.
             </div>`
          : `<button class="primary-btn" onclick="window._umMyConnect()">Connect My Google Account</button>`
@@ -1165,7 +1165,7 @@ window.umIsUserGoogleConnected = function() {
       display: block;
       font-size: 11px;
       font-weight: 600;
-      color: #64748b;
+      color: #6F7E6A;
       text-transform: uppercase;
       letter-spacing: .05em;
       margin-bottom: 6px;
@@ -1176,7 +1176,7 @@ window.umIsUserGoogleConnected = function() {
       background: var(--gw-surface-3);
       border: 1px solid var(--gw-line);
       border-radius: 8px;
-      color: #e2e8f0;
+      color: #E8E4D9;
       font-size: 13px;
       box-sizing: border-box;
       transition: border-color .15s;
@@ -1184,7 +1184,7 @@ window.umIsUserGoogleConnected = function() {
     }
     .um-input:focus {
       outline: none;
-      border-color: #00A7E1;
+      border-color: #4D8A86;
     }
     .um-input option {
       background: var(--gw-surface-3);
