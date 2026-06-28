@@ -1143,7 +1143,8 @@ app.get('/onboard', (c) => {
 // SUPER-ADMIN API  (is_super_admin = 1 required)
 // ══════════════════════════════════════════════════════════════════════════════
 
-// GET /api/admin/companies  — list all companies with stats
+// GET /api/admin/companies  — list all tenant companies with stats
+// Excludes groundwork_platform (the platform owner's anchor record, not a customer tenant)
 app.get('/api/admin/companies', requireSuperAdmin, async (c) => {
   const companies = await c.env.DB.prepare(`
     SELECT c.id, c.name, c.slug, c.plan, c.owner_email, c.active, c.created_at, c.trial_ends_at,
@@ -1153,17 +1154,18 @@ app.get('/api/admin/companies', requireSuperAdmin, async (c) => {
     FROM companies c
     LEFT JOIN reps r         ON r.company_id = c.id AND r.active = 1
     LEFT JOIN opportunities o ON o.company_id = c.id
+    WHERE c.id != 'groundwork_platform'
     GROUP BY c.id
     ORDER BY c.created_at DESC
   `).all()
   return json(c, companies.results)
 })
 
-// GET /api/admin/stats  — platform-wide totals
+// GET /api/admin/stats  — platform-wide totals (excludes platform owner anchor records)
 app.get('/api/admin/stats', requireSuperAdmin, async (c) => {
   const [companies, reps, opps] = await c.env.DB.batch([
-    c.env.DB.prepare('SELECT COUNT(*) as n FROM companies WHERE active = 1'),
-    c.env.DB.prepare('SELECT COUNT(*) as n FROM reps WHERE active = 1'),
+    c.env.DB.prepare("SELECT COUNT(*) as n FROM companies WHERE active = 1 AND id != 'groundwork_platform'"),
+    c.env.DB.prepare("SELECT COUNT(*) as n FROM reps WHERE active = 1 AND company_id != 'groundwork_platform'"),
     c.env.DB.prepare('SELECT COUNT(*) as n FROM opportunities')
   ])
   return json(c, {
@@ -1211,6 +1213,223 @@ app.put('/api/admin/companies/:id', requireSuperAdmin, async (c) => {
     `UPDATE companies SET ${set}, updated_at = datetime('now') WHERE id = ?`
   ).bind(...vals, id).run()
   return json(c, { updated: id })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PLATFORM OWNER LOGIN  (/platform-login)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// GET /platform-login — dedicated login page for tyler@groundwork-crm.com
+// Completely separate from the Avalon tenant rep-picker login screen.
+// Accessible at groundwork-crm.com/platform-login (not linked from the main app).
+app.get('/platform-login', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Groundwork CRM — Platform Admin</title>
+  <meta name="robots" content="noindex,nofollow"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;background:linear-gradient(160deg,#0E2E27 0%,#0A1F1B 55%,#0E2E27 100%);
+         display:flex;align-items:center;justify-content:center;
+         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif}
+    .shell{width:min(400px,94vw);padding:0 20px}
+    /* Brand mark */
+    .brand{text-align:center;margin-bottom:40px}
+    .brand-icon{display:inline-flex;align-items:center;justify-content:center;
+                width:68px;height:68px;background:rgba(32,74,67,.7);
+                border:1px solid rgba(77,138,134,.35);border-radius:18px;
+                margin-bottom:16px;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+    .brand-icon svg{display:block}
+    .brand h1{color:#fff;font-size:24px;font-weight:900;letter-spacing:-.04em;margin-bottom:4px}
+    .brand-sub{color:rgba(255,255,255,.38);font-size:11px;font-weight:700;
+               letter-spacing:.1em;text-transform:uppercase}
+    .brand-badge{display:inline-block;margin-top:10px;padding:4px 10px;
+                 background:rgba(32,74,67,.6);border:1px solid rgba(77,138,134,.4);
+                 border-radius:20px;color:#7FC5BB;font-size:10px;font-weight:700;
+                 letter-spacing:.08em;text-transform:uppercase}
+    /* Card */
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+          border-radius:20px;padding:28px;backdrop-filter:blur(10px)}
+    .card-title{color:rgba(255,255,255,.65);font-size:12px;font-weight:700;
+                letter-spacing:.07em;text-transform:uppercase;margin-bottom:20px;
+                text-align:center}
+    /* Email field */
+    .field{margin-bottom:14px}
+    .field label{display:block;color:rgba(255,255,255,.5);font-size:11px;
+                 font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+    .email-display{padding:12px 14px;background:rgba(255,255,255,.04);
+                   border:1px solid rgba(255,255,255,.1);border-radius:10px;
+                   color:rgba(255,255,255,.6);font-size:13px;font-family:monospace}
+    /* PIN pad */
+    .pin-dots{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 14px}
+    .pin-dot{height:10px;border-radius:6px;background:rgba(255,255,255,.1);transition:background .15s}
+    .pin-dot.filled{background:#4D8A86}
+    .pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .pin-key{padding:18px 8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+             border-radius:12px;color:#fff;font-size:20px;font-weight:600;
+             cursor:pointer;transition:background .12s;font-family:inherit;width:100%}
+    .pin-key:hover{background:rgba(255,255,255,.15)}
+    .pin-key.ghost{visibility:hidden}
+    /* Error */
+    .error-msg{color:#F5C8C0;font-size:13px;text-align:center;margin-top:14px;display:none}
+    /* Footer */
+    .footer{text-align:center;color:rgba(255,255,255,.18);font-size:11px;
+            margin-top:28px;letter-spacing:.04em}
+    /* Spinner for submit feedback */
+    .submitting .pin-key{opacity:.5;pointer-events:none}
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-icon">
+      <!-- Groundwork "G" logomark -->
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <rect width="36" height="36" rx="10" fill="none"/>
+        <path d="M25 14.5C23.5 11.5 20.5 9.5 18 9.5C13.5 9.5 10 13.3 10 18C10 22.7 13.5 26.5 18 26.5C21 26.5 23.6 24.8 25 22.3" stroke="#7FC5BB" stroke-width="2" stroke-linecap="round"/>
+        <path d="M21 18H26.5" stroke="#7FC5BB" stroke-width="2" stroke-linecap="round"/>
+        <path d="M24 15.5V20.5" stroke="#7FC5BB" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1>Groundwork CRM</h1>
+    <p class="brand-sub">Platform Administration</p>
+    <span class="brand-badge">Restricted Access</span>
+  </div>
+
+  <!-- Login card -->
+  <div class="card" id="loginCard">
+    <p class="card-title">Platform Owner Sign In</p>
+
+    <div class="field">
+      <label>Account</label>
+      <div class="email-display">tyler@groundwork-crm.com</div>
+    </div>
+
+    <div class="field">
+      <label>PIN</label>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+    </div>
+
+    <div class="pin-grid" id="pinGrid">
+      ${[1,2,3,4,5,6,7,8,9,'','0','⌫'].map(k =>
+        k === ''
+          ? '<button class="pin-key ghost" tabindex="-1" aria-hidden="true"></button>'
+          : `<button class="pin-key" data-key="${k}" onclick="pinKey('${k}')">${k}</button>`
+      ).join('')}
+    </div>
+
+    <div class="error-msg" id="errMsg">Incorrect PIN — please try again</div>
+  </div>
+
+  <p class="footer">GROUNDWORK CRM · PLATFORM ADMIN · RESTRICTED</p>
+</div>
+
+<script>
+  let buf = '';
+  function updateDots() {
+    for (let i = 0; i < 4; i++) {
+      document.getElementById('pd' + i).className = 'pin-dot' + (i < buf.length ? ' filled' : '');
+    }
+  }
+  function pinKey(k) {
+    const err = document.getElementById('errMsg');
+    if (k === '⌫') { buf = buf.slice(0,-1); updateDots(); err.style.display='none'; return; }
+    if (buf.length >= 4) return;
+    buf += k;
+    updateDots();
+    if (buf.length === 4) setTimeout(submit, 300);
+  }
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') pinKey(e.key);
+    else if (e.key === 'Backspace') pinKey('⌫');
+  });
+  async function submit() {
+    const card = document.getElementById('loginCard');
+    const err  = document.getElementById('errMsg');
+    card.classList.add('submitting');
+    err.style.display = 'none';
+    try {
+      const res  = await fetch('/api/auth/platform-login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ pin: buf })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Login failed');
+      // Success — redirect to main app; post-login routing handles show('superAdmin')
+      window.location.href = '/';
+    } catch(e) {
+      buf = '';
+      updateDots();
+      err.textContent = e.message || 'Incorrect PIN — please try again';
+      err.style.display = 'block';
+      card.classList.remove('submitting');
+      // Shake effect
+      card.style.transform = 'translateX(-6px)';
+      setTimeout(() => card.style.transform = 'translateX(6px)', 80);
+      setTimeout(() => card.style.transform = '', 160);
+    }
+  }
+</script>
+</body>
+</html>`)
+})
+
+// POST /api/auth/platform-login  { pin }
+// Email is fixed as tyler@groundwork-crm.com (id='gw_tyler', company='groundwork_platform').
+// On success sets the same avalon_session cookie as normal login.
+// The client-side initApp() detects is_super_admin=1 + company_id='groundwork_platform'
+// and auto-navigates to superAdmin() instead of today().
+app.post('/api/auth/platform-login', async (c) => {
+  const body = await c.req.json().catch(() => ({}))
+  const { pin } = body as any
+  if (!pin) return err(c, 'PIN required')
+  // Always look up the single platform-owner rep — no picker needed
+  const rep = await c.env.DB.prepare(
+    "SELECT * FROM reps WHERE id = 'gw_tyler' AND company_id = 'groundwork_platform' AND is_super_admin = 1 AND active = 1 LIMIT 1"
+  ).first<any>()
+  if (!rep) return err(c, 'Platform account not found', 401)
+  // Dual-mode PIN check (same logic as /api/auth/login)
+  let pinOk = false
+  if (rep.pin_hash) {
+    pinOk = await verifyPin(String(pin), rep.pin_hash)
+    if (pinOk && rep.pin) {
+      await c.env.DB.prepare("UPDATE reps SET pin = '' WHERE id = 'gw_tyler'").run()
+    }
+  } else if (rep.pin) {
+    pinOk = String(pin) === String(rep.pin)
+    if (pinOk) {
+      const hash = await hashPin(String(pin))
+      await c.env.DB.prepare("UPDATE reps SET pin_hash = ?, pin = '' WHERE id = 'gw_tyler'")
+        .bind(hash).run()
+    }
+  }
+  if (!pinOk) return err(c, 'Incorrect PIN', 401)
+  const token = uid() + uid()
+  await c.env.DB.batch([
+    c.env.DB.prepare(
+      "INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))"
+    ).bind(`session_${token}`, rep.id),
+    c.env.DB.prepare(
+      "INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))"
+    ).bind(`session_company_${token}`, rep.company_id)
+  ])
+  setCookie(c, 'avalon_session', token, {
+    httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 60 * 60 * 24 * 30
+  })
+  const { pin: _p, pin_hash: _ph, ...safeRep } = rep as any
+  return json(c, safeRep)
 })
 
 // Google OAuth2 callback page — receives access token from Google's implicit flow,
@@ -1284,7 +1503,8 @@ function getHtml(): string {
     </div>
     <nav class="nav" id="mainNav" role="navigation">
 
-      <details class="nav-group" open>
+      <!-- ── Tenant nav groups (hidden when platform admin session active) ── -->
+      <details class="nav-group tenant-nav" open>
         <summary class="nav-summary">Home</summary>
         <div class="nav-items">
           <button class="nav-item active" data-view="today" onclick="show('today')">Today</button>
@@ -1292,7 +1512,7 @@ function getHtml(): string {
         </div>
       </details>
 
-      <details class="nav-group" open>
+      <details class="nav-group tenant-nav" open>
         <summary class="nav-summary">Pipeline</summary>
         <div class="nav-items">
           <button class="nav-item" data-view="pipeline" onclick="show('pipeline')">Pipeline</button>
@@ -1301,7 +1521,7 @@ function getHtml(): string {
         </div>
       </details>
 
-      <details class="nav-group">
+      <details class="nav-group tenant-nav">
         <summary class="nav-summary">Sales Toolkit</summary>
         <div class="nav-items">
           <button class="nav-item" data-view="process" onclick="show('process')">Sales Process</button>
@@ -1314,14 +1534,14 @@ function getHtml(): string {
         </div>
       </details>
 
-      <details class="nav-group">
+      <details class="nav-group tenant-nav">
         <summary class="nav-summary">Learning</summary>
         <div class="nav-items">
           <button class="nav-item" data-view="academy" onclick="show('academy')">Sales Academy</button>
         </div>
       </details>
 
-      <details class="nav-group">
+      <details class="nav-group tenant-nav">
         <summary class="nav-summary">Admin</summary>
         <div class="nav-items">
           <button class="nav-item" data-view="manager" onclick="show('manager')">Manager Tools</button>
@@ -1329,7 +1549,18 @@ function getHtml(): string {
           <button class="nav-item" data-view="integrations" onclick="show('integrations')">Integrations</button>
           <button class="nav-item" data-view="userManagement" onclick="show('userManagement')">User Management</button>
           <button class="nav-item" data-view="settings" onclick="show('settings')">Settings</button>
-          <button class="nav-item" data-view="superAdmin" id="superAdminNavBtn" onclick="show('superAdmin')" style="display:none;color:var(--gw-emerald);font-weight:700;border-top:1px solid rgba(255,255,255,.1);margin-top:6px;padding-top:10px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.9"><path d="M8 2L3 4.5v4C3 11.5 5.2 14 8 15c2.8-1 5-3.5 5-6.5v-4L8 2z"/></svg> Platform Admin</button>
+        </div>
+      </details>
+
+      <!-- ── Platform Admin nav (visible only when company_id=groundwork_platform) ── -->
+      <details class="nav-group platform-nav" id="platformAdminNav" style="display:none" open>
+        <summary class="nav-summary" style="color:#4D8A86;font-weight:700">Platform Admin</summary>
+        <div class="nav-items">
+          <button class="nav-item" data-view="superAdmin" onclick="show('superAdmin')" style="color:#204A43;font-weight:600">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="M8 2L3 4.5v4C3 11.5 5.2 14 8 15c2.8-1 5-3.5 5-6.5v-4L8 2z"/></svg>
+            Dashboard
+          </button>
+          <button class="nav-item" data-view="settings" onclick="show('settings')" style="color:#5E6E6F">Platform Settings</button>
         </div>
       </details>
 
@@ -1379,14 +1610,14 @@ function getHtml(): string {
 <div id="toast" class="toast" hidden role="alert" aria-live="assertive"></div>
 
 <script src="/static/gw-icons.js?v=20260628gw1"></script>
-<script src="/static/db.js?v=20260627gw3"></script>
-<script src="/static/data.js?v=20260627gw3"></script>
-<script src="/static/reps.js?v=20260627gw3"></script>
-<script src="/static/academy.js?v=20260627gw3"></script>
-<script src="/static/app_premium.js?v=20260627gw3"></script>
-<script src="/static/integrations.js?v=20260627gw3"></script>
-<script src="/static/import_clients_csv.js?v=20260627gw3"></script>
-<script src="/static/user_management.js?v=20260627gw3"></script>
+<script src="/static/db.js?v=20260628gw8"></script>
+<script src="/static/data.js?v=20260628gw8"></script>
+<script src="/static/reps.js?v=20260628gw8"></script>
+<script src="/static/academy.js?v=20260628gw8"></script>
+<script src="/static/app_premium.js?v=20260628gw8"></script>
+<script src="/static/integrations.js?v=20260628gw8"></script>
+<script src="/static/import_clients_csv.js?v=20260628gw8"></script>
+<script src="/static/user_management.js?v=20260628gw8"></script>
 <script>
   // Service Worker registration
   if ('serviceWorker' in navigator) {

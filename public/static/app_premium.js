@@ -259,19 +259,36 @@ window.show = show;
 (function updateSidebarRep() {
   try {
     const rep = window.getCurrentRep ? window.getCurrentRep() : null;
-    if (rep) {
-      const isAdmin = rep.role === 'admin';
-      const isOM = rep.role === 'office_manager';
+    const d1Rep = window._d1SessionRep;
+    // Platform-admin detection: is_super_admin=1 AND groundwork_platform company
+    const isPlatformAdmin = d1Rep &&
+      (d1Rep.is_super_admin === 1 || d1Rep.is_super_admin === true) &&
+      d1Rep.company_id === 'groundwork_platform';
+
+    if (rep || isPlatformAdmin) {
+      const isAdmin = rep && rep.role === 'admin';
+      const isOM = rep && rep.role === 'office_manager';
+
       // Footer: show rep identity + role badge
       const footer = document.querySelector('.sidebar-footer');
       if (footer) {
-        const initials = (rep.name || 'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-        const roleLabel = isAdmin ? 'Owner / Admin' : isOM ? 'Office Manager' : (rep.title || 'Sales Rep');
+        const displayName = isPlatformAdmin ? 'Tyler Grigg' : (rep?.name || 'User');
+        const displayRole = isPlatformAdmin ? 'Platform Owner' :
+                            isAdmin ? 'Owner / Admin' : isOM ? 'Office Manager' :
+                            (rep?.title || 'Sales Rep');
+        // Platform admin gets a distinct teal avatar; tenant reps get white
+        const avatarBg = isPlatformAdmin
+          ? 'background:rgba(77,138,134,.45);border-color:rgba(77,138,134,.6)'
+          : 'background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.25)';
+        const initials = displayName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        const logoutAction = isPlatformAdmin
+          ? `(function(){fetch('/api/auth/logout',{method:'POST'}).finally(()=>{window.location.href='/platform-login'});})()`
+          : `logoutRep();renderLoginScreen()`;
         footer.innerHTML = `
-          <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;cursor:pointer;letter-spacing:-.01em" onclick="logoutRep();renderLoginScreen()" title="Switch account">${initials}</div>
+          <div style="width:32px;height:32px;border-radius:50%;${avatarBg};border:1px solid;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;cursor:pointer;letter-spacing:-.01em" onclick="${logoutAction}" title="Sign out">${initials}</div>
           <div style="min-width:0;flex:1">
-            <strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;font-size:13px;color:#ffffff">${rep.name}</strong>
-            <span style="font-size:11px;color:rgba(255,255,255,.50)">${roleLabel}</span>
+            <strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;font-size:13px;color:#ffffff">${displayName}</strong>
+            <span style="font-size:11px;color:rgba(255,255,255,.50)">${displayRole}</span>
           </div>`;
       }
       // Nav items: always fully visible — access controlled by Permission Matrix in Settings
@@ -9036,4 +9053,64 @@ async function superAdmin() {
 }
 window.superAdmin = superAdmin;
 
-show('today');
+// ── Platform-owner vs tenant post-login routing ───────────────────────────────
+// On every page load, check /api/auth/me to determine session identity.
+// If is_super_admin=1 AND company_id='groundwork_platform' → Platform Admin mode.
+// Otherwise → standard tenant flow (show 'today').
+//
+// This async bootstrap runs FIRST and handles both:
+//   (a) fresh redirect from /platform-login (no _d1SessionRep in memory yet)
+//   (b) normal tenant login returning from location.reload() in initApp()
+(async function _initialRoute() {
+  // 1. Try to hydrate session from server if not already set
+  let d1Rep = window._d1SessionRep;
+  if (!d1Rep && window.DB) {
+    try {
+      // DB.auth.me() returns the rep object directly (unwrapped from {ok,data})
+      const me = await window.DB.auth.me();
+      if (me && me.id) {
+        d1Rep = me;
+        window._d1SessionRep = d1Rep;
+        // Also set company context
+        if (d1Rep.company_id) window._companyId = d1Rep.company_id;
+      }
+    } catch(e) {
+      // No active session or session expired — fall through to tenant login flow
+    }
+  }
+
+  const isPlatformAdmin = d1Rep &&
+    (d1Rep.is_super_admin === 1 || d1Rep.is_super_admin === true) &&
+    d1Rep.company_id === 'groundwork_platform';
+
+  if (isPlatformAdmin) {
+    // ── Platform Admin mode ──────────────────────────────────────────────────
+    // Show Platform Admin nav, hide all Avalon tenant nav groups
+    const platformNav = document.getElementById('platformAdminNav');
+    if (platformNav) platformNav.style.display = '';
+    document.querySelectorAll('.tenant-nav').forEach(el => {
+      el.style.display = 'none';
+    });
+    // Update brand subtitle to reflect platform context
+    const brandSubtitle = document.querySelector('.brand-subtitle');
+    if (brandSubtitle) brandSubtitle.textContent = 'Platform Admin';
+    // Update sidebar footer with platform admin identity
+    try {
+      const footer = document.querySelector('.sidebar-footer');
+      if (footer) {
+        const logoutAction = `fetch('/api/auth/logout',{method:'POST'}).finally(()=>{window.location.href='/platform-login'})`;
+        footer.innerHTML = `
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(77,138,134,.45);border:1px solid rgba(77,138,134,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;cursor:pointer;letter-spacing:-.01em" onclick="${logoutAction}" title="Sign out">TG</div>
+          <div style="min-width:0;flex:1">
+            <strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;font-size:13px;color:#ffffff">Tyler Grigg</strong>
+            <span style="font-size:11px;color:rgba(255,255,255,.50)">Platform Owner</span>
+          </div>`;
+      }
+    } catch(e) {}
+    // Navigate to Platform Admin dashboard
+    show('superAdmin');
+  } else {
+    // ── Standard tenant flow ─────────────────────────────────────────────────
+    show('today');
+  }
+})();
