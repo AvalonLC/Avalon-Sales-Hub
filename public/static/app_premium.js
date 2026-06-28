@@ -6971,7 +6971,7 @@ function renderCommissionRulesPanel() {
   if (!active) return '<p style="color:#6F7E6A;font-size:13px">Commission engine not loaded yet — reload the page.</p>';
 
   const updatedInfo = override
-    ? `<span style="color:#8B6914;font-size:12px"> gwIcon('settings',16) Custom rules active — last edited ${new Date(override.updatedAt||'').toLocaleDateString()} by ${override.updatedBy||'admin'}</span>`
+    ? `<span style="color:#8B6914;font-size:12px"> ${gwIcon('settings',16)} Custom rules active — last edited ${new Date(override.updatedAt||'').toLocaleDateString()} by ${override.updatedBy||'admin'}</span>`
     : `<span style="color:#2D7A55;font-size:12px"> ✓ Using default Avalon commission structure</span>`;
 
   const lTiers = active.landscape.tiers;
@@ -7022,7 +7022,7 @@ function renderCommissionRulesPanel() {
   <div class="gw-comm-panel">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
       <div>
-        <div style="font-size:14px;font-weight:800;color:#E8E4D9">gwIcon('revenue',16) Commission Rules Manager</div>
+        <div style="font-size:14px;font-weight:800;color:var(--gw-ink)">${gwIcon('revenue',16)} Commission Rules Manager</div>
         <div style="font-size:12px;color:#6F7E6A;margin-top:2px">Edit rates, caps, and thresholds. Changes apply immediately to all commission calculations.${updatedInfo}</div>
       </div>
       <div style="display:flex;gap:8px">
@@ -7193,7 +7193,7 @@ function renderCommissionSimulator() {
   <div class="gw-sim-panel">
     <div class="gw-sim-header">
       <div>
-        <div style="font-size:14px;font-weight:800;color:#E8E4D9">gwIcon('calculator',16) Commission Simulator</div>
+        <div style="font-size:14px;font-weight:800;color:var(--gw-ink)">${gwIcon('calculator',16)} Commission Simulator</div>
         <div style="font-size:11px;color:#6F7E6A;margin-top:2px">Hypothetical — no data is saved or changed</div>
       </div>
       <button onclick="window._runCommSim()" class="gw-btn-primary">Calculate →</button>

@@ -549,7 +549,7 @@ async function integrations() {
     </p>
     ${!clientIdConfigured ? `
     <div style="padding:12px 14px;background:#113931;border:1px solid rgba(139,105,20,.25);border-radius:8px;margin-bottom:16px;font-size:13px;color:#8B6914">
-      gwIcon('warning',16) Google Client ID not configured. Ask Tyler (Admin) to set it up in
+      ${gwIcon('warning',16)} Google Client ID not configured. Ask Tyler (Admin) to set it up in
       <strong>Admin → User Management → Users &amp; Workspace tab</strong>.
     </div>` : ''}
     <button class="primary-btn" style="width:100%;justify-content:center;font-size:14px;padding:12px 20px;${!clientIdConfigured?'opacity:.5;cursor:not-allowed':''}"
@@ -572,11 +572,11 @@ async function integrations() {
   </div>
 
   <!-- Homeworks always accessible -->
-  <div class="gw-int-panel" style="border-radius:16px;padding:28px">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <div style="width:32px;height:32px;background:var(--gw-surface-3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">gwIcon('construction',16)</div>
-      <div>
-        <div style="font-weight:800;font-size:16px;color:#E8E4D9">Homeworks CRM</div>
+  <div class="gw-int-panel" style="border-radius:16px;padding:28px;min-width:0;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;min-width:0">
+      <div style="width:32px;height:32px;flex-shrink:0;background:var(--gw-surface-3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">${gwIcon('construction',16)}</div>
+      <div style="min-width:0;overflow:hidden">
+        <div style="font-weight:800;font-size:16px;color:#E8E4D9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Homeworks CRM</div>
         ${hwOk?`<div style="font-size:11px;font-weight:700;color:#2D7A55;margin-top:2px"> Connected via Zapier</div>`:`<div style="font-size:11px;color:#6F7E6A;margin-top:2px">Not connected</div>`}
       </div>
     </div>

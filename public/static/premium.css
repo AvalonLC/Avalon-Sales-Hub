@@ -7005,3 +7005,105 @@ h1.pl-title,
 }
 
 /* ── END SECTION 37 ───────────────────────────────────────────────────────── */
+
+/* ════════════════════════════════════════════════════════════════════════════
+   38. ROUND-4 POLISH — User Management rows, OAuth input, Commission form inputs
+   2026-06-28 gw6
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. User Management: compact user rows ─────────────────────────────── */
+/* The .gw-um-user-row had an extra flex layout applied via inline style that
+   doubled padding. Override here so the main row div uses the expected height. */
+.gw-um-user-row {
+  display: block !important;         /* override flex — let inner divs handle layout */
+  padding: 0 !important;
+  background: var(--gw-surface) !important;
+  border: 1px solid var(--gw-line) !important;
+  border-radius: 10px !important;
+  margin-bottom: 10px !important;
+  overflow: hidden !important;
+}
+
+/* Main row: name + badges + buttons — keeps its flex layout */
+.gw-um-user-row > div:first-child {
+  padding: 12px 16px !important;
+  gap: 10px !important;
+  flex-wrap: nowrap !important;
+}
+
+/* Google status strip: tighter padding */
+.gw-um-user-row > div:last-child {
+  padding: 6px 16px !important;
+}
+
+/* ── 2. "Google not connected" — better contrast ───────────────────────── */
+/* color:#5C6B58 on cream is barely readable; lift to ink-muted */
+.gw-um-user-row span[style*="color:#5C6B58"] {
+  color: var(--gw-ink) !important;
+  opacity: 0.65 !important;
+}
+
+/* ── 3. Google OAuth Client ID input — fix excessive width ─────────────── */
+/* The input wrapper has flex:1;min-width:220px — cap the input max-width */
+#um-ws-client-id {
+  max-width: 480px !important;
+  flex: 1 1 220px !important;
+}
+
+/* ── 4. gw-info-strip label contrast: emoji pencil label was faint ─────── */
+.gw-info-strip [style*="color:#5C6B58"],
+.gw-info-strip [style*="color: #5C6B58"] {
+  color: var(--gw-ink) !important;
+  opacity: 0.6 !important;
+}
+
+/* ── 5. Commission form: gw-input-sm sizing in commission panels ───────── */
+/* Small % and $ inputs were cramped (width:48px clips numbers). Ensure
+   adequate width and consistent padding, especially the Cap $ inputs. */
+.gw-comm-panel .gw-input-sm,
+.gw-sim-panel .gw-input-sm {
+  padding: 5px 8px !important;
+  min-width: 52px !important;
+  box-sizing: border-box !important;
+}
+
+/* Tier table % inputs — 60px is fine, ensure it's honoured */
+.gw-comm-panel table .gw-input-sm {
+  width: 62px !important;
+  min-width: 52px !important;
+}
+
+/* Recurring row cap/bonus inputs — these were clipping at right */
+.gw-comm-panel .gw-label {
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.gw-comm-panel .gw-label .gw-input-sm[id$="-cap"] {
+  width: 68px !important;
+  min-width: 60px !important;
+}
+
+.gw-comm-panel .gw-label .gw-input-sm[id$="-bonus"] {
+  width: 62px !important;
+  min-width: 54px !important;
+}
+
+/* Soft approval / hard cap inputs below tier table */
+#cr-soft-cap, #cr-hard-cap {
+  width: 88px !important;
+  min-width: 72px !important;
+}
+
+/* ── 6. Commission headings on cream bg: ensure icon+text are aligned ──── */
+/* The gwIcon SVG sits inline — align-items keeps the row tidy */
+.gw-comm-panel > div > div > div[style*="font-size:14px"],
+.gw-sim-header > div > div[style*="font-size:14px"] {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* ── END SECTION 38 ───────────────────────────────────────────────────────── */
