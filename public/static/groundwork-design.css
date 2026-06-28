@@ -1448,4 +1448,151 @@ a:hover { color: var(--gds-pine); text-decoration: underline; }
   background-image: none !important;
 }
 
+/* ─── 61. GLOBAL DARK-TEXT RESCUES ─────────────────────────────────────── */
+/* These selectors catch all inline color:#E8E4D9, #EDEAE0, #D6D1C4 (off-white
+   text) that was designed for a dark-surface UI and now sits on white cards.
+   Attribute selectors have higher specificity than class+element so they win
+   over premium.css without needing !important everywhere. */
+
+/* — off-white text → ink — */
+[style*="color:#E8E4D9"]   { color: var(--gds-ink)   !important; }
+[style*="color: #E8E4D9"]  { color: var(--gds-ink)   !important; }
+[style*="color:#EDEAE0"]   { color: var(--gds-ink)   !important; }
+[style*="color: #EDEAE0"]  { color: var(--gds-ink)   !important; }
+[style*="color:#D6D1C4"]   { color: var(--gds-ink)   !important; }
+[style*="color: #D6D1C4"]  { color: var(--gds-ink)   !important; }
+
+/* — dark-muted text → gds-muted — */
+[style*="color:#6F7E6A"]   { color: var(--gds-muted) !important; }
+[style*="color: #6F7E6A"]  { color: var(--gds-muted) !important; }
+[style*="color:#5C6B58"]   { color: var(--gds-muted) !important; }
+[style*="color: #5C6B58"]  { color: var(--gds-muted) !important; }
+[style*="color:#4A5947"]   { color: var(--gds-muted) !important; }
+[style*="color: #4A5947"]  { color: var(--gds-muted) !important; }
+
+/* — forest-green text (#113931, #1A4740) → pine — */
+[style*="color:#113931"]   { color: var(--gds-pine)  !important; }
+[style*="color: #113931"]  { color: var(--gds-pine)  !important; }
+[style*="color:#1A4740"]   { color: var(--gds-pine)  !important; }
+[style*="color: #1A4740"]  { color: var(--gds-pine)  !important; }
+
+/* — dark panel backgrounds → light surface — */
+[style*="background:#113931"] { background: var(--gds-surface-2) !important; }
+[style*="background: #113931"] { background: var(--gds-surface-2) !important; }
+[style*="background:#1A4740"]  { background: var(--gds-surface-2) !important; }
+[style*="background: #1A4740"] { background: var(--gds-surface-2) !important; }
+
+/* ── EXCEPTIONS: keep intentional dark surfaces ────────────────────────── */
+/* Comms board stays dark */
+.comms-board [style*="background:#113931"] { background: #113931 !important; }
+.comms-board [style*="color:#E8E4D9"]      { color: #E8E4D9 !important; }
+/* Sidebar stays dark */
+.sidebar [style*="background:#113931"] { background: unset !important; }
+/* Dark tooltip/badge text that sits ON a dark background tile — keep white */
+[style*="background:#2D7A55"] [style*="color:#fff"],
+[style*="background:#2C5F57"] [style*="color:#fff"],
+[style*="background:#8B6914"] [style*="color:#fff"],
+[style*="background:#7A2E20"] [style*="color:#fff"] {
+  color: #fff !important; /* keep white-on-color badges legible */
+}
+
+/* ─── 62. SKY-CARD LIGHT THEME ──────────────────────────────────────────── */
+/* gw-sky-card was a dark card; on light theme it becomes a white card */
+.gw-sky-card {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-lg) !important;
+  box-shadow: var(--gds-shadow-card) !important;
+}
+.gw-sky-card-header {
+  background: var(--gds-surface-2) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+  padding: 12px 16px !important;
+}
+
+/* ─── 63. ADMIN PANEL LIGHT THEME ───────────────────────────────────────── */
+.gw-admin-panel {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-xl) !important;
+  box-shadow: var(--gds-shadow-card) !important;
+}
+.gw-admin-panel-header {
+  background: var(--gds-surface-2) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+}
+
+/* ─── 64. DIVISION SECTION LIGHT THEME ──────────────────────────────────── */
+.gw-div-section {
+  background: var(--gds-surface) !important;
+  border: 1px solid var(--gds-line) !important;
+  border-radius: var(--gds-r-xl) !important;
+  box-shadow: var(--gds-shadow-card) !important;
+  margin-bottom: 20px !important;
+}
+.gw-div-section-header {
+  background: var(--gds-surface-2) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+  padding: 14px 18px !important;
+}
+
+/* ─── 65. REP COMMISSION TABLE HEADER ───────────────────────────────────── */
+/* The gw-payout-card and gw-data-table dark th rows */
+.gw-payout-card thead tr,
+.gw-data-table thead tr {
+  background: var(--gds-surface-2) !important;
+}
+.gw-payout-card th,
+.gw-data-table th {
+  color: var(--gds-muted) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+}
+.gw-payout-card td,
+.gw-data-table td {
+  color: var(--gds-ink) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+}
+
+/* ─── 66. MODAL TITLE DARK TEXT RESCUE ──────────────────────────────────── */
+/* Some modals render h2/h3 with hardcoded dark heading colours */
+.modal-box h2[style*="color:#E8E4D9"],
+.modal-box h3[style*="color:#E8E4D9"],
+.modal-box h2[style*="color:#EDEAE0"],
+.modal-box h3[style*="color:#EDEAE0"] {
+  color: var(--gds-ink) !important;
+}
+
+/* ─── 67. SETTINGS / FEATURE FLAG DARK LABELS ───────────────────────────── */
+/* Feature Flags label and any settings panel dark-text labels */
+.gw-settings-panel [style*="color:#E8E4D9"],
+.gw-settings-panel [style*="color:#EDEAE0"] {
+  color: var(--gds-ink) !important;
+}
+
+/* ─── 68. AUDIT TRAIL DARK ENTRIES ─────────────────────────────────────── */
+/* Commission rule audit trail entries */
+.gw-audit-trail [style*="color:#E8E4D9"],
+.gw-audit-trail [style*="color:#4A5947"] {
+  color: var(--gds-ink) !important;
+}
+
+/* ─── 69. CALENDAR / MEETING ROWS ────────────────────────────────────────── */
+/* Calendar meeting name text */
+.gw-cal-row [style*="color:#E8E4D9"] { color: var(--gds-ink) !important; }
+
+/* ─── 70. ADMIN-PANEL TABLE ROWS ─────────────────────────────────────────── */
+.gw-admin-panel table thead tr { background: var(--gds-surface-2) !important; }
+.gw-admin-panel table th {
+  color: var(--gds-muted) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+}
+.gw-admin-panel table td {
+  color: var(--gds-ink) !important;
+  border-bottom: 1px solid var(--gds-line) !important;
+}
+.gw-admin-panel table tr:hover { background: var(--gds-surface-2) !important; }
+
 /* ─── END GROUNDWORK DESIGN SYSTEM v1.0 ─────────────────────────────────── */

@@ -7898,13 +7898,13 @@ window.exportAsPDF = function(title, buildDataFn) {
       </div>
       <table style="width:100%;border-collapse:collapse;font-family:inherit">
         <thead>
-          <tr style="background:#113931">
-            ${headers.map(h => `<th style="padding:9px 10px;text-align:left;color:#fff;font-size:12px;font-weight:700;border:1px solid #1A4740">${xe(h)}</th>`).join('')}
+          <tr style="background:var(--gds-surface-2,#F4F1EC)">
+            ${headers.map(h => `<th style="padding:9px 10px;text-align:left;color:var(--gds-muted,#5E6E6F);font-size:12px;font-weight:700;border:1px solid var(--gds-line,#E0DDD5)">${xe(h)}</th>`).join('')}
           </tr>
         </thead>
         <tbody>${tableRows}</tbody>
       </table>
-      <div style="margin-top:20px;font-size:10px;color:#6F7E6A;border-top:1px solid #E8E4D9;padding-top:10px">
+      <div style="margin-top:20px;font-size:10px;color:#5E6E6F;border-top:1px solid #E0DDD5;padding-top:10px">
         Avalon Landscaping — Confidential — ${new Date().getFullYear()}
       </div>
     </div>`;

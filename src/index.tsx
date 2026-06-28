@@ -1267,7 +1267,7 @@ function getHtml(): string {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/premium.css?v=20260628gw6">
   <link rel="stylesheet" href="/static/styles.css?v=20260628gw6">
-  <link rel="stylesheet" href="/static/groundwork-design.css?v=20260628gw1">
+  <link rel="stylesheet" href="/static/groundwork-design.css?v=20260628gw7">
 </head>
 <body>
 <div id="sidebarScrim" class="sidebar-scrim"></div>

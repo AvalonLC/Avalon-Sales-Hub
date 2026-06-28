@@ -884,45 +884,47 @@ function umRenderAudit(container) {
   const log = umLoadAudit();
 
   const iconMap = {
-    login:                    { icon:'🟢', label:'Login' },
-    logout:                   { icon:'⚪', label:'Logout' },
-    login_failed:             { icon:'🔴', label:'Failed Login' },
-    user_created:             { icon:'➕', label:'User Created' },
-    user_updated:             { icon:'✏️', label:'User Updated' },
-    user_deactivated:         { icon:'🚫', label:'User Deactivated' },
-    user_reactivated:         { icon:'♻️', label:'User Reactivated' },
-    pin_reset:                { icon:'',   label:'PIN Reset' },
-    google_disconnected_by_admin: { icon:'🔌', label:'Google Disconnected (Admin)' },
-    google_connected:         { icon:'🔗', label:'Google Connected' }
+    login:                    { icon:'in',   label:'Login',                    color:'#2D7A55' },
+    logout:                   { icon:'out',  label:'Logout',                   color:'#5E6E6F' },
+    login_failed:             { icon:'fail', label:'Failed Login',             color:'#7A2E20' },
+    user_created:             { icon:'new',  label:'User Created',             color:'#2C5F57' },
+    user_updated:             { icon:'edit', label:'User Updated',             color:'#4D8A86' },
+    user_deactivated:         { icon:'off',  label:'User Deactivated',         color:'#8B3A2A' },
+    user_reactivated:         { icon:'on',   label:'User Reactivated',         color:'#2D7A55' },
+    pin_reset:                { icon:'pin',  label:'PIN Reset',                color:'#5E6E6F' },
+    google_disconnected_by_admin: { icon:'dc', label:'Google Disconnected (Admin)', color:'#8B3A2A' },
+    google_connected:         { icon:'gc',   label:'Google Connected',         color:'#2D7A55' }
   };
 
   container.innerHTML = `
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
   <div>
     <h3 style="margin:0 0 2px;font-size:16px">Login & Security Audit Log</h3>
-    <p style="color:#6F7E6A;font-size:12px;margin:0">${log.length} entries · Last 200 events stored locally</p>
+    <p style="color:var(--gds-muted,#5E6E6F);font-size:12px;margin:0">${log.length} entries · Last 200 events stored locally</p>
   </div>
   ${log.length ? `<button class="secondary-btn" style="font-size:12px" onclick="window._umClearAudit()">Clear Log</button>` : ''}
 </div>
 
 ${log.length === 0
-  ? `<div style="text-align:center;padding:48px;color:#5C6B58">
-      <div style="font-size:32px;margin-bottom:12px">📋</div>
-      <div>No audit events recorded yet.</div>
-      <div style="font-size:12px;margin-top:6px">Events are logged as users log in and admin makes changes.</div>
+  ? `<div style="text-align:center;padding:48px;color:var(--gds-muted,#5E6E6F)">
+      <div style="width:40px;height:40px;background:#EEF4F3;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#204A43" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+      </div>
+      <div style="font-weight:600;color:var(--gds-ink,#1F2A2B);margin-bottom:4px">No audit events recorded yet.</div>
+      <div style="font-size:12px">Events are logged as users log in and admin makes changes.</div>
     </div>`
   : `<div style="display:flex;flex-direction:column;gap:6px">
       ${log.map(entry => {
-        const def = iconMap[entry.type] || { icon:'📌', label: entry.type || 'Event' };
+        const def = iconMap[entry.type] || { icon:'evt', label: entry.type || 'Event', color:'#5E6E6F' };
         return `
         <div class="gw-um-user-row" style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-radius:8px">
-          <span style="font-size:16px;flex-shrink:0;margin-top:1px">${def.icon}</span>
+          <span style="flex-shrink:0;margin-top:1px;width:26px;height:26px;border-radius:6px;background:${def.color}18;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:${def.color}">${def.icon}</span>
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;color:#E8E4D9;font-weight:600">${def.label}
-              ${entry.userName ? `<span style="color:#6F7E6A;font-weight:400"> · ${umEscape(entry.userName)}</span>` : ''}
-              ${entry.by && entry.by !== entry.userName ? `<span style="font-size:11px;color:#5C6B58"> by ${umEscape(entry.by)}</span>` : ''}
+            <div style="font-size:13px;color:var(--gds-ink,#1F2A2B);font-weight:600">${def.label}
+              ${entry.userName ? `<span style="color:var(--gds-muted,#5E6E6F);font-weight:400"> · ${umEscape(entry.userName)}</span>` : ''}
+              ${entry.by && entry.by !== entry.userName ? `<span style="font-size:11px;color:var(--gds-muted,#5E6E6F)"> by ${umEscape(entry.by)}</span>` : ''}
             </div>
-            <div style="font-size:11px;color:#5C6B58;margin-top:2px">${umFormatDate(entry.timestamp)}</div>
+            <div style="font-size:11px;color:var(--gds-muted,#5E6E6F);margin-top:2px">${umFormatDate(entry.timestamp)}</div>
           </div>
         </div>`;
       }).join('')}

@@ -985,8 +985,8 @@ function renderRepDashboard(viewEl, rep) {
           const gateRow = gateInfo && gateInfo.held ? `
         <tr>
           <td colspan="7" style="padding:2px 12px 10px">
-            <div style="display:inline-flex;align-items:center;gap:6px;background:#113931;border:1px solid rgba(139,105,20,.25);border-radius:6px;padding:4px 10px">
-              <span style="font-size:10px;color:#8B6914">⏳</span>
+            <div style="display:inline-flex;align-items:center;gap:6px;background:#FEF9ED;border:1px solid rgba(139,105,20,.25);border-radius:6px;padding:4px 10px">
+              <span style="font-size:10px;color:#8B6914">Pending:</span>
               <span style="font-size:10px;color:#8B6914">${gateInfo.reason}</span>
               ${gateInfo.preview > 0 ? `<span style="font-size:10px;color:#6F7E6A">Earns ${fmtCurrency(gateInfo.preview)} once collected.</span>` : ''}
             </div>
@@ -1615,12 +1615,12 @@ ${(()=>{
     </div>
     <div style="text-align:center">
       <div style="font-size:11px;font-weight:700;color:var(--gw-muted);text-transform:uppercase;letter-spacing:.06em">Needed / Mo</div>
-      <div style="font-size:1.6rem;font-weight:900;color:#113931">${fmtM(annual.avgNeededPerMonth)}</div>
+      <div style="font-size:1.6rem;font-weight:900;color:var(--gds-pine,#204A43)">${fmtM(annual.avgNeededPerMonth)}</div>
       <div style="font-size:11px;color:var(--gw-muted)">${annual.monthsLeft != null ? annual.monthsLeft : 7} months left (dynamic)</div>
     </div>
     <div style="text-align:center">
       <div style="font-size:11px;font-weight:700;color:var(--gw-muted);text-transform:uppercase;letter-spacing:.06em">Operating GM</div>
-      <div style="font-size:1.6rem;font-weight:900;color:#1A4740">${annual.grossMarginPct ? Math.round(annual.grossMarginPct * 100) + '%' : '—'}</div>
+      <div style="font-size:1.6rem;font-weight:900;color:var(--gds-pine,#204A43)">${annual.grossMarginPct ? Math.round(annual.grossMarginPct * 100) + '%' : '—'}</div>
     </div>
     <div style="text-align:center">
       <div style="font-size:11px;font-weight:700;color:var(--gw-muted);text-transform:uppercase;letter-spacing:.06em">True Net Income</div>
@@ -1801,7 +1801,7 @@ ${(()=>{
             </div>
             <div style="text-align:right;flex-shrink:0">
               <div style="font-size:13px;font-weight:800;color:#4D8A86">${fmtM(val)}</div>
-              <div style="font-size:10px;color:${o.collected?'#2D7A55':'#8B6914'}">${o.collected ? '✓ collected' : '⏳ uncollected'}</div>
+              <div style="font-size:10px;color:${o.collected?'#2D7A55':'#8B6914'}">${o.collected ? 'collected' : 'uncollected'}</div>
             </div>
           </div>
           <div style="padding:8px 12px;background:var(--gw-surface);border-top:1px solid var(--gw-line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -1821,7 +1821,7 @@ ${(()=>{
                 style="background:#5C2318;border:none;color:#C97B6A;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer">Reject</button>
               ` : `
               <button onclick="event.stopPropagation();window._adminMarkCommPaid('${o.id}')"
-                style="background:#113931;border:none;color:#2D7A55;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">$ Mark Paid</button>
+                style="background:#EEF6F0;border:1px solid #2D7A5533;color:#2D7A55;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">Mark Paid</button>
               `}
               <button onclick="event.stopPropagation();show('pipeline','${o.id}')"
                 style="background:var(--gw-surface-2);border:1px solid var(--gw-line);color:var(--gw-muted);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">View →</button>
@@ -1918,13 +1918,13 @@ ${(()=>{
         </div>
       </div>
       <!-- Commission -->
-      <div style="background:#113931;border:1px solid #2D7A55;border-radius:8px;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#EEF6F0;border:1px solid #2D7A5533;border-radius:8px;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
         <div style="text-align:center">
-          <div style="font-size:9px;color:#B8DEC9;font-weight:600;text-transform:uppercase">Earned</div>
+          <div style="font-size:9px;color:#2D7A55;font-weight:600;text-transform:uppercase">Earned</div>
           <div style="font-size:15px;font-weight:800;color:#2D7A55;margin-top:2px">${fmtM(totalEarned)}</div>
         </div>
         <div style="text-align:center">
-          <div style="font-size:9px;color:#F5E8C0;font-weight:600;text-transform:uppercase">Pending</div>
+          <div style="font-size:9px;color:#8B6914;font-weight:600;text-transform:uppercase">Pending</div>
           <div style="font-size:15px;font-weight:800;color:#8B6914;margin-top:2px">${fmtM(pendingCollection)}</div>
         </div>
       </div>
