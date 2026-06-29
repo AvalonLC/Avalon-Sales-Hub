@@ -39,7 +39,7 @@ const REPS = [
     name: 'Jen',
     title: 'Office Manager — Sales Operations',
     role: 'office_manager',
-    email: 'jen@avalon-lc.com',
+    email: 'admin@avalon-lc.com',
     avatar: '',
     color: '#8B6914',
     base: null,
