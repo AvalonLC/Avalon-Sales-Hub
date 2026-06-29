@@ -274,7 +274,15 @@ function getCurrentRep() {
   try {
     const d = JSON.parse(localStorage.getItem(AUTH_KEY) || '{}');
     if (!d.repId) return null;
-    return REPS.find(r => r.id === d.repId) || null;
+    // Primary: find in REPS array (tenant reps loaded at boot)
+    const inReps = REPS.find(r => r.id === d.repId);
+    if (inReps) return inReps;
+    // Fallback: use D1 session rep directly (e.g. platform super-admin who
+    // is not in the tenant REPS array)
+    if (window._d1SessionRep && window._d1SessionRep.id === d.repId) {
+      return window._d1SessionRep;
+    }
+    return null;
   } catch(e) { return null; }
 }
 
