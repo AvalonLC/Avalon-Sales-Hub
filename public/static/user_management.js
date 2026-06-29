@@ -300,9 +300,10 @@ function umRenderUsers(container) {
   const currentRep = window.getCurrentRep ? window.getCurrentRep() : null;
   // Fetch D1 rep data in background to get invite status and sync
   const companyId = currentRep?.company_id || window._d1SessionRep?.company_id || 'avalon';
-  fetch(`/api/reps?companyId=${encodeURIComponent(companyId)}`)
+  fetch(`/api/reps?companyId=${encodeURIComponent(companyId)}`, { credentials: 'include' })
     .then(r=>r.json())
-    .then(d1Reps => {
+    .then(d => {
+      const d1Reps = d.data || d;
       if (!Array.isArray(d1Reps)) return;
       // Store D1 invite statuses in a map for user row rendering
       window._umD1InviteMap = {};
@@ -614,8 +615,8 @@ function umRenderUsers(container) {
         ...(password ? { password } : {})
       };
       const apiCall = existingId
-        ? window.API?.reps?.update?.(existingId, apiPayload) || fetch(`/api/reps/${existingId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(apiPayload) })
-        : window.API?.reps?.create?.({ ...apiPayload, id: userId }) || fetch('/api/reps', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ...apiPayload, id: userId }) });
+        ? window.API?.reps?.update?.(existingId, apiPayload) || fetch(`/api/reps/${existingId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include', body:JSON.stringify(apiPayload) })
+        : window.API?.reps?.create?.({ ...apiPayload, id: userId }) || fetch('/api/reps', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body:JSON.stringify({ ...apiPayload, id: userId }) });
       apiCall.then(r => (r.ok ? null : r.json().then(d => umToast(`Server sync: ${d?.error || 'error'}`)))).catch(() => {});
 
       document.getElementById('um-user-modal')?.remove();
@@ -635,7 +636,7 @@ function umRenderUsers(container) {
       umSaveUsers(users);
       umAddAuditEntry({ type: newStatus === 'inactive' ? 'user_deactivated' : 'user_reactivated', userId, userName: u.name, by: window.getCurrentRep?.()?.name || 'Admin' });
       // Sync active state to D1
-      fetch(`/api/reps/${userId}`, { method:'PUT', headers:{'Content-Type':'application/json'},
+      fetch(`/api/reps/${userId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include',
         body: JSON.stringify({ active: newStatus === 'active' ? 1 : 0 }) }).catch(() => {});
       document.getElementById('um-user-modal')?.remove();
       umToast(`${u.name} ${newStatus === 'active' ? 'reactivated' : 'deactivated'}`);
@@ -657,7 +658,7 @@ function umRenderUsers(container) {
     umSaveUsers(users);
     umAddAuditEntry({ type: 'pin_reset', userId, userName: u.name, by: window.getCurrentRep?.()?.name || 'Admin' });
     // Sync new password to D1
-    fetch(`/api/reps/${userId}`, { method:'PUT', headers:{'Content-Type':'application/json'},
+    fetch(`/api/reps/${userId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include',
       body: JSON.stringify({ password: newPw }) }).catch(() => {});
     umToast(`Password reset for ${u.name}`);
     userManagement('users');

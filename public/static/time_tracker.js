@@ -179,7 +179,7 @@ async function ttQuickClockOut() {
 }
 
 // ── Main View Entry Point ──────────────────────────────────────────────────────
-function timeTracker(tab) {
+window.timeTracker = function timeTracker(tab) {
   const rep = window.getCurrentRep ? window.getCurrentRep() : null;
   const d1Rep = window._d1SessionRep || {};
   const isAdmin = rep && (rep.role === 'admin' || rep.role === 'office_manager');

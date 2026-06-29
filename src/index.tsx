@@ -189,7 +189,7 @@ app.post('/api/auth/logout', async (c) => {
       c.env.DB.prepare('DELETE FROM settings WHERE key = ?').bind(`session_company_${token}`)
     ])
   }
-  deleteCookie(c, 'avalon_session')
+  deleteCookie(c, 'avalon_session', { path: '/' })
   return json(c, { loggedOut: true })
 })
 
@@ -255,9 +255,9 @@ app.post('/api/companies', async (c) => {
 // REPS  — all scoped to company_id
 // ══════════════════════════════════════════════════════════════════════════════
 
-// GET /api/reps?companyId=
-app.get('/api/reps', async (c) => {
-  const companyId = c.req.query('companyId') || 'avalon'
+// GET /api/reps  — scoped to session's company
+app.get('/api/reps', requireAuth, async (c) => {
+  const companyId = (c.var.companyId as string) || c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
     'SELECT id, name, title, role, color, commission_plan, active, company_id, email, invite_accepted, invite_sent_at FROM reps WHERE company_id = ? ORDER BY active DESC, name'
   ).bind(companyId).all()
@@ -265,8 +265,8 @@ app.get('/api/reps', async (c) => {
 })
 
 // GET /api/reps/:id
-app.get('/api/reps/:id', async (c) => {
-  const companyId = c.req.query('companyId') || 'avalon'
+app.get('/api/reps/:id', requireAuth, async (c) => {
+  const companyId = (c.var.companyId as string) || c.req.query('companyId') || 'avalon'
   const row = await c.env.DB.prepare(
     'SELECT id, name, title, role, color, commission_plan, active, company_id FROM reps WHERE id = ? AND company_id = ? LIMIT 1'
   ).bind(c.req.param('id'), companyId).first()
@@ -290,10 +290,10 @@ app.post('/api/reps', async (c) => {
 })
 
 // PUT /api/reps/:id
-app.put('/api/reps/:id', async (c) => {
+app.put('/api/reps/:id', requireAuth, async (c) => {
   const id = c.req.param('id')
   const b  = await c.req.json()
-  const companyId = b.companyId || 'avalon'
+  const companyId = (c.var.companyId as string) || b.companyId || 'avalon'
   const fields = ['name','title','role','color','email','commission_plan','active']
   const updates: string[] = []
   const vals: any[] = []
