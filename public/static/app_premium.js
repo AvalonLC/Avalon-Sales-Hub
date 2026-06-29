@@ -198,7 +198,19 @@ function estCommission(opp){
   const rates = { landscape:.06, maintenance_onetime:.04, maintenance_recurring:.20, hardscape:.06, drainage:.06, design_build:.06 };
   return val * (rates[opp?.workType] || .06);
 }
-function showToast(message, duration){ toastEl.textContent = message; toastEl.hidden = false; setTimeout(()=>toastEl.hidden=true, duration || 2200); }
+function showToast(message, duration){
+  if (!toastEl) return;
+  toastEl.textContent = message;
+  toastEl.hidden = false;
+  // Clear any previous timer
+  if (toastEl._hideTimer) clearTimeout(toastEl._hideTimer);
+  // Auto-hide: longer messages get more time, min 2.5s max 6s
+  const ms = duration || Math.min(6000, Math.max(2500, message.length * 50));
+  toastEl._hideTimer = setTimeout(() => { toastEl.hidden = true; }, ms);
+  // Click anywhere on toast to dismiss immediately
+  toastEl.onclick = () => { toastEl.hidden = true; clearTimeout(toastEl._hideTimer); };
+  toastEl.style.cursor = 'pointer';
+}
 function copyText(text, btnEl){
   const doFeedback = () => {
     showToast('Copied to clipboard!');
