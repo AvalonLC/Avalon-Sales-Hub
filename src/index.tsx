@@ -259,7 +259,7 @@ app.post('/api/companies', async (c) => {
 app.get('/api/reps', requireAuth, async (c) => {
   const companyId = (c.var.companyId as string) || c.req.query('companyId') || 'avalon'
   const rows = await c.env.DB.prepare(
-    'SELECT id, name, title, role, color, commission_plan, active, company_id, email, invite_accepted, invite_sent_at FROM reps WHERE company_id = ? ORDER BY active DESC, name'
+    'SELECT id, name, title, role, color, commission_plan, active, company_id, email, email_signature, invite_accepted, invite_sent_at FROM reps WHERE company_id = ? ORDER BY active DESC, name'
   ).bind(companyId).all()
   return json(c, rows.results)
 })
@@ -268,7 +268,7 @@ app.get('/api/reps', requireAuth, async (c) => {
 app.get('/api/reps/:id', requireAuth, async (c) => {
   const companyId = (c.var.companyId as string) || c.req.query('companyId') || 'avalon'
   const row = await c.env.DB.prepare(
-    'SELECT id, name, title, role, color, commission_plan, active, company_id FROM reps WHERE id = ? AND company_id = ? LIMIT 1'
+    'SELECT id, name, title, role, color, commission_plan, active, company_id, email_signature FROM reps WHERE id = ? AND company_id = ? LIMIT 1'
   ).bind(c.req.param('id'), companyId).first()
   if (!row) return err(c, 'Rep not found', 404)
   return json(c, row)
@@ -294,7 +294,7 @@ app.put('/api/reps/:id', requireAuth, async (c) => {
   const id = c.req.param('id')
   const b  = await c.req.json()
   const companyId = (c.var.companyId as string) || b.companyId || 'avalon'
-  const fields = ['name','title','role','color','email','commission_plan','active']
+  const fields = ['name','title','role','color','email','commission_plan','active','email_signature']
   const updates: string[] = []
   const vals: any[] = []
   for (const f of fields) {

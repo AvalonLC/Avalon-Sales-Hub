@@ -684,6 +684,17 @@ function renderLoginScreen() {
       window._companyId    = d1Rep.company_id || 'avalon';
       loginRep(d1Rep.id); // write to localStorage so getCurrentRep() works
 
+      // Merge D1 fields (email_signature, etc.) onto the in-memory REPS entry
+      // so getCurrentRep() returns them without requiring a separate fetch.
+      const localRep = REPS.find(r => r.id === d1Rep.id);
+      if (localRep) {
+        localRep.email_signature = d1Rep.email_signature || '';
+        // Sync any other D1-sourced fields the static array may not have
+        if (d1Rep.title)  localRep.title  = d1Rep.title;
+        if (d1Rep.color)  localRep.color  = d1Rep.color;
+        if (d1Rep.email)  localRep.email  = d1Rep.email;
+      }
+
       // Load opps + clients in background (same as before)
       await _postLoginDataLoad(d1Rep);
 

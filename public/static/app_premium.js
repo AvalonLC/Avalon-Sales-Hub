@@ -6964,6 +6964,11 @@ function settings(){
         ${list(['Access via browser — bookmark for quick daily use.','Install via the Install button for app-style access on mobile.','Data is stored locally in this browser — export regularly.','Contact Tyler to transfer data between devices or reps.'])}
       </section>
     </div>
+
+    <!-- ── My Google Connection + Email Signature ── always shown to all reps ── -->
+    <div id="gw-settings-google-wrap" style="margin-top:20px"></div>
+    <div id="gw-settings-sig-wrap" style="margin-top:0"></div>
+
     ${_ia ? `<div class="gw-comm-tools" style="margin-top:20px">
       <div>
         <div class="gw-comm-tools-title" style="margin-bottom:2px">Admin Controls</div>
@@ -7000,6 +7005,12 @@ function settings(){
       <div id="comm-tool-result" class="gw-tool-result"></div>
     </div>` : ''}
   `;
+
+  // Render Google connection + signature editor (works for all roles)
+  const googleWrap = document.getElementById('gw-settings-google-wrap');
+  if (googleWrap && typeof window.umRenderMyGoogleConnection === 'function') {
+    window.umRenderMyGoogleConnection(googleWrap);
+  }
 }
 
 // renderPermMatrix removed — permissions are now managed exclusively in

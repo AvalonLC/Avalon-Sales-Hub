@@ -1235,6 +1235,248 @@ function umRenderMyGoogleConnection(container) {
   }
 </section>`;
 
+  // Append signature editor panel below the Google connection card
+  const sigWrap = document.createElement('div');
+  sigWrap.style.marginTop = '14px';
+  container.appendChild(sigWrap);
+  umRenderSignatureEditor(sigWrap);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EMAIL SIGNATURE EDITOR
+// Lets each rep set/edit their email signature, with a "Fetch from Gmail" button
+// that pulls it from the Gmail Settings API (sendAs), and a manual HTML textarea
+// fallback. Saves to D1 via PUT /api/reps/:id { email_signature }.
+// ═══════════════════════════════════════════════════════════════════════════════
+function umRenderSignatureEditor(container) {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) return;
+
+  // Check for a cached Gmail signature in localStorage
+  const map  = umLoadUserGoogle();
+  const gc   = map[rep.id];
+  const cachedGmailSig = gc?.signature ?? null;   // null = never fetched, '' = fetched but empty
+  const connected = gc && gc.token && Date.now() < (gc.expiry || 0);
+
+  // Current saved signature: prefer D1 value on rep object
+  const savedSig = rep.email_signature || '';
+
+  container.innerHTML = `
+<section class="card" style="border:1px solid var(--gw-line)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+      Email Signature
+    </h3>
+    <div id="um-sig-saved-badge" style="display:none;font-size:10px;font-weight:700;color:#2D7A55;background:#2D7A5515;border:1px solid #2D7A5540;border-radius:20px;padding:2px 9px">✓ Saved</div>
+  </div>
+  <p style="font-size:12px;color:#6F7E6A;margin:0 0 14px">
+    This signature is automatically appended to every email you send from Groundwork.
+    ${connected
+      ? `<br><strong style="color:#2D7A55">Google is connected</strong> — you can sync directly from Gmail.`
+      : `<br><span style="color:#8B6914">Connect Google above to auto-sync your Gmail signature.</span>`}
+  </p>
+
+  <!-- Source toggle tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:14px;background:var(--gw-surface-3);border-radius:8px;padding:3px;width:fit-content">
+    <button id="um-sig-tab-gmail" onclick="umSigSwitchTab('gmail')"
+      style="padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;
+      background:${connected && (cachedGmailSig || cachedGmailSig==='') ? 'var(--gw-surface)' : 'transparent'};
+      color:${connected ? 'var(--gw-ink,#1F2A2B)' : '#6F7E6A'}">
+      ${connected ? '✓ ' : ''}Gmail Sync
+    </button>
+    <button id="um-sig-tab-manual" onclick="umSigSwitchTab('manual')"
+      style="padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;
+      background:${!connected ? 'var(--gw-surface)' : 'transparent'};color:var(--gw-ink,#1F2A2B)">
+      Manual Editor
+    </button>
+  </div>
+
+  <!-- Gmail Sync panel -->
+  <div id="um-sig-panel-gmail" style="display:${connected ? 'block' : 'none'}">
+    ${connected ? `
+    <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
+      <button onclick="umFetchGmailSig()" id="um-sig-fetch-btn"
+        style="padding:8px 16px;background:linear-gradient(135deg,#4285F4,#1a73e8);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+        <img src="https://www.google.com/favicon.ico" style="width:14px;height:14px">
+        Fetch from Gmail
+      </button>
+      <span id="um-sig-fetch-status" style="font-size:11px;color:#6F7E6A"></span>
+    </div>
+    ${cachedGmailSig
+      ? `<div style="font-size:11px;color:#2D7A55;margin-bottom:8px">✓ Gmail signature fetched${cachedGmailSig ? '' : ' (empty — no signature set in Gmail)'}</div>`
+      : cachedGmailSig === ''
+      ? `<div style="font-size:11px;color:#8B6914;margin-bottom:8px">ⓘ No signature found in Gmail — use Manual Editor below or set one in Gmail settings.</div>`
+      : `<div style="font-size:11px;color:#6F7E6A;margin-bottom:8px">Click "Fetch from Gmail" to pull your current Gmail signature.</div>`
+    }
+    <!-- Preview of fetched sig -->
+    ${cachedGmailSig ? `
+    <div style="padding:12px;background:var(--gw-surface-3);border:1px solid var(--gw-line);border-radius:8px;font-size:12px;line-height:1.6;color:var(--gw-ink,#1F2A2B);max-height:140px;overflow-y:auto;margin-bottom:12px" id="um-sig-gmail-preview">
+      ${cachedGmailSig}
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="umSaveSigFromGmail()" style="padding:8px 18px;background:#2D7A55;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+        Use This Signature →
+      </button>
+      <button onclick="umSigSwitchTab('manual')" style="padding:8px 14px;background:transparent;border:1px solid var(--gw-line);border-radius:8px;color:#6F7E6A;font-size:12px;font-weight:600;cursor:pointer">
+        Edit Manually Instead
+      </button>
+    </div>` : ''}
+    ` : ''}
+  </div>
+
+  <!-- Manual editor panel -->
+  <div id="um-sig-panel-manual" style="display:${!connected ? 'block' : 'none'}">
+    <div style="font-size:11px;color:#6F7E6A;margin-bottom:6px">
+      Paste HTML from Gmail (Gmail → Settings → Signature → copy source), or type plain text.
+      <a href="https://mail.google.com/mail/u/0/#settings/general" target="_blank" style="color:#4D8A86;text-decoration:underline">Open Gmail Settings →</a>
+    </div>
+    <textarea id="um-sig-manual-input" rows="6"
+      style="width:100%;padding:9px 12px;background:var(--gw-surface-3);border:1px solid var(--gw-line);border-radius:8px;color:var(--gw-ink,#1F2A2B);font-size:12px;resize:vertical;font-family:monospace;box-sizing:border-box"
+      placeholder="Paste signature HTML here, or type plain text…"
+    >${umEscape(savedSig)}</textarea>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <button onclick="umSaveSigManual()" style="padding:8px 18px;background:#2D7A55;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+        Save Signature
+      </button>
+      <button onclick="umSigPreviewManual()" style="padding:8px 14px;background:transparent;border:1px solid var(--gw-line);border-radius:8px;color:#6F7E6A;font-size:12px;font-weight:600;cursor:pointer">
+        Preview
+      </button>
+      ${savedSig ? `<button onclick="umClearSig()" style="padding:8px 14px;background:transparent;border:1px solid #C97B6A40;border-radius:8px;color:#C97B6A;font-size:12px;font-weight:600;cursor:pointer">Clear</button>` : ''}
+    </div>
+    <!-- Preview output -->
+    <div id="um-sig-manual-preview" style="display:none;margin-top:10px;padding:12px;background:var(--gw-surface-3);border:1px solid var(--gw-line);border-radius:8px;font-size:12px;line-height:1.6;color:var(--gw-ink,#1F2A2B)"></div>
+  </div>
+
+  <!-- Currently active signature -->
+  ${savedSig ? `
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gw-line)">
+    <div style="font-size:10px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Active Signature</div>
+    <div style="padding:10px 12px;background:var(--gw-surface-3);border:1px solid #2D7A5540;border-radius:8px;font-size:12px;line-height:1.6;color:var(--gw-ink,#1F2A2B);max-height:100px;overflow:hidden">${savedSig}</div>
+  </div>` : ''}
+</section>`;
+}
+
+// Signature editor helpers
+function umSigSwitchTab(tab) {
+  const gmail  = document.getElementById('um-sig-panel-gmail');
+  const manual = document.getElementById('um-sig-panel-manual');
+  const tabG   = document.getElementById('um-sig-tab-gmail');
+  const tabM   = document.getElementById('um-sig-tab-manual');
+  if (gmail)  gmail.style.display  = tab === 'gmail'  ? 'block' : 'none';
+  if (manual) manual.style.display = tab === 'manual' ? 'block' : 'none';
+  const activeStyle   = 'padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:var(--gw-surface);color:var(--gw-ink,#1F2A2B)';
+  const inactiveStyle = 'padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#6F7E6A';
+  if (tabG) tabG.style.cssText = tab === 'gmail'  ? activeStyle : inactiveStyle;
+  if (tabM) tabM.style.cssText = tab === 'manual' ? activeStyle : inactiveStyle;
+}
+
+async function umFetchGmailSig() {
+  const btn = document.getElementById('um-sig-fetch-btn');
+  const status = document.getElementById('um-sig-fetch-status');
+  if (btn) { btn.textContent = 'Fetching…'; btn.disabled = true; }
+  if (status) status.textContent = '';
+
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) { if (btn) { btn.innerHTML = '<img src="https://www.google.com/favicon.ico" style="width:14px;height:14px"> Fetch from Gmail'; btn.disabled = false; } return; }
+
+  try {
+    // Use integrations.js helper if available (has access to current token)
+    let sig = '';
+    if (typeof window.gmailRefreshSignature === 'function') {
+      sig = await window.gmailRefreshSignature();
+    } else {
+      // Direct fetch using token from user record
+      const map = umLoadUserGoogle();
+      const gc  = map[rep.id];
+      if (!gc?.token) throw new Error('No token');
+      const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs', {
+        headers: { Authorization: `Bearer ${gc.token}` }
+      });
+      if (!r.ok) throw new Error(`Gmail API ${r.status}`);
+      const j = await r.json();
+      const primary = (j.sendAs||[]).find(s=>s.isDefault) || (j.sendAs||[])[0];
+      sig = primary?.signature || '';
+      // Cache it
+      map[rep.id].signature = sig;
+      umSaveUserGoogle(map);
+    }
+
+    if (status) status.textContent = sig ? '✓ Fetched!' : 'No signature found in Gmail.';
+
+    // Re-render to show the preview
+    const container = document.getElementById('um-sig-fetch-btn')?.closest('section')?.parentElement;
+    if (container) umRenderSignatureEditor(container);
+
+    if (sig) umToast('Gmail signature fetched ✓', 'ok');
+    else umToast('No signature found in Gmail — use Manual Editor', 'warn');
+  } catch(e) {
+    if (status) status.textContent = 'Error: ' + e.message;
+    umToast('Could not fetch Gmail signature: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.innerHTML = '<img src="https://www.google.com/favicon.ico" style="width:14px;height:14px"> Fetch from Gmail'; btn.disabled = false; }
+  }
+}
+
+async function umSaveSigFromGmail() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) return;
+  const map = umLoadUserGoogle();
+  const sig = map[rep.id]?.signature || '';
+  await _umSaveSigToD1(rep, sig);
+}
+
+async function umSaveSigManual() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) return;
+  const val = document.getElementById('um-sig-manual-input')?.value || '';
+  await _umSaveSigToD1(rep, val);
+}
+
+async function _umSaveSigToD1(rep, sig) {
+  try {
+    const res = await fetch(`/api/reps/${rep.id}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email_signature: sig })
+    });
+    const j = await res.json();
+    if (j.ok) {
+      // Update the in-memory rep record so compose picks it up immediately
+      if (window.getCurrentRep) {
+        const cr = window.getCurrentRep();
+        if (cr) cr.email_signature = sig;
+      }
+      umToast('Signature saved ✓', 'ok');
+      const badge = document.getElementById('um-sig-saved-badge');
+      if (badge) { badge.style.display = 'inline-flex'; setTimeout(() => { badge.style.display = 'none'; }, 3000); }
+      // Re-render to show active signature
+      const container = document.getElementById('um-sig-manual-input')?.closest('section')?.parentElement
+                     || document.getElementById('um-sig-gmail-preview')?.closest('section')?.parentElement;
+      if (container) umRenderSignatureEditor(container);
+    } else {
+      umToast(j.error || 'Could not save signature', 'error');
+    }
+  } catch(e) {
+    umToast('Network error saving signature', 'error');
+  }
+}
+
+async function umClearSig() {
+  if (!confirm('Remove your email signature?')) return;
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) return;
+  await _umSaveSigToD1(rep, '');
+}
+
+function umSigPreviewManual() {
+  const val = document.getElementById('um-sig-manual-input')?.value || '';
+  const preview = document.getElementById('um-sig-manual-preview');
+  if (!preview) return;
+  if (!val) { preview.style.display = 'none'; return; }
+  preview.innerHTML = val;
+  preview.style.display = 'block';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1254,6 +1496,7 @@ async function umMyConnect() {
   const scopes = [
     'https://www.googleapis.com/auth/gmail.compose',
     'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail.settings.basic',
     'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/calendar.readonly',
     'https://www.googleapis.com/auth/drive.readonly',
@@ -1308,6 +1551,19 @@ async function umMyConnect() {
       const rep = window.getCurrentRep ? window.getCurrentRep() : null;
       if (!rep) return;
       const map = umLoadUserGoogle();
+      // Try to fetch Gmail sendAs signature right away
+      let gmailSig = '';
+      try {
+        const sigRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (sigRes.ok) {
+          const sigJ = await sigRes.json();
+          const primary = (sigJ.sendAs || []).find(s => s.isDefault) || (sigJ.sendAs || [])[0];
+          gmailSig = primary?.signature || '';
+        }
+      } catch(sigErr) { /* scope may not be granted yet — silent */ }
+
       map[rep.id] = {
         token: accessToken,
         expiry: Date.now() + expiresIn * 1000,
@@ -1315,11 +1571,13 @@ async function umMyConnect() {
         gmail: true,
         calendar: true,
         drive: true,
+        signature: gmailSig,
         connectedAt: new Date().toISOString()
       };
       umSaveUserGoogle(map);
       umAddAuditEntry({ type: 'google_connected', userId: rep.id, userName: rep.name, by: rep.name });
-      umToast(`Google connected as ${googleEmail}`);
+      const sigMsg = gmailSig ? ' (signature synced ✓)' : '';
+      umToast(`Google connected as ${googleEmail}${sigMsg}`);
 
       // Refresh whatever view is currently visible
       if (typeof window.integrations === 'function') window.integrations();
@@ -1458,3 +1716,10 @@ window.umSaveUsers = umSaveUsers;
 window.umAddAuditEntry = umAddAuditEntry;
 window.umLoadUserGoogle = umLoadUserGoogle;
 window.umSaveUserGoogle = umSaveUserGoogle;
+window.umRenderSignatureEditor = umRenderSignatureEditor;
+window.umFetchGmailSig  = umFetchGmailSig;
+window.umSaveSigFromGmail = umSaveSigFromGmail;
+window.umSaveSigManual  = umSaveSigManual;
+window.umSigPreviewManual = umSigPreviewManual;
+window.umSigSwitchTab   = umSigSwitchTab;
+window.umClearSig       = umClearSig;

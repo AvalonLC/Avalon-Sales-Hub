@@ -45,10 +45,12 @@ function getIntState(key) { return loadIntState()[key]; }
 })();
 
 // ── Google OAuth2 ─────────────────────────────────────────────────────────────
-// Scopes: Gmail read/compose, Calendar read/write, Drive read
+// Scopes: Gmail read/compose/settings, Calendar read/write, Drive read
+// gmail.settings.basic allows reading sendAs addresses (→ email signature)
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.settings.basic',
   'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/calendar.readonly',
   'https://www.googleapis.com/auth/drive.readonly',
@@ -143,6 +145,29 @@ async function googleOAuthConnect() {
               const u = await r.json();
               saveIntState({ googleEmail: u.email || '' });
             } catch(_) {}
+            // Fetch Gmail sendAs signature and cache it immediately
+            try {
+              const sigR = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs', {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              if (sigR.ok) {
+                const sigJ = await sigR.json();
+                const primary = (sigJ.sendAs||[]).find(s=>s.isDefault) || (sigJ.sendAs||[])[0];
+                const sig = primary?.signature || '';
+                // Store in per-user record (avalonUserGoogleV1)
+                const curRep = window.getCurrentRep ? window.getCurrentRep() : null;
+                if (curRep) {
+                  try {
+                    const m2 = JSON.parse(localStorage.getItem('avalonUserGoogleV1') || '{}');
+                    if (!m2[curRep.id]) m2[curRep.id] = {};
+                    m2[curRep.id].token     = token;
+                    m2[curRep.id].expiry    = Date.now() + expiresIn * 1000;
+                    m2[curRep.id].signature = sig;
+                    localStorage.setItem('avalonUserGoogleV1', JSON.stringify(m2));
+                  } catch(e2) {}
+                }
+              }
+            } catch(_sig) {}
             showIntToast('Google connected', 'success');
             resolve(true);
           }
@@ -186,6 +211,74 @@ async function gFetch(url, options = {}) {
   }
   return res;
 }
+
+// ── Gmail Signature helpers ─────────────────────────────────────────────────
+// Fetch the user's Gmail sendAs signature via the Gmail Settings API.
+// Requires gmail.settings.basic scope.
+// Returns the HTML string, or '' if not available / scope missing.
+async function gmailFetchSendAsSignature() {
+  try {
+    const r = await gFetch('https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs');
+    if (!r.ok) return '';
+    const j = await r.json();
+    const sendAsEntries = j.sendAs || [];
+    // Prefer the "default" / verified sender; fall back to first entry
+    const primary = sendAsEntries.find(s => s.isDefault) || sendAsEntries[0];
+    return primary?.signature || '';
+  } catch(e) {
+    console.warn('[Groundwork] Could not fetch Gmail signature:', e.message);
+    return '';
+  }
+}
+
+// Get the active signature for the current user.
+// Priority: 1) Gmail API (if token+scope available and cached), 2) D1 rep record.
+// Result is cached in avalonUserGoogleV1[repId].signature for the session.
+window.gmailGetSignature = async function() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) return '';
+
+  // Check localStorage cache first (avoids repeat API calls)
+  try {
+    const map = JSON.parse(localStorage.getItem('avalonUserGoogleV1') || '{}');
+    const gc  = map[rep.id];
+    if (gc && gc.signature !== undefined && gc.signature !== null) {
+      return gc.signature;  // may be '' (empty Gmail sig) or actual HTML
+    }
+  } catch(e) {}
+
+  // Try to fetch from Gmail API
+  if (isGoogleConnected()) {
+    const sig = await gmailFetchSendAsSignature();
+    // Cache result (even if empty — prevents repeat calls)
+    try {
+      const map = JSON.parse(localStorage.getItem('avalonUserGoogleV1') || '{}');
+      if (!map[rep.id]) map[rep.id] = {};
+      map[rep.id].signature = sig;
+      localStorage.setItem('avalonUserGoogleV1', JSON.stringify(map));
+    } catch(e) {}
+    if (sig) return sig;
+  }
+
+  // Fall back to rep.email_signature from D1 (loaded when rep record was fetched)
+  return rep.email_signature || '';
+};
+
+// Force-refresh signature from Gmail API (ignores cache)
+window.gmailRefreshSignature = async function() {
+  const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+  if (!rep) return '';
+  if (!isGoogleConnected()) return rep.email_signature || '';
+
+  const sig = await gmailFetchSendAsSignature();
+  try {
+    const map = JSON.parse(localStorage.getItem('avalonUserGoogleV1') || '{}');
+    if (!map[rep.id]) map[rep.id] = {};
+    map[rep.id].signature = sig;
+    localStorage.setItem('avalonUserGoogleV1', JSON.stringify(map));
+  } catch(e) {}
+  return sig;
+};
 
 // ── Gmail ─────────────────────────────────────────────────────────────────────
 async function gmailListThreads(maxResults = 10) {
@@ -627,10 +720,13 @@ async function integrations() {
 
 <!-- ── Compose Email Modal ────────────────────────────────────────────── -->
 <div id="int-compose-modal" style="display:none;position:fixed;inset:0;background:#00000088;z-index:9999;align-items:center;justify-content:center;padding:20px">
-  <div class="gw-modal-card" style="border-radius:16px;padding:28px;width:100%;max-width:560px;box-shadow:0 24px 64px #000a">
+  <div class="gw-modal-card" style="border-radius:16px;padding:28px;width:100%;max-width:600px;box-shadow:0 24px 64px #000a;max-height:90vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--gds-ink,#1F2A2B)">${gwIcon('email',16)} New Email</h3>
-      <button onclick="document.getElementById('int-compose-modal').style.display='none'" style="background:none;border:none;color:#6F7E6A;font-size:22px;cursor:pointer;line-height:1">×</button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="int-sig-status" style="font-size:10px;color:#6F7E6A"></div>
+        <button onclick="document.getElementById('int-compose-modal').style.display='none'" style="background:none;border:none;color:#6F7E6A;font-size:22px;cursor:pointer;line-height:1">×</button>
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div>
@@ -645,12 +741,31 @@ async function integrations() {
       </div>
       <div>
         <label style="font-size:11px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Message</label>
-        <textarea id="int-email-body" rows="8" placeholder="Write your message…"
+        <textarea id="int-email-body" rows="7" placeholder="Write your message…"
           style="width:100%;margin-top:5px;padding:9px 12px;background:var(--gw-surface-3);border:1px solid var(--gw-line);border-radius:8px;color:var(--gw-ink);font-size:13px;resize:vertical;box-sizing:border-box;font-family:inherit"></textarea>
+      </div>
+      <!-- Signature preview section — shown when a signature is loaded -->
+      <div id="int-sig-section" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="width:28px;height:1px;background:var(--gw-line)"></div>
+            <span style="font-size:10px;font-weight:700;color:#6F7E6A;text-transform:uppercase;letter-spacing:.05em">Signature</span>
+            <div style="flex:1;height:1px;background:var(--gw-line)"></div>
+          </div>
+          <button onclick="intToggleSig()" id="int-sig-toggle-btn"
+            style="font-size:10px;font-weight:700;color:#6F7E6A;background:none;border:1px solid var(--gw-line);border-radius:5px;padding:2px 8px;cursor:pointer;margin-left:10px">
+            Remove
+          </button>
+        </div>
+        <!-- Rendered HTML signature preview -->
+        <div id="int-sig-preview"
+          style="padding:10px 12px;background:var(--gw-surface-3);border:1px solid var(--gw-line);border-radius:8px;font-size:12px;line-height:1.5;color:var(--gw-ink,#1F2A2B);overflow:hidden;max-height:160px;overflow-y:auto">
+        </div>
+        <div style="font-size:10px;color:#6F7E6A;margin-top:4px" id="int-sig-source-label"></div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
         <button onclick="document.getElementById('int-compose-modal').style.display='none'" class="secondary-btn">Cancel</button>
-        <button onclick="intSendEmail()" class="primary-btn">${gwIcon('plane',16)} Send via Gmail</button>
+        <button onclick="intSendEmail()" class="primary-btn" id="int-send-btn">${gwIcon('plane',16)} Send via Gmail</button>
       </div>
     </div>
   </div>
@@ -963,18 +1078,95 @@ window.gwSendReply = async function(threadId, lastMessageId) {
 };
 
 // ── Compose modal ──────────────────────────────────────────────────────────────
-window.gwOpenCompose = function(prefillTo='', prefillSubject='') {
+// Track whether the signature is currently included in the compose window
+window._intSigActive   = false;
+window._intSigHtml     = '';
+window._intSigSource   = '';  // 'gmail' | 'manual' | ''
+
+window.gwOpenCompose = async function(prefillTo='', prefillSubject='') {
   const modal = document.getElementById('int-compose-modal');
   if (!modal) { showIntToast('Compose unavailable — reload the Integrations page', 'warn'); return; }
-  // Clear fields
-  const toEl   = document.getElementById('int-email-to');
-  const subjEl = document.getElementById('int-email-subject');
-  const bodyEl = document.getElementById('int-email-body');
+  // Reset fields
+  const toEl       = document.getElementById('int-email-to');
+  const subjEl     = document.getElementById('int-email-subject');
+  const bodyEl     = document.getElementById('int-email-body');
+  const sigSection = document.getElementById('int-sig-section');
+  const sigPreview = document.getElementById('int-sig-preview');
+  const sigStatus  = document.getElementById('int-sig-status');
+  const sigSrcLbl  = document.getElementById('int-sig-source-label');
+  const sigToggle  = document.getElementById('int-sig-toggle-btn');
+
   if (toEl)   toEl.value   = prefillTo || '';
   if (subjEl) subjEl.value = prefillSubject || '';
   if (bodyEl) bodyEl.value = '';
+
+  // Hide signature section initially while loading
+  if (sigSection) sigSection.style.display = 'none';
+  if (sigStatus)  sigStatus.textContent = '⏳ Loading signature…';
+  window._intSigActive = false;
+  window._intSigHtml   = '';
+  window._intSigSource = '';
+
   modal.style.display = 'flex';
+
+  // Async: load signature (Gmail API → manual fallback)
+  try {
+    let sig = '';
+    let source = '';
+
+    if (isGoogleConnected()) {
+      // Try Gmail API first
+      const apiSig = await gmailFetchSendAsSignature();
+      if (apiSig) {
+        sig    = apiSig;
+        source = 'gmail';
+      }
+    }
+
+    // Fall back to D1 rep record signature if Gmail API returned nothing
+    if (!sig) {
+      const rep = window.getCurrentRep ? window.getCurrentRep() : null;
+      const manualSig = rep?.email_signature || '';
+      if (manualSig) {
+        sig    = manualSig;
+        source = 'manual';
+      }
+    }
+
+    if (sig) {
+      window._intSigHtml   = sig;
+      window._intSigSource = source;
+      window._intSigActive = true;
+
+      if (sigPreview) sigPreview.innerHTML = sig;
+      if (sigSection) sigSection.style.display = 'block';
+      if (sigToggle)  sigToggle.textContent = 'Remove';
+      if (sigSrcLbl)  sigSrcLbl.textContent = source === 'gmail'
+        ? '✓ Synced from your Gmail signature'
+        : '✓ Using your saved email signature';
+      if (sigStatus)  sigStatus.textContent = '';
+    } else {
+      if (sigStatus) sigStatus.textContent = '';
+    }
+  } catch(e) {
+    if (sigStatus) sigStatus.textContent = '';
+    console.warn('[Groundwork] Signature load failed:', e.message);
+  }
 };
+
+function intToggleSig() {
+  window._intSigActive = !window._intSigActive;
+  const sigSection = document.getElementById('int-sig-section');
+  const sigToggle  = document.getElementById('int-sig-toggle-btn');
+  if (sigSection) sigSection.style.display = window._intSigActive ? 'block' : 'none';
+  if (sigToggle)  sigToggle.textContent    = window._intSigActive ? 'Remove' : 'Add back';
+  if (!window._intSigActive && sigSection) {
+    // Keep section visible but visually dim when toggled off, just hide the preview
+    sigSection.style.display = 'none';
+  } else if (window._intSigActive && window._intSigHtml) {
+    sigSection.style.display = 'block';
+  }
+}
 
 // Keep legacy aliases
 function intShowGmail()    { gwSwitchTab('gmail'); }
@@ -1505,24 +1697,32 @@ function intOpenInGmail() {
   window.open(gmailComposeUrl(to, subject, body), '_blank', 'width=800,height=600');
 }
 async function intSendEmail() {
-  const to = document.getElementById('int-email-to')?.value?.trim();
+  const to      = document.getElementById('int-email-to')?.value?.trim();
   const subject = document.getElementById('int-email-subject')?.value?.trim();
-  const body = document.getElementById('int-email-body')?.value?.trim();
-  if (!to || !subject || !body) { showIntToast('Fill in To, Subject, and Body', 'warn'); return; }
+  const bodyRaw = document.getElementById('int-email-body')?.value?.trim();
+  if (!to || !subject || !bodyRaw) { showIntToast('Fill in To, Subject, and Body', 'warn'); return; }
   if (!isGoogleConnected()) { showIntToast('Connect Google first', 'warn'); return; }
+
+  // Build full HTML body: message text + optional signature
+  const bodyHtml = bodyRaw.replace(/\n/g, '<br>');
+  let fullHtml   = bodyHtml;
+  if (window._intSigActive && window._intSigHtml) {
+    // Separator + signature, matching Gmail's convention
+    fullHtml += `<br><br><div style="border-top:1px solid #e0e0e0;padding-top:8px;margin-top:8px">${window._intSigHtml}</div>`;
+  }
+
   try {
-    const btn = document.querySelector('#int-compose-modal .primary-btn');
+    const btn = document.getElementById('int-send-btn');
     if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
-    const htmlBody = body.replace(/\n/g, '<br>');
-    await gmailSendEmail({ to, subject, body: htmlBody });
-    showIntToast('Email sent');
+    await gmailSendEmail({ to, subject, body: fullHtml });
+    showIntToast('Email sent ✓');
     document.getElementById('int-compose-modal').style.display = 'none';
     if (_gwTab === 'gmail') gwLoadGmail();
-    if (btn) { btn.textContent = 'Send via Gmail'; btn.disabled = false; }
+    if (btn) { btn.textContent = `${gwIcon('plane',16)} Send via Gmail`; btn.disabled = false; }
   } catch(e) {
     showIntToast(e.message, 'error');
-    const btn = document.querySelector('#int-compose-modal .primary-btn');
-    if (btn) { btn.textContent = 'Send via Gmail'; btn.disabled = false; }
+    const btn = document.getElementById('int-send-btn');
+    if (btn) { btn.textContent = `${gwIcon('plane',16)} Send via Gmail`; btn.disabled = false; }
   }
 }
 
